@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MOBYA — Motor de Inteligência Quântica Automotiva">
+<meta name="theme-color" content="#7c3aed">
+<title>MOBYA — Inteligência Quântica Automotiva</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-env="production">
+
+<!-- LOADING -->
+<div class="ls" id="ls">
+  <div class="ls-box">
+    <div class="ls-logo">MOBYA</div>
+    <div class="ls-sub">QUANTUM ENGINE v3.0</div>
+    <div class="ls-bar"><div class="ls-fill" id="lsFill"></div></div>
+    <div class="ls-txt" id="lsTxt">Iniciando motor quântico...</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="h-left">
+    <div class="logo-ico">🚗</div>
+    <div class="logo-wrap">
+      <div class="logo">MOBYA</div>
+      <div class="logo-sub">QUANTUM ENGINE v3.0</div>
+    </div>
+  </div>
+  <nav id="nav">
+    <button class="nb active" data-page="home">Início</button>
+    <button class="nb" data-page="classificados">Classificados</button>
+    <button class="nb" data-page="pecas">Peças</button>
+    <button class="nb" data-page="aluguel">Aluguel</button>
+    <button class="nb" data-page="servicos">Serviços</button>
+    <button class="nb" data-page="agentes">Agentes IA</button>
+    <button class="nb nb-sos" data-page="emergencia">🚨 SOS</button>
+  </nav>
+  <div class="h-right">
+    <div class="q-status" id="apiStatus">
+      <div class="q-dot" id="apiDot"></div>
+      <span id="apiTxt">CONECTANDO</span>
+    </div>
+    <button class="btn-cta" id="btnCta" onclick="MobyaAuth.showLogin()">Entrar</button>
+    <button class="btn-menu" id="btnMenu" onclick="toggleMenu()">☰</button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-sec">
+      <div class="sb-lbl">Plataforma</div>
+      <div class="sb-item active" data-page="home">⬡ Painel Quântico</div>
+      <div class="sb-item" data-page="classificados">🚘 Classificados <span class="sb-badge v" id="bdClassi">...</span></div>
+      <div class="sb-item" data-page="pecas">⚙️ Peças <span class="sb-badge b">128</span></div>
+      <div class="sb-item" data-page="aluguel">🗝️ Aluguel <span class="sb-badge g">12</span></div>
+      <div class="sb-item" data-page="servicos">🔨 Serviços</div>
+      <div class="sb-item" data-page="seguros">🛡️ Seguros <span class="sb-badge v">NOVO</span></div>
+      <div class="sb-item" data-page="financiamento">💰 Financiamento</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Emergência 24H</div>
+      <div class="sb-item sb-sos" data-page="emergencia">🚨 Central SOS <span class="sb-badge r">24H</span></div>
+      <div class="sb-item" data-page="reboque">🚛 Reboque & Guincho</div>
+      <div class="sb-item" data-page="chaveiro">🔑 Chaveiro Auto</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Ferramentas</div>
+      <div class="sb-item" data-page="calculadoras">🧮 Calculadoras</div>
+      <div class="sb-item" data-page="vistoria">🔍 Vistoria & Laudo</div>
+      <div class="sb-item" data-page="documentacao">📋 Documentação</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Motor de IA</div>
+      <div class="sb-item" data-page="agentes">🤖 Agentes Quânticos</div>
+      <div class="sb-item" data-page="chat">💬 Chat Quântico</div>
+      <div class="sb-item" data-page="dashboard">📊 Dashboard</div>
+    </div>
+    <div class="sb-status">
+      <div class="sbs-title">◈ MOTOR QUÂNTICO</div>
+      <div class="sbs-row"><span>9 Agentes NEXUS</span><span class="sbs-on">● ATIVOS</span></div>
+      <div class="sbs-row"><span>SambaNova</span><span class="sbs-on" id="sbSambanova">● –</span></div>
+      <div class="sbs-row"><span>Cerebras</span><span class="sbs-on" id="sbCerebras">● –</span></div>
+      <div class="sbs-row"><span>Gemini</span><span class="sbs-on" id="sbGemini">● –</span></div>
+      <div class="sbs-row"><span>OpenRouter</span><span class="sbs-on" id="sbOpenRouter">● –</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main"></main>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-bg" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="MobyaAuth.closeModal()">✕</button>
+    <div id="authContent"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="modals"></div>
+
+<!-- SCRIPTS -->
+<script>
+  // API URL — detecta ambiente automaticamente
+  window.MOBYA = {
+    API: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      ? 'http://localhost:4000'
+      : 'https://mobya-api.onrender.com',
+    VERSION: '3.0.0',
+  };
+</script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
