@@ -45,6 +45,7 @@ function renderChatPage() {
   if (typeof Chat !== 'undefined') Chat.render('agentChatContainer', 'orquestrador');
 }
 
+if (typeof Pages === "undefined") { console.error("[MOBYA] pages.js falhou"); window.Pages = {}; ["renderHome","renderClassificados","renderAgentes","renderEmergencia","renderCalculadoras","renderVistoria","renderDocumentacao","renderDashboard","renderListing"].forEach(m => Pages[m] = () => {}); }
 const BASE_PAGES = {
   home:          () => Pages.renderHome(),
   classificados: () => Pages.renderClassificados(),
