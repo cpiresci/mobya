@@ -1092,9 +1092,6 @@ window.Monetization = (() => {
   }
 
   // Auto-init REMOVIDO — init() é chamado pelo App.init() em app.js
-  if (document.readyState === 'loading') {
-    setTimeout(init, 0);
-  }
 
   return {
     // Exposto imediatamente para chamadas inline do HTML
