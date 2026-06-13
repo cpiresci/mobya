@@ -23,7 +23,7 @@ async function boot(){
   try{const u=await Promise.race([API.me(),new Promise((_,r)=>setTimeout(()=>r('timeout'),5000))]);if(u?.data){const btn=document.getElementById('btnCta');if(btn){btn.textContent=u.data.name?.split(' ')[0]||'Perfil';btn.onclick=()=>renderPage('dashboard');}}}catch(e){}
 
   // api status (non-blocking)
-  API.ping().catch(()=>{});
+  API.ping().then(ok=>{const d=document.getElementById("apiDot");const t=document.getElementById("apiTxt");if(d)d.style.background=ok?"var(--green)":"var(--red)";if(t)t.textContent=ok?"QUANTUM ONLINE":"API OFFLINE";}).catch(()=>{const t=document.getElementById("apiTxt");if(t)t.textContent="API OFFLINE";});
 }
 
 window.renderPage=function(page){
