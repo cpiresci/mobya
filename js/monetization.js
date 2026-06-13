@@ -1091,10 +1091,8 @@ window.Monetization = (() => {
     console.log('[MOBYA] 💰 Módulo de Monetização Quântica v1.0 carregado');
   }
 
-  // Auto-init ao DOM estar pronto
+  // Auto-init REMOVIDO — init() é chamado pelo App.init() em app.js
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
     setTimeout(init, 0);
   }
 
