@@ -125,7 +125,7 @@ window.Pages = (() => {
       </div>
 
       <!-- STATS + ÚLTIMOS CLASSIFICADOS -->
-      <div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;align-items:start">
         <!-- Últimos anúncios -->
         <div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -496,7 +496,7 @@ window.Pages = (() => {
         <button onclick="renderPage('classificados')" style="
           background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:20px">
           ← Voltar aos classificados</button>
-        <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px;align-items:start">
           <div>
             <!-- Imagens -->
             <div style="border-radius:12px;overflow:hidden;background:var(--s3);
