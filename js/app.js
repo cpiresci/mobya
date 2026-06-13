@@ -121,7 +121,8 @@ window.renderPage = function (page) {
 
   const handler = BASE_PAGES[page];
   if (handler) {
-    try { handler(); } catch (e) { console.error('Erro ao renderizar página', page, e); Toast.show('Erro ao carregar página.', 'err'); }
+    try { handler(); } catch (e) { console.error('Erro ao renderizar página', page, e); document.getElementById('main').innerHTML = '<pre style="color:red;padding:20px;font-size:11px">' + e + '
+' + (e.stack||'') + '</pre>'; }
   } else {
     comingSoon((page || 'PÁGINA').toUpperCase());
   }
