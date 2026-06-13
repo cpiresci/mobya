@@ -305,12 +305,12 @@ window.Pages = (() => {
       <div id="clPager" style="display:flex;justify-content:center;gap:8px;margin-top:24px"></div>
     `;
 
-    Pages.searchListings();
+    Pages.searchListings && Pages.searchListings();
   }
 
   let clPage = 1;
 
-  Pages.searchListings = async function(page=1) {
+  searchListings = async function(page=1) {
     clPage = page;
     const results = document.getElementById('clResults');
     if (!results) return;
@@ -398,7 +398,7 @@ window.Pages = (() => {
       </div>`;
   }
 
-  Pages.showCreateListing = function() {
+  showCreateListing = function() {
     if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
     const modals = document.getElementById('modals');
     if (!modals) return;
@@ -452,7 +452,7 @@ window.Pages = (() => {
       </div>`;
   };
 
-  Pages.submitListing = async function() {
+  submitListing = async function() {
     const btn   = document.getElementById('clSubmitBtn');
     const title = document.getElementById('clTitle')?.value?.trim();
     const price = document.getElementById('clPrice')?.value;
@@ -469,7 +469,7 @@ window.Pages = (() => {
       await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type });
       document.getElementById('createModal')?.remove();
       App.toast('✅ Anúncio publicado com sucesso!','ok');
-      Pages.searchListings();
+      Pages.searchListings && Pages.searchListings();
     } catch(e) {
       App.toast(e.message||'Erro ao publicar.','err');
     } finally {
@@ -657,7 +657,7 @@ window.Pages = (() => {
     }, 50);
   }
 
-  Pages.openSOS = async function(type, label) {
+  openSOS = async function(type, label) {
     if (!API.isAuth()) {
       App.toast('Faça login para registrar emergência.','warn');
       window.MobyaAuth?.showLogin(); return;
@@ -788,7 +788,7 @@ window.Pages = (() => {
     `;
   }
 
-  Pages.showCalcTab = function(tab) {
+  showCalcTab = function(tab) {
     ['fipe','cdc','tco'].forEach(t => {
       const el = document.getElementById(`tab_${t}`);
       const bt = document.getElementById(`ctab_${t}`);
@@ -848,7 +848,7 @@ window.Pages = (() => {
       </div>`;
   }
 
-  Pages.runVistoria = async function() {
+  runVistoria = async function() {
     if (!API.isAuth()) { App.toast('Faça login para usar a vistoria.','warn'); window.MobyaAuth?.showLogin(); return; }
     const btn = document.getElementById('viBtnAnalyze');
     const res = document.getElementById('viResult');
@@ -1027,12 +1027,12 @@ window.Pages = (() => {
     renderVistoria,
     renderDocumentacao,
     renderDashboard,
-    showCreateListing:   () => {},  // será sobrescrito pelo closure
-    submitListing:       () => {},
-    searchListings:      () => {},
-    showCalcTab:         () => {},
-    openSOS:             () => {},
-    runVistoria:         () => {},
+    showCreateListing,
+    submitListing,
+    searchListings,
+    showCalcTab,
+    openSOS,
+    runVistoria,
   };
 
 })();
