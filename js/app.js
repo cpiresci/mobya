@@ -192,7 +192,7 @@ window.App = (() => {
     if (label && txt) label.textContent = txt;
   }
 
-  async function init() {
+    async function init() {
     setLoadingProgress(30, 'Montando interface...');
 
     bindNavigation();
