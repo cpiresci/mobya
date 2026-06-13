@@ -190,11 +190,11 @@ window.Monetization = (() => {
     });
   }
 
-  window.Monetization.filterByVertical = function(v) {
+  function filterByVertical(v) {
     const sel = document.getElementById('srchVertical');
     if (sel) sel.value = v;
     searchProviders();
-  };
+  }
 
   async function searchProviders() {
     const city      = document.getElementById('srchCity')?.value?.trim() || '';
@@ -1100,7 +1100,7 @@ window.Monetization = (() => {
 
   return {
     // Exposto imediatamente para chamadas inline do HTML
-    filterByVertical:    () => {},
+    filterByVertical:    filterByVertical,
     openQuoteModal:      () => {},
     closeQuoteModal:     () => {},
     submitQuote:         () => {},

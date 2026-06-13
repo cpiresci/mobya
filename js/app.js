@@ -1,97 +1,233 @@
-import express      from 'express';
-import helmet       from 'helmet';
-import cors         from 'cors';
-import compression  from 'compression';
-import cookieParser from 'cookie-parser';
-import morgan       from 'morgan';
-import { rateLimit } from 'express-rate-limit';
-import { prisma } from './config/database.js';
-import { getRedis } from './config/redis.js';
-import authRoutes from './routes/auth.routes.js';
-import aiRoutes, { PROVIDERS } from './routes/ai.routes.js';
-import listingRoutes from './routes/listing.routes.js';
-import emergencyRoutes from './routes/emergency.routes.js';
-import monetizationRoutes from './routes/monetization.routes.js';
+// ============================================================
+// MOBYA — app.js (Quantum Engine v3.0)
+// Núcleo do SPA: bootstrap, navegação, toasts, menu.
+// Depende de: api.js, auth.js, pages.js, chat.js, calc.js, monetization.js
+// ============================================================
 
-const app = express();
+// ── TOAST ──────────────────────────────────────────────────
+window.Toast = (() => {
+  function ensureWrap() {
+    let wrap = document.getElementById('toastWrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'toastWrap';
+      wrap.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:340px';
+      document.body.appendChild(wrap);
+    }
+    return wrap;
+  }
 
-const allowedOrigins = [
-  'https://mobya.com.br',
-  'https://www.mobya.com.br',
-  'https://cpiresci.github.io',
-  'https://cpiresci.github.io/mobya',
-  'http://localhost:3000',
-  'http://localhost:5500',
-  'http://127.0.0.1:5500',
-];
+  const COLORS = {
+    ok:   { bg: 'rgba(16,185,129,.12)', border: 'rgba(16,185,129,.35)', text: '#10b981' },
+    err:  { bg: 'rgba(239,68,68,.12)',  border: 'rgba(239,68,68,.35)',  text: '#ef4444' },
+    warn: { bg: 'rgba(245,158,11,.12)', border: 'rgba(245,158,11,.35)', text: '#f59e0b' },
+    info: { bg: 'rgba(124,58,237,.12)', border: 'rgba(124,58,237,.35)', text: '#a78bfa' },
+  };
 
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS bloqueado: ${origin}`));
-  },
-  credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Request-ID'],
-}));
-app.use(compression());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(morgan('combined'));
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: { code: 'TOO_MANY', message: 'Muitas requisições.' } },
-}));
+  function show(msg, type = 'info', duration = 3500) {
+    const wrap = ensureWrap();
+    const c = COLORS[type] || COLORS.info;
+    const el = document.createElement('div');
+    el.style.cssText = `
+      background:${c.bg};border:1px solid ${c.border};color:${c.text};
+      padding:12px 16px;border-radius:10px;font-family:'Space Grotesk',sans-serif;
+      font-size:.84rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.35);
+      backdrop-filter:blur(8px);opacity:0;transform:translateX(16px);
+      transition:all .25s ease;`;
+    el.textContent = msg;
+    wrap.appendChild(el);
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(0)';
+    });
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(16px)';
+      setTimeout(() => el.remove(), 250);
+    }, duration);
+  }
 
-// Health
-app.get('/api/v1/health', async (_req, res) => {
-  const checks = { api: 'ok', database: 'unknown', redis: 'unknown' };
-  try { await prisma.$queryRaw`SELECT 1`; checks.database = 'ok'; } catch { checks.database = 'error'; }
-  try {
-    const r = getRedis();
-    if (r) { await r.ping(); checks.redis = 'ok'; } else { checks.redis = 'disabled'; }
-  } catch { checks.redis = 'error'; }
-  const ok = checks.api === 'ok' && checks.database === 'ok';
-  res.status(ok ? 200 : 503).json({
-    status: ok ? 'healthy' : 'degraded',
-    version: '3.0.0',
-    checks,
-    providers: PROVIDERS.map(p => ({ name: p.name, configured: !!p.apiKey() })),
-    uptime: Math.round(process.uptime()),
-    timestamp: new Date().toISOString(),
+  return { show };
+})();
+
+// ── PÁGINAS SEM RENDER DEDICADO ────────────────────────────
+function comingSoon(title, icon = '🚧') {
+  const el = document.getElementById('main');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:50vh;text-align:center;gap:14px;padding:40px">
+      <div style="font-size:3rem">${icon}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;
+        background:linear-gradient(135deg,#fff,var(--q3),var(--neon));
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent">${title}</div>
+      <div style="color:var(--muted);font-size:.85rem;max-width:380px">
+        Este módulo está em desenvolvimento e estará disponível em breve no MOBYA Quantum Engine.
+      </div>
+      <button onclick="App.navigate('home')" style="margin-top:8px;background:var(--s2);
+        border:1px solid var(--border);color:var(--text);padding:10px 22px;border-radius:8px;
+        font-family:'Space Grotesk',sans-serif;font-weight:600;cursor:pointer">
+        ← Voltar ao painel
+      </button>
+    </div>`;
+}
+
+function renderChatPage() {
+  const el = document.getElementById('main');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="margin-bottom:24px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;
+        background:linear-gradient(135deg,#fff,var(--q3),var(--neon));
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent">CHAT QUÂNTICO</div>
+      <div style="color:var(--muted);font-size:.84rem;margin-top:4px">Converse com os agentes NEXUS em tempo real</div>
+    </div>
+    <div id="agentChatContainer"></div>`;
+  if (typeof Chat !== 'undefined') Chat.render('agentChatContainer', 'orquestrador');
+}
+
+const BASE_PAGES = {
+  home:           () => Pages.renderHome(),
+  classificados:  () => Pages.renderClassificados(),
+  agentes:        () => Pages.renderAgentes(),
+  emergencia:     () => Pages.renderEmergencia(),
+  calculadoras:   () => Pages.renderCalculadoras(),
+  vistoria:       () => Pages.renderVistoria(),
+  documentacao:   () => Pages.renderDocumentacao(),
+  dashboard:      () => Pages.renderDashboard(),
+  chat:           () => renderChatPage(),
+  listing:        () => Pages.renderListing(window.__mobyaListingId),
+
+  // verticais ainda sem renderer próprio — placeholder amigável
+  pecas:          () => comingSoon('PEÇAS & ACESSÓRIOS', '⚙️'),
+  aluguel:        () => comingSoon('ALUGUEL DE VEÍCULOS', '🗝️'),
+  servicos:       () => comingSoon('SERVIÇOS AUTOMOTIVOS', '🔨'),
+  reboque:        () => comingSoon('REBOQUE & GUINCHO', '🚛'),
+  chaveiro:       () => comingSoon('CHAVEIRO AUTOMOTIVO', '🔑'),
+  seguros:        () => comingSoon('SEGUROS', '🛡️'),
+  financiamento:  () => comingSoon('FINANCIAMENTO', '💰'),
+};
+
+// window.renderPage — pode ser interceptado/estendido por monetization.js
+window.renderPage = function (page) {
+  document.querySelectorAll('.sb-item').forEach(elx => {
+    elx.classList.toggle('active', elx.dataset.page === page);
+  });
+  document.querySelectorAll('.nb').forEach(elx => {
+    elx.classList.toggle('active', elx.dataset.page === page);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  const handler = BASE_PAGES[page];
+  if (handler) {
+    try { handler(); } catch (e) { console.error('Erro ao renderizar página', page, e); Toast.show('Erro ao carregar página.', 'err'); }
+  } else {
+    comingSoon((page || 'PÁGINA').toUpperCase());
+  }
+};
+
+// ── APP (núcleo) ───────────────────────────────────────────
+window.App = (() => {
+  let currentPage = 'home';
+
+  function navigate(page, param) {
+    currentPage = page;
+    if (param !== undefined) window.__mobyaListingId = param;
+    history.replaceState(null, '', `#${page}`);
+    closeMenu();
+    window.renderPage(page);
+  }
+
+  function toast(msg, type = 'info', duration) {
+    Toast.show(msg, type, duration);
+  }
+
+  function getCurrentPage() {
+    return currentPage;
+  }
+
+  function closeMenu() {
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('header')?.classList.remove('menu-open');
+  }
+
+  function toggleMenu() {
+    document.getElementById('sidebar')?.classList.toggle('open');
+    document.getElementById('header')?.classList.toggle('menu-open');
+  }
+  window.toggleMenu = toggleMenu;
+
+  function bindNavigation() {
+    document.querySelectorAll('[data-page]').forEach(elx => {
+      elx.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const page = elx.dataset.page;
+        if (page) navigate(page);
+      });
+    });
+
+    document.addEventListener('click', (ev) => {
+      const sidebar = document.getElementById('sidebar');
+      const btn = document.getElementById('btnMenu');
+      if (!sidebar || !sidebar.classList.contains('open')) return;
+      if (sidebar.contains(ev.target) || ev.target === btn) return;
+      closeMenu();
+    });
+  }
+
+  function hideLoadingScreen() {
+    const ls = document.getElementById('ls');
+    if (!ls) return;
+    ls.style.opacity = '0';
+    ls.style.transition = 'opacity .4s ease';
+    setTimeout(() => ls.remove(), 450);
+  }
+
+  function setLoadingProgress(pct, txt) {
+    const fill = document.getElementById('lsFill');
+    const label = document.getElementById('lsTxt');
+    if (fill) fill.style.width = `${pct}%`;
+    if (label && txt) label.textContent = txt;
+  }
+
+  async function init() {
+    setLoadingProgress(20, 'Conectando ao motor quântico...');
+
+    API.ping().catch(() => {});
+
+    setLoadingProgress(55, 'Carregando sessão...');
+
+    if (typeof MobyaAuth !== 'undefined') {
+      try { await MobyaAuth.init(); } catch (e) { console.warn('Auth init falhou', e); }
+    }
+
+    setLoadingProgress(80, 'Montando interface...');
+
+    bindNavigation();
+
+    if (typeof Monetization !== 'undefined' && typeof Monetization.init === 'function') {
+      try { Monetization.init(); } catch (e) { console.warn('Monetization init falhou', e); }
+    }
+
+    const initial = (location.hash || '#home').replace('#', '') || 'home';
+    setLoadingProgress(100, 'Pronto.');
+
+    navigate(initial);
+
+    setInterval(() => API.ping().catch(() => {}), 60000);
+
+    setTimeout(hideLoadingScreen, 300);
+  }
+
+  return { navigate, toast, getCurrentPage, toggleMenu, init };
+})();
+
+// ── BOOTSTRAP ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  App.init().catch(err => {
+    console.error('Falha ao iniciar MOBYA', err);
+    Toast.show('Erro ao iniciar o motor quântico.', 'err', 6000);
+    document.getElementById('ls')?.remove();
   });
 });
-
-app.get('/api/v1/ping', (_req, res) => res.json({ pong: true, ts: Date.now() }));
-
-// Routes
-app.get('/api/v1', (_req, res) => res.json({
-  name: 'MOBYA Quantum Engine API',
-  version: '3.0.0',
-  status: 'operational',
-  agents: 9,
-}));
-
-// Rotas principais
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/ai', aiRoutes);
-app.use('/api/v1/listings', listingRoutes);
-app.use('/api/v1/emergency', emergencyRoutes);
-app.use('/api/v1/monetization', monetizationRoutes);
-
-// 404
-app.use((_req, res) => res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Rota não encontrada.' } }));
-
-// Error handler
-app.use((err, _req, res, _next) => {
-  const status = err.statusCode || 500;
-  const msg    = status < 500 ? err.message : (process.env.NODE_ENV === 'production' ? 'Erro interno.' : err.message);
-  res.status(status).json({ success: false, error: { code: err.code || 'ERROR', message: msg } });
-});
-
-export default app;
