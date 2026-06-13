@@ -193,17 +193,7 @@ window.App = (() => {
   }
 
   async function init() {
-    setLoadingProgress(20, 'Conectando ao motor quântico...');
-
-    API.ping().catch(() => {});
-
-    setLoadingProgress(55, 'Carregando sessão...');
-
-    if (typeof MobyaAuth !== 'undefined') {
-      try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 5000))]); } catch (e) { console.warn('Auth init falhou', e); }
-    }
-
-    setLoadingProgress(80, 'Montando interface...');
+    setLoadingProgress(30, 'Montando interface...');
 
     bindNavigation();
 
@@ -213,12 +203,16 @@ window.App = (() => {
 
     const initial = (location.hash || '#home').replace('#', '') || 'home';
     setLoadingProgress(100, 'Pronto.');
-
     navigate(initial);
-
-    setInterval(() => API.ping().catch(() => {}), 60000);
-
     setTimeout(hideLoadingScreen, 300);
+
+    setTimeout(async () => {
+      try { await Promise.race([API.ping(), new Promise(r => setTimeout(r, 8000))]); } catch {}
+      if (typeof MobyaAuth !== 'undefined') {
+        try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 8000))]); } catch {}
+      }
+      setInterval(() => API.ping().catch(() => {}), 60000);
+    }, 200);
   }
 
   return { navigate, toast, getCurrentPage, toggleMenu, init };
