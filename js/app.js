@@ -199,7 +199,7 @@ window.App = (() => {
     setLoadingProgress(55, 'Carregando sessão...');
 
     if (typeof MobyaAuth !== 'undefined') {
-      try { await MobyaAuth.init(); } catch (e) { console.warn('Auth init falhou', e); }
+      try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 5000))]); } catch (e) { console.warn('Auth init falhou', e); }
     }
 
     setLoadingProgress(80, 'Montando interface...');
@@ -225,6 +225,7 @@ window.App = (() => {
 
 // ── BOOTSTRAP ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => { document.getElementById('ls')?.remove(); }, 8000);
   App.init().catch(err => {
     console.error('Falha ao iniciar MOBYA', err);
     Toast.show('Erro ao iniciar o motor quântico.', 'err', 6000);
