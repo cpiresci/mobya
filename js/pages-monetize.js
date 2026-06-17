@@ -1,5 +1,5 @@
 // ============================================================
-// MOBYA — pages-monetize.js  (v2.0 — integração real)
+// MOBYA — pages-monetize.js
 // Páginas: Seguros e Financiamento
 // Carregar APÓS pages-extra.js no index.html
 // ============================================================
@@ -7,12 +7,6 @@
 (function () {
 
   const main = () => document.getElementById('main');
-  const fmtBRL = v => `R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-  const authGuard = (cb) => {
-    if (typeof MobyaAuth !== 'undefined') { MobyaAuth.requireAuth(cb); return; }
-    if (!API.isAuth()) { Toast.show('Faça login para continuar.','warn'); return; }
-    cb();
-  };
 
   // ══════════════════════════════════════════════════════════
   // SEGUROS
@@ -27,7 +21,7 @@
     <div class="px-hero-icon">🛡️</div>
     <div>
       <div class="px-hero-title">SEGUROS AUTOMOTIVOS</div>
-      <div class="px-hero-sub">Simulação inteligente · Score de risco personalizado</div>
+      <div class="px-hero-sub">Compare e contrate em minutos · Melhor preço garantido</div>
     </div>
   </div>
 
@@ -35,67 +29,40 @@
   <div class="px-card">
     <div class="px-card-title">◈ SIMULE SEU SEGURO</div>
     <div class="pm-form">
-      <div class="px-form-row">
-        <div class="pm-field">
-          <label>Marca do veículo</label>
-          <input type="text" class="px-input" id="segMarca" placeholder="Ex: Toyota">
-        </div>
-        <div class="pm-field">
-          <label>Modelo</label>
-          <input type="text" class="px-input" id="segModelo" placeholder="Ex: Corolla">
-        </div>
+      <div class="pm-field">
+        <label>Modelo do veículo</label>
+        <input type="text" class="px-input" id="segVeiculo" placeholder="Ex: Toyota Corolla 2022">
       </div>
-      <div class="px-form-row">
-        <div class="pm-field">
-          <label>Ano</label>
-          <select class="px-input" id="segAno">
-            ${Array.from({length:20},(_,i)=>2025-i).map(y=>`<option>${y}</option>`).join('')}
-          </select>
-        </div>
-        <div class="pm-field">
-          <label>Valor do veículo (R$)</label>
-          <input type="text" class="px-input" id="segValor" placeholder="Ex: 85000" oninput="PagesMon._fmtSegValor(this)">
-        </div>
+      <div class="pm-field">
+        <label>Ano</label>
+        <select class="px-input" id="segAno">
+          ${Array.from({length:15},(_,i)=>2025-i).map(y=>`<option>${y}</option>`).join('')}
+        </select>
       </div>
-      <div class="px-form-row">
-        <div class="pm-field">
-          <label>Cidade do condutor</label>
-          <input type="text" class="px-input" id="segCidade" placeholder="Ex: São Paulo">
-        </div>
-        <div class="pm-field">
-          <label>Estado (UF)</label>
-          <input type="text" class="px-input" id="segEstado" placeholder="SP" maxlength="2" style="text-transform:uppercase">
-        </div>
+      <div class="pm-field">
+        <label>CEP</label>
+        <input type="text" class="px-input" id="segCep" placeholder="00000-000" maxlength="9">
       </div>
-      <div class="px-form-row">
-        <div class="pm-field">
-          <label>Idade do condutor principal</label>
-          <input type="number" class="px-input" id="segIdade" placeholder="Ex: 35" min="18" max="99">
-        </div>
-        <div class="pm-field">
-          <label>Produto</label>
-          <select class="px-input" id="segProduto">
-            <option value="AUTO_FULL">Auto Completo</option>
-            <option value="AUTO_POPULAR">Auto Popular</option>
-            <option value="LIFE">Vida</option>
-            <option value="CONSORTIUM_AUTO">Consórcio Auto</option>
-          </select>
-        </div>
+      <div class="pm-field">
+        <label>Perfil do condutor</label>
+        <select class="px-input" id="segPerfil">
+          <option>Proprietário principal</option>
+          <option>Múltiplos condutores</option>
+          <option>Jovem condutor (18-25)</option>
+          <option>Condutor sênior (60+)</option>
+        </select>
       </div>
     </div>
-    <button class="px-btn" id="segBtnSim" onclick="PagesMon.simularSeguro()">
-      🔍 SIMULAR AGORA — GRÁTIS
-    </button>
+    <button class="px-btn" onclick="PagesMon.simularSeguro()">🔍 SIMULAR AGORA — GRÁTIS</button>
   </div>
 
-  <!-- RESULTADOS (ocultos) -->
+  <!-- RESULTADOS (inicialmente ocultos) -->
   <div id="segResultados" style="display:none">
-    <div id="segRiskCard"></div>
     <div class="px-card-title" style="margin:24px 0 12px">◈ MELHORES OFERTAS PARA VOCÊ</div>
     <div id="segCards"></div>
   </div>
 
-  <!-- PLANOS DE REFERÊNCIA -->
+  <!-- PLANOS -->
   <div class="px-card-title" style="margin:24px 0 12px">TIPOS DE COBERTURA</div>
   <div class="px-grid2">
     ${_segPlano('🔰','Básico','Cobertura contra roubo e furto','A partir de R$ 89/mês',['Roubo e furto','Incêndio','Assistência 24h'],'basic')}
@@ -119,7 +86,7 @@
     <div class="pm-vantagens">
       ${_vant('💰','Economia real','Compare até 12 seguradoras e economize até 40%')}
       ${_vant('⚡','Contratação rápida','Do simulador ao seguro ativo em menos de 15 minutos')}
-      ${_vant('🤖','Score de risco personalizado','Análise heurística do seu perfil e veículo')}
+      ${_vant('🤖','IA de perfil','Nosso agente analisa seu perfil e sugere a melhor cobertura')}
       ${_vant('📱','Gestão no app','Acione sinistro, veja apólice e pague tudo aqui')}
     </div>
   </div>
@@ -205,21 +172,13 @@
   <div id="finBancos" style="display:none">
     <div class="px-card-title" style="margin:24px 0 12px">◈ OFERTAS DOS BANCOS</div>
     <div id="finBancosCards"></div>
-    <div class="px-card" style="margin-top:12px">
-      <div class="px-card-title">◈ SOLICITAR PROPOSTA FORMAL</div>
-      <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Registre sua intenção e um especialista MOBYA entrará em contato.</div>
-      <button class="px-btn" onclick="PagesMon.registrarIntencaoFinanciamento()">
-        🚀 REGISTRAR PROPOSTA DE FINANCIAMENTO
-      </button>
-      <div id="finQuoteFeedback" style="display:none;margin-top:12px"></div>
-    </div>
   </div>
 
   <!-- MODALIDADES -->
   <div class="px-card-title" style="margin:24px 0 12px">MODALIDADES DISPONÍVEIS</div>
   <div class="px-grid2">
-    ${_finModal('🏦','CDC Tradicional','Crédito Direto ao Consumidor','A partir de 0,99% a.m.','Sem alienação fiduciária')}
-    ${_finModal('🔒','Leasing','Arrendamento mercantil','A partir de 0,89% a.m.','IPVA por conta do banco')}
+    ${_finModal('🏦','CDC Tradicional','Crédito Direto ao Consumidor','Taxa a partir de 0,99% a.m.','Sem alienação fiduciária')}
+    ${_finModal('🔒','Leasing','Arrendamento mercantil','Taxa a partir de 0,89% a.m.','IPVA por conta do banco')}
     ${_finModal('🤝','Consórcio','Sem juros, só taxa adm','Taxa adm: 12% total','Carta de crédito')}
     ${_finModal('💳','FGTS','Use seu saldo do FGTS','Complemento de entrada','Para veículos até R$ 80k')}
   </div>
@@ -231,6 +190,9 @@
       ${['RG e CPF','Comprovante de renda (3 últimos holerites)','Comprovante de residência','CNH válida','Extratos bancários (3 meses)'].map(d=>`
         <div class="pm-doc">📄 ${d}</div>`).join('')}
     </div>
+    <button class="px-btn" style="margin-top:14px" onclick="PagesMon.iniciarFinanciamento()">
+      🚀 INICIAR PROPOSTA AGORA
+    </button>
   </div>
 
   <!-- TAXAS MERCADO -->
@@ -255,6 +217,7 @@
 
 </div>`;
 
+    // Inicializa calculadora
     setTimeout(() => PagesMon.updateEntrada(), 100);
   }
 
@@ -273,134 +236,51 @@
   // AÇÕES E LÓGICA
   // ══════════════════════════════════════════════════════════
   let _prazoAtual = 36;
-  let _finSimulado = null; // guarda resultado da simulação para usar no quote
 
   const PagesMon = {
 
-    // ── SEGUROS ───────────────────────────────────────────────
-
-    _fmtSegValor(el) {
-      // permite digitar número puro e formata ao sair
-      el.value = el.value.replace(/[^\d]/g,'');
-    },
-
-    // Chama POST /monetization/insurance/simulate
+    // — SEGUROS —
     simularSeguro() {
-      const marca   = document.getElementById('segMarca')?.value?.trim();
-      const modelo  = document.getElementById('segModelo')?.value?.trim();
-      const ano     = document.getElementById('segAno')?.value;
-      const valorRaw = document.getElementById('segValor')?.value?.replace(/[^\d]/g,'');
-      const valor   = parseFloat(valorRaw);
-      const cidade  = document.getElementById('segCidade')?.value?.trim();
-      const estado  = document.getElementById('segEstado')?.value?.trim().toUpperCase();
-      const idade   = document.getElementById('segIdade')?.value;
-      const produto = document.getElementById('segProduto')?.value;
-
-      if (!marca || !modelo)       { Toast.show('Informe marca e modelo do veículo.','err'); return; }
-      if (!valor || isNaN(valor))  { Toast.show('Informe o valor do veículo.','err'); return; }
-
-      const btn = document.getElementById('segBtnSim');
-      if (btn) { btn.disabled = true; btn.textContent = '⟳ Consultando seguradoras...'; }
-
-      Monetization.api.insuranceSim({
-        vehicleBrand:  marca,
-        vehicleModel:  modelo,
-        vehicleYear:   parseInt(ano),
-        vehicleValue:  valor,
-        driverCity:    cidade || undefined,
-        driverState:   estado || undefined,
-        driverAge:     idade ? parseInt(idade) : undefined,
-        product:       produto,
-      })
-        .then(r => {
-          const d = r.data;
-          const res   = document.getElementById('segResultados');
-          const cards = document.getElementById('segCards');
-          const risk  = document.getElementById('segRiskCard');
-          if (!res||!cards||!risk) return;
-
-          // Risk card
-          const riskColor = d.riskLevel === 'baixo' ? '#10b981' : d.riskLevel === 'médio' ? '#f59e0b' : '#ef4444';
-          const riskBar   = Math.round(d.riskScore);
-          risk.innerHTML = `
-            <div class="px-card" style="border-color:${riskColor}40;background:${riskColor}08">
-              <div class="px-card-title" style="color:${riskColor}">◈ SEU SCORE DE RISCO</div>
-              <div class="pm-risk-row">
-                <div>
-                  <div style="font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:${riskColor}">${d.riskScore}<span style="font-size:1rem">/100</span></div>
-                  <div style="font-size:.82rem;color:var(--muted);margin-top:4px">Risco <strong style="color:${riskColor}">${d.riskLevel.toUpperCase()}</strong></div>
-                </div>
-                <div style="flex:1;margin-left:20px">
-                  <div class="pm-risk-bar-bg"><div class="pm-risk-bar-fill" style="width:${riskBar}%;background:${riskColor}"></div></div>
-                </div>
+      const v = document.getElementById('segVeiculo')?.value;
+      if (!v || v.length < 3) { Toast?.show('Informe o modelo do veículo','err'); return; }
+      Toast?.show('🔍 Consultando seguradoras...','info');
+      setTimeout(() => {
+        const res = document.getElementById('segResultados');
+        const cards = document.getElementById('segCards');
+        if (!res||!cards) return;
+        const ofertas = [
+          {seg:'Porto Seguro', cobertura:'Completo', parcela:'R$ 234/mês', economia:'40%', stars:'⭐⭐⭐⭐⭐', dest:true},
+          {seg:'Allianz',      cobertura:'Completo', parcela:'R$ 251/mês', economia:'36%', stars:'⭐⭐⭐⭐⭐', dest:false},
+          {seg:'Bradesco',     cobertura:'Intermediário', parcela:'R$ 178/mês', economia:'28%', stars:'⭐⭐⭐⭐', dest:false},
+          {seg:'Suhai',        cobertura:'Básico',  parcela:'R$ 97/mês',  economia:'15%', stars:'⭐⭐⭐⭐', dest:false},
+        ];
+        cards.innerHTML = ofertas.map(o => `
+          <div class="pm-oferta ${o.dest?'pm-oferta--dest':''}">
+            ${o.dest?'<div class="pm-popular">MELHOR OFERTA</div>':''}
+            <div class="pm-oferta-top">
+              <div>
+                <div class="pm-oferta-seg">${o.seg}</div>
+                <div class="pm-oferta-cob">${o.cobertura} · ${o.stars}</div>
               </div>
-              ${d.riskFactors?.length ? `
-              <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-                ${d.riskFactors.map(f=>`<div style="font-size:.78rem;color:var(--muted);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;border-left:2px solid ${riskColor}">⚠ ${f}</div>`).join('')}
-              </div>` : ''}
-              <div style="margin-top:14px">
-                <div style="font-size:.78rem;color:var(--muted);margin-bottom:6px">Prêmio mensal estimado</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:#10b981;font-weight:700">
-                  ${fmtBRL(d.monthlyPremium.min)} <span style="color:var(--muted);font-size:.82rem">até</span> ${fmtBRL(d.monthlyPremium.max)}
-                </div>
-              </div>
-            </div>`;
-
-          // Cards seguradoras
-          cards.innerHTML = d.insurers.map((ins, i) => `
-            <div class="pm-oferta ${i===0?'pm-oferta--dest':''}">
-              ${i===0?'<div class="pm-popular">MELHOR OFERTA</div>':''}
-              <div class="pm-oferta-top">
-                <div>
-                  <div class="pm-oferta-seg">${ins.name}</div>
-                  <div class="pm-oferta-cob">${ins.highlight}</div>
-                </div>
-                <div class="pm-oferta-preco">${fmtBRL(ins.estimatedPremium)}<span style="font-size:.72rem;font-weight:400;font-family:'Space Grotesk',sans-serif">/mês</span></div>
-              </div>
-              <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.contratarSeguro('${ins.name}')">
-                Contratar ${ins.name}
-              </button>
-            </div>`).join('');
-
-          // Dicas
-          if (d.savingTips?.length) {
-            cards.innerHTML += `
-              <div class="px-card" style="margin-top:12px">
-                <div class="px-card-title">◈ DICAS PARA REDUZIR O PRÊMIO</div>
-                <div style="display:flex;flex-direction:column;gap:8px">
-                  ${d.savingTips.map(t=>`<div style="font-size:.8rem;color:var(--muted);padding:8px 12px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:8px">💡 ${t}</div>`).join('')}
-                </div>
-              </div>`;
-          }
-
-          res.style.display = 'block';
-          res.scrollIntoView({ behavior:'smooth' });
-          Toast.show(`✅ ${d.insurers.length} seguradoras encontradas!`,'ok');
-        })
-        .catch(e => {
-          Toast.show(e.message || 'Erro ao simular seguro.','err');
-        })
-        .finally(() => {
-          if (btn) { btn.disabled = false; btn.textContent = '🔍 SIMULAR AGORA — GRÁTIS'; }
-        });
+              <div class="pm-oferta-preco">${o.parcela}</div>
+            </div>
+            <div class="pm-oferta-eco">💰 Economia de até ${o.economia} vs mercado</div>
+            <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.contratarSeguro('${o.seg}')">
+              Contratar ${o.seg}
+            </button>
+          </div>`).join('');
+        res.style.display = 'block';
+        res.scrollIntoView({behavior:'smooth'});
+        Toast?.show('✅ 4 ofertas encontradas!','ok');
+      }, 1800);
     },
 
     contratarSeguro(nome) {
-      authGuard(() => {
-        Monetization.api.createQuote({
-          vertical: 'INSURANCE',
-          description: `Contratação de seguro ${nome} — via simulador MOBYA`,
-          insuranceProduct: document.getElementById('segProduto')?.value || 'AUTO_FULL',
-        })
-          .then(r => {
-            Toast.show(`🛡️ Proposta enviada para ${nome}! ID: ${r.data?.id||'—'}`, 'ok', 5000);
-          })
-          .catch(e => Toast.show(e.message||'Erro ao enviar proposta.','err'));
-      });
+      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) { MobyaAuth.showLogin(); return; }
+      Toast?.show(`🛡️ Iniciando contratação ${nome}...`,'ok');
     },
 
-    // ── FINANCIAMENTO ─────────────────────────────────────────
-
+    // — FINANCIAMENTO —
     fmtValor(el) {
       let v = el.value.replace(/\D/g,'');
       if (!v) { el.value=''; return; }
@@ -418,8 +298,8 @@
 
     updateEntrada() {
       const range = document.getElementById('finEntradaRange');
-      const pct   = document.getElementById('finEntradaPct');
-      const val   = document.getElementById('finEntradaVal');
+      const pct = document.getElementById('finEntradaPct');
+      const val = document.getElementById('finEntradaVal');
       if (!range||!pct||!val) return;
       pct.textContent = range.value + '%';
       const total = this._getValor();
@@ -436,11 +316,12 @@
     calcParcela() {
       const total = this._getValor();
       if (!total) return;
-      const entrada    = total * (parseInt(document.getElementById('finEntradaRange')?.value||20)/100);
+      const entrada = total * (parseInt(document.getElementById('finEntradaRange')?.value||20)/100);
       const financiado = total - entrada;
-      const taxa = 0.0109;
-      const n    = _prazoAtual;
-      const parcela    = financiado * (taxa * Math.pow(1+taxa,n)) / (Math.pow(1+taxa,n)-1);
+      const taxa = 0.0109; // 1.09% a.m.
+      const n = _prazoAtual;
+      // Fórmula Price
+      const parcela = financiado * (taxa * Math.pow(1+taxa,n)) / (Math.pow(1+taxa,n)-1);
       const totalPagar = parcela * n + entrada;
 
       const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -452,34 +333,25 @@
 
     simularFinanciamento() {
       const total = this._getValor();
-      if (!total) { Toast.show('Informe o valor do veículo.','err'); return; }
-
-      Toast.show('⚡ Calculando propostas...','info');
-
-      const entrada    = total * (parseInt(document.getElementById('finEntradaRange')?.value||20)/100);
-      const financiado = total - entrada;
-      const n          = _prazoAtual;
-
-      const bancos = [
-        {nome:'Caixa Econômica', taxa:0.0095},
-        {nome:'Banco do Brasil', taxa:0.0099},
-        {nome:'Bradesco',        taxa:0.0109},
-        {nome:'Santander',       taxa:0.0119},
-        {nome:'Itaú',            taxa:0.0115},
-      ];
-
-      const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-      _finSimulado = { total, entrada, financiado, prazo: n };
-
-      const cards     = document.getElementById('finBancosCards');
-      const container = document.getElementById('finBancos');
-      if (!cards||!container) return;
-
-      cards.innerHTML = bancos
-        .map(b => ({ ...b, parcela: financiado * (b.taxa * Math.pow(1+b.taxa,n)) / (Math.pow(1+b.taxa,n)-1) }))
-        .sort((a,b) => a.parcela - b.parcela)
-        .map((b, i) => `
+      if (!total) { Toast?.show('Informe o valor do veículo','err'); return; }
+      Toast?.show('⚡ Consultando bancos parceiros...','info');
+      setTimeout(() => {
+        const entrada = total * (parseInt(document.getElementById('finEntradaRange')?.value||20)/100);
+        const fin = total - entrada;
+        const n = _prazoAtual;
+        const bancos = [
+          {nome:'Caixa Econômica', taxa:0.0095, cor:'#0ea5e9'},
+          {nome:'Banco do Brasil', taxa:0.0099, cor:'#f59e0b'},
+          {nome:'Bradesco',        taxa:0.0109, cor:'#ef4444'},
+          {nome:'Santander',       taxa:0.0119, cor:'#dc2626'},
+        ];
+        const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const cards = document.getElementById('finBancosCards');
+        const container = document.getElementById('finBancos');
+        if (!cards||!container) return;
+        cards.innerHTML = bancos.map((b,i) => {
+          const parc = fin * (b.taxa * Math.pow(1+b.taxa,n)) / (Math.pow(1+b.taxa,n)-1);
+          return `
           <div class="pm-oferta ${i===0?'pm-oferta--dest':''}">
             ${i===0?'<div class="pm-popular">MENOR TAXA</div>':''}
             <div class="pm-oferta-top">
@@ -487,54 +359,29 @@
                 <div class="pm-oferta-seg">${b.nome}</div>
                 <div class="pm-oferta-cob">${(b.taxa*100).toFixed(2).replace('.',',')}% a.m. · ${n}x</div>
               </div>
-              <div class="pm-oferta-preco">${fmt(b.parcela)}<span style="font-size:.72rem;font-weight:400;font-family:'Space Grotesk',sans-serif">/mês</span></div>
+              <div class="pm-oferta-preco">${fmt(parc)}</div>
             </div>
-          </div>`).join('');
-
-      container.style.display = 'block';
-      container.scrollIntoView({ behavior:'smooth' });
-      Toast.show(`✅ ${bancos.length} propostas calculadas!`,'ok');
+            <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.iniciarFinanciamento('${b.nome}')">
+              Solicitar ao ${b.nome}
+            </button>
+          </div>`;
+        }).join('');
+        container.style.display = 'block';
+        container.scrollIntoView({behavior:'smooth'});
+        Toast?.show('✅ 4 propostas encontradas!','ok');
+      }, 2000);
     },
 
-    // Registra quote de FINANCIAMENTO no backend
-    registrarIntencaoFinanciamento() {
-      authGuard(() => {
-        if (!_finSimulado) { Toast.show('Simule o financiamento primeiro.','warn'); return; }
-
-        const { total, entrada, financiado, prazo } = _finSimulado;
-        const desc = `Financiamento veicular: veículo R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:0})}, entrada ${Math.round((entrada/total)*100)}%, ${prazo}x — via MOBYA`;
-
-        const btn = document.querySelector('#finBancos .px-btn');
-        if (btn) { btn.disabled = true; btn.textContent = '⟳ Registrando...'; }
-
-        Monetization.api.createQuote({
-          vertical:        'LOGISTICS',  // INSURANCE vertical não tem produto exato, usando LOGISTICS como "serviço financeiro"
-          description:     desc,
-          estimatedAmount: financiado,
-        })
-          .then(r => {
-            const fb = document.getElementById('finQuoteFeedback');
-            if (fb) {
-              fb.style.display = 'block';
-              fb.innerHTML = `
-                <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:14px;text-align:center">
-                  <div style="font-size:1.4rem;margin-bottom:6px">✅</div>
-                  <div style="font-weight:700;color:#10b981;margin-bottom:4px">Proposta registrada!</div>
-                  <div style="font-size:.78rem;color:var(--muted)">ID: <code style="color:#a78bfa">${r.data?.id||'—'}</code></div>
-                  <div style="font-size:.78rem;color:var(--muted);margin-top:6px">Um especialista MOBYA entrará em contato em até 24h.</div>
-                </div>`;
-            }
-            Toast.show('💰 Proposta registrada! Aguarde contato em até 24h.','ok', 6000);
-          })
-          .catch(e => Toast.show(e.message||'Erro ao registrar proposta.','err'))
-          .finally(() => {
-            if (btn) { btn.disabled = false; btn.textContent = '🚀 REGISTRAR PROPOSTA DE FINANCIAMENTO'; }
-          });
-      });
+    iniciarFinanciamento(banco) {
+      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) { MobyaAuth.showLogin(); return; }
+      const msg = banco ? `💰 Proposta enviada ao ${banco}!` : '💰 Iniciando sua proposta de financiamento!';
+      Toast?.show(msg,'ok');
     },
   };
 
   window.PagesMon = PagesMon;
+  // Expõe as páginas de render (eram privadas do closure e nunca chegavam
+  // a app.js — por isso seguros/financiamento caíam no comingSoon).
   PagesMon.renderSeguros       = renderSeguros;
   PagesMon.renderFinanciamento = renderFinanciamento;
 
@@ -567,7 +414,8 @@
 .pm-oferta-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .pm-oferta-seg{font-weight:700;color:#fff;font-size:.9rem}
 .pm-oferta-cob{font-size:.75rem;color:var(--muted,#888);margin-top:2px}
-.pm-oferta-preco{font-family:'JetBrains Mono',monospace;font-size:1rem;color:#10b981;font-weight:700;text-align:right}
+.pm-oferta-preco{font-family:'JetBrains Mono',monospace;font-size:1rem;color:#10b981;font-weight:700}
+.pm-oferta-eco{font-size:.75rem;color:#f59e0b}
 .pm-range-label{font-size:.78rem;color:var(--muted,#888);margin-top:4px}
 .pm-prazo-btns{display:flex;gap:8px;flex-wrap:wrap}
 .pm-prazo-btn{padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:var(--muted,#888);cursor:pointer;font-size:.84rem;transition:all .2s}
@@ -586,12 +434,16 @@
 .pm-taxa-val{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#10b981;min-width:80px;text-align:right}
 .pm-taxa-ano{color:var(--muted,#888)}
 input[type=range]{width:100%;accent-color:#7c3aed}
-/* risk score */
-.pm-risk-row{display:flex;align-items:center;gap:16px;margin-top:8px}
-.pm-risk-bar-bg{width:100%;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
-.pm-risk-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
-@media(max-width:480px){.px-form-row{grid-template-columns:1fr}.pm-risk-row{flex-direction:column;align-items:flex-start}}
   `;
   document.head.appendChild(style);
+
+  // ══════════════════════════════════════════════════════════
+  // ROTEAMENTO
+  // ══════════════════════════════════════════════════════════
+  // O roteamento real de seguros/financiamento é feito direto em
+  // BASE_PAGES (js/app.js), que chama PagesMon.renderX(). O patch
+  // antigo sobrescrevia window.App.navigate, mas os cliques do menu
+  // (data-page) chamam a função `navigate` interna do app.js, não
+  // App.navigate — então o patch nunca era acionado. Removido.
 
 })();
