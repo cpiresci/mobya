@@ -1612,20 +1612,6 @@ window.Pages = (() => {
     if (descInput  && phs[type]) descInput.placeholder  = phs[type].desc;
   };
 
-// ═══════════════════════════════════════════════════════════
-// ADICIONAR AO return {} em pages.js:
-//   renderPecas, renderServicos, searchPecas, searchServicos
-// ═══════════════════════════════════════════════════════════
-//
-// return {
-//   renderHome, renderClassificados, renderAgentes, renderEmergencia,
-//   renderCalculadoras, renderVistoria, renderDocumentacao, renderDashboard,
-//   renderListing, searchListings, showCreateListing, submitListing,
-    renderPecas, renderServicos, searchPecas, searchServicos, _updateListingPlaceholder,
-//   renderPecas, renderServicos, searchPecas, searchServicos,   // ← ADICIONAR
-//   _updateListingPlaceholder,
-// };
-
   return {
     renderHome,
     renderClassificados,
@@ -1642,6 +1628,10 @@ window.Pages = (() => {
     showCalcTab,
     openSOS,
     runVistoria,
+    renderPecas,
+    renderServicos,
+    searchPecas,
+    searchServicos,
   };
 
 })();
