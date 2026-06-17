@@ -1017,6 +1017,615 @@ window.Pages = (() => {
   // ═══════════════════════════════════════════════════════════
   // REGISTRO PÚBLICO DE RENDERERS
   // ═══════════════════════════════════════════════════════════
+// ============================================================
+// MOBYA — PEÇAS & ACESSÓRIOS + SERVIÇOS AUTOMOTIVOS
+// Adicionar este bloco em pages.js, dentro do window.Pages = (() => { ... })()
+// antes do "return { ... };" final.
+//
+// Em app.js, substituir:
+//   pecas:    () => comingSoon('PEÇAS & ACESSÓRIOS','⚙️'),
+//   servicos: () => comingSoon('SERVIÇOS AUTOMOTIVOS','🔨'),
+// por:
+//   pecas:    () => Pages.renderPecas(),
+//   servicos: () => Pages.renderServicos(),
+// ============================================================
+
+  // ═══════════════════════════════════════════════════════════
+  // PEÇAS & ACESSÓRIOS
+  // ═══════════════════════════════════════════════════════════
+
+  const PART_CATEGORIES = [
+    { v:'', label:'Todas as categorias' },
+    { v:'motor',       label:'🔩 Motor & Transmissão' },
+    { v:'suspensao',   label:'🔧 Suspensão & Direção' },
+    { v:'freios',      label:'🛑 Freios' },
+    { v:'eletrica',    label:'⚡ Elétrica & Eletrônica' },
+    { v:'carroceria',  label:'🚗 Carroceria & Lataria' },
+    { v:'interior',    label:'💺 Interior & Acessórios' },
+    { v:'pneus',       label:'⭕ Pneus & Rodas' },
+    { v:'escapamento', label:'💨 Escapamento' },
+    { v:'arrefecimento',label:'🌡️ Arrefecimento' },
+    { v:'combustivel', label:'⛽ Combustível & Filtros' },
+    { v:'performance', label:'🏎️ Performance & Tuning' },
+  ];
+
+  const PART_BRANDS = ['Todas','Bosch','Mahle','SKF','Monroe','Cofap','Bendix','NGK','Mann','Valeo','Delphi','Continental','TRW','Denso','AC Delco'];
+
+  async function renderPecas() {
+    const el = main();
+    if (!el) return;
+
+    el.innerHTML = `
+      ${pageHeader('PEÇAS & ACESSÓRIOS', 'Marketplace de peças · Originais · Paralelas · Performance', 'var(--gold),var(--orange)')}
+
+      <!-- FILTROS -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;
+        padding:20px;margin-bottom:24px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+
+          <div style="flex:2;min-width:200px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">BUSCA</label>
+            <input id="pcQuery" placeholder="Ex: pastilha de freio Civic 2022..."
+              onkeydown="if(event.key==='Enter')Pages.searchPecas()"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+
+          <div style="flex:1;min-width:160px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">CATEGORIA</label>
+            <select id="pcCat" style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;cursor:pointer">
+              ${PART_CATEGORIES.map(c => `<option value="${c.v}">${c.label}</option>`).join('')}
+            </select>
+          </div>
+
+          <div style="flex:1;min-width:130px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">MARCA DA PEÇA</label>
+            <select id="pcBrand" style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;cursor:pointer">
+              ${PART_BRANDS.map(b => `<option value="${b === 'Todas' ? '' : b}">${b}</option>`).join('')}
+            </select>
+          </div>
+
+          <div style="flex:1;min-width:110px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">ESTADO</label>
+            <select id="pcCondition" style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;cursor:pointer">
+              <option value="">Todos</option>
+              <option value="nova">🟢 Nova</option>
+              <option value="usada">🟡 Usada</option>
+              <option value="recondicionada">🔵 Recondicionada</option>
+            </select>
+          </div>
+
+          <div style="flex:1;min-width:110px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">CIDADE</label>
+            <input id="pcCity" placeholder="São Paulo"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+
+          <div style="flex:1;min-width:130px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">PREÇO MÁX (R$)</label>
+            <input id="pcMaxPrice" type="number" placeholder="Sem limite"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="Pages.searchPecas()" style="
+              background:linear-gradient(135deg,var(--gold),var(--orange));color:#000;
+              padding:9px 22px;border-radius:8px;font-weight:700;font-size:.82rem;
+              border:none;cursor:pointer;white-space:nowrap;box-shadow:0 0 14px rgba(245,158,11,.3)">
+              Buscar
+            </button>
+            <button onclick="Pages.showCreateListing('PART')" style="
+              background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.25);
+              padding:9px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">
+              + Anunciar Peça
+            </button>
+          </div>
+        </div>
+
+        <!-- Tags de compatibilidade rápida -->
+        <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace">FILTRAR POR:</span>
+          ${['Honda Civic','Toyota Corolla','Volkswagen Gol','Fiat Uno','Chevrolet Onix','Ford Ka','Jeep Renegade'].map(car => `
+            <button onclick="document.getElementById('pcQuery').value='${car}';Pages.searchPecas()" style="
+              background:var(--s3);border:1px solid var(--border);color:var(--muted);
+              padding:4px 10px;border-radius:6px;font-size:.72rem;cursor:pointer;
+              font-family:'Space Grotesk',sans-serif;transition:all .15s"
+              onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              ${car}
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <div id="pcResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
+        ${skeleton(8)}
+      </div>
+      <div id="pcPager" style="display:flex;justify-content:center;gap:8px;margin-top:24px"></div>
+    `;
+
+    Pages.searchPecas && Pages.searchPecas();
+  }
+
+  let pcPage = 1;
+
+  searchPecas = async function(page = 1) {
+    pcPage = page;
+    const results = document.getElementById('pcResults');
+    if (!results) return;
+    results.innerHTML = skeleton(8);
+
+    const query    = document.getElementById('pcQuery')?.value?.trim()    || undefined;
+    const cat      = document.getElementById('pcCat')?.value              || undefined;
+    const brand    = document.getElementById('pcBrand')?.value            || undefined;
+    const cond     = document.getElementById('pcCondition')?.value        || undefined;
+    const city     = document.getElementById('pcCity')?.value?.trim()     || undefined;
+    const maxPrice = document.getElementById('pcMaxPrice')?.value         || undefined;
+
+    // Monta query combinando campos de texto
+    const combinedQuery = [query, cat, brand, cond].filter(Boolean).join(' ') || undefined;
+
+    const params = {
+      page, limit: 12,
+      type: 'PART',
+      sort: 'recent',
+      ...(combinedQuery && { query: combinedQuery }),
+      ...(city          && { city }),
+      ...(maxPrice      && { maxPrice }),
+    };
+
+    try {
+      const r = await API.listings.search(params);
+      const listings   = r.data || [];
+      const pagination = r.pagination || {};
+
+      if (!listings.length) {
+        results.innerHTML = `
+          <div style="color:var(--muted);padding:60px;text-align:center;grid-column:1/-1">
+            <div style="font-size:2.5rem;margin-bottom:12px">⚙️</div>
+            <div style="font-size:.88rem;margin-bottom:8px">Nenhuma peça encontrada com esses filtros.</div>
+            <div style="font-size:.75rem;color:var(--muted)">Tente outros termos ou seja o primeiro a anunciar!</div>
+            <button onclick="Pages.showCreateListing('PART')" style="
+              margin-top:16px;background:rgba(245,158,11,.1);color:var(--gold);
+              border:1px solid rgba(245,158,11,.25);padding:10px 22px;border-radius:8px;
+              font-size:.82rem;font-weight:600;cursor:pointer">
+              + Anunciar Peça
+            </button>
+          </div>`;
+        return;
+      }
+
+      results.innerHTML = listings.map(l => partCard(l)).join('');
+
+      const pager = document.getElementById('pcPager');
+      if (pager && pagination.totalPages > 1) {
+        const pages = Array.from({ length: Math.min(pagination.totalPages, 7) }, (_, i) => i + 1);
+        pager.innerHTML = pages.map(p => `
+          <button onclick="Pages.searchPecas(${p})" style="
+            padding:7px 13px;border-radius:6px;font-size:.8rem;cursor:pointer;
+            background:${p === pcPage ? 'var(--gold)' : 'var(--s3)'};
+            color:${p === pcPage ? '#000' : 'var(--muted)'};
+            border:1px solid ${p === pcPage ? 'var(--gold)' : 'var(--border)'}">
+            ${p}
+          </button>`).join('');
+      }
+    } catch (e) {
+      results.innerHTML = `<div style="color:var(--red);padding:32px;text-align:center;grid-column:1/-1">
+        ⚠️ ${e.message}</div>`;
+    }
+  };
+
+  function partCard(l) {
+    const imgs = (() => { try { return JSON.parse(l.images || '[]'); } catch { return []; } })();
+    return `
+      <div onclick="App.navigate('listing',${JSON.stringify(l.id)})" style="
+        background:var(--s2);border:1px solid var(--border);border-radius:12px;
+        overflow:hidden;cursor:pointer;transition:all .18s"
+        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--gold)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.borderColor='var(--border)'">
+        <div style="height:150px;background:var(--s3);position:relative;overflow:hidden">
+          ${imgs[0]
+            ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
+            : `<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:2.8rem">⚙️</div>`}
+          <span style="position:absolute;top:8px;left:8px;font-family:'JetBrains Mono',monospace;
+            font-size:.58rem;padding:3px 8px;border-radius:4px;
+            background:rgba(0,0,0,.75);color:var(--gold);border:1px solid rgba(245,158,11,.3)">
+            PEÇA
+          </span>
+          ${l.priceNegotiable ? `<span style="position:absolute;top:8px;right:8px;font-family:'JetBrains Mono',monospace;
+            font-size:.55rem;padding:3px 7px;border-radius:4px;
+            background:rgba(0,0,0,.7);color:var(--muted);border:1px solid var(--border)">
+            negociável</span>` : ''}
+        </div>
+        <div style="padding:14px">
+          <div style="font-weight:600;font-size:.86rem;margin-bottom:6px;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(l.title)}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);margin-bottom:8px">
+            ${fmtBRL(l.price)}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.72rem;color:var(--muted)">📍 ${escHtml(l.city)}/${l.state}</span>
+            <span style="font-size:.68rem;color:var(--muted)">${ago(l.createdAt)}</span>
+          </div>
+          ${l.user ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);
+            font-size:.7rem;color:var(--muted)">
+            👤 ${escHtml(l.user.name || 'Vendedor')}
+            · 👁 ${fmtNum(l.views)}
+          </div>` : ''}
+        </div>
+      </div>`;
+  }
+
+
+  // ═══════════════════════════════════════════════════════════
+  // SERVIÇOS AUTOMOTIVOS
+  // ═══════════════════════════════════════════════════════════
+
+  const SERVICE_CATEGORIES = [
+    { v:'', label:'Todos os serviços' },
+    { v:'revisao',      label:'🔍 Revisão Preventiva' },
+    { v:'funilaria',    label:'🔨 Funilaria & Pintura' },
+    { v:'eletrica',     label:'⚡ Elétrica Automotiva' },
+    { v:'mecanica',     label:'🔧 Mecânica Geral' },
+    { v:'pneus',        label:'⭕ Pneus & Alinhamento' },
+    { v:'ar',           label:'❄️ Ar Condicionado' },
+    { v:'injecao',      label:'💉 Injeção Eletrônica' },
+    { v:'cambio',       label:'⚙️ Câmbio & Transmissão' },
+    { v:'vidros',       label:'🪟 Vidros & Películas' },
+    { v:'som',          label:'🔊 Som & Multimídia' },
+    { v:'higienizacao', label:'🧹 Higienização & Estética' },
+    { v:'diagnostico',  label:'💻 Diagnóstico Eletrônico' },
+    { v:'gnv',          label:'⛽ GNV & Conversão' },
+  ];
+
+  async function renderServicos() {
+    const el = main();
+    if (!el) return;
+
+    el.innerHTML = `
+      ${pageHeader('SERVIÇOS AUTOMOTIVOS', 'Oficinas · Especialistas · Agendamento', 'var(--neon),var(--q4)')}
+
+      <!-- FILTROS -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;
+        padding:20px;margin-bottom:24px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+
+          <div style="flex:2;min-width:200px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">BUSCA</label>
+            <input id="svQuery" placeholder="Ex: alinhamento balanceamento Honda..."
+              onkeydown="if(event.key==='Enter')Pages.searchServicos()"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+
+          <div style="flex:1;min-width:180px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">CATEGORIA</label>
+            <select id="svCat" style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;cursor:pointer">
+              ${SERVICE_CATEGORIES.map(c => `<option value="${c.v}">${c.label}</option>`).join('')}
+            </select>
+          </div>
+
+          <div style="flex:1;min-width:120px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">CIDADE</label>
+            <input id="svCity" placeholder="São Paulo"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+
+          <div style="flex:1;min-width:130px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">PREÇO MÁX (R$)</label>
+            <input id="svMaxPrice" type="number" placeholder="Sem limite"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+
+          <div style="flex:1;min-width:110px">
+            <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">ORDENAR</label>
+            <select id="svSort" style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;cursor:pointer">
+              <option value="recent">Mais recentes</option>
+              <option value="price_asc">Menor preço</option>
+              <option value="price_desc">Maior preço</option>
+              <option value="views">Mais vistos</option>
+            </select>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="Pages.searchServicos()" style="
+              background:linear-gradient(135deg,var(--neon),var(--q4));color:#fff;
+              padding:9px 22px;border-radius:8px;font-weight:700;font-size:.82rem;
+              border:none;cursor:pointer;white-space:nowrap;box-shadow:0 0 14px rgba(16,185,129,.25)">
+              Buscar
+            </button>
+            <button onclick="Pages.showCreateListing('SERVICE')" style="
+              background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);
+              padding:9px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">
+              + Oferecer Serviço
+            </button>
+          </div>
+        </div>
+
+        <!-- Atalhos de categoria rápida -->
+        <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace">POPULAR:</span>
+          ${[
+            { v:'revisao', label:'🔍 Revisão' },
+            { v:'funilaria', label:'🔨 Funilaria' },
+            { v:'pneus', label:'⭕ Pneus' },
+            { v:'ar', label:'❄️ A/C' },
+            { v:'eletrica', label:'⚡ Elétrica' },
+            { v:'higienizacao', label:'🧹 Estética' },
+          ].map(item => `
+            <button onclick="document.getElementById('svCat').value='${item.v}';Pages.searchServicos()" style="
+              background:var(--s3);border:1px solid var(--border);color:var(--muted);
+              padding:4px 10px;border-radius:6px;font-size:.72rem;cursor:pointer;
+              font-family:'Space Grotesk',sans-serif;transition:all .15s"
+              onmouseover="this.style.borderColor='var(--neon)';this.style.color='var(--neon)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              ${item.label}
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <div id="svResults" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+        ${skeleton(6)}
+      </div>
+      <div id="svPager" style="display:flex;justify-content:center;gap:8px;margin-top:24px"></div>
+    `;
+
+    Pages.searchServicos && Pages.searchServicos();
+  }
+
+  let svPage = 1;
+
+  searchServicos = async function(page = 1) {
+    svPage = page;
+    const results = document.getElementById('svResults');
+    if (!results) return;
+    results.innerHTML = skeleton(6);
+
+    const query    = document.getElementById('svQuery')?.value?.trim()    || undefined;
+    const cat      = document.getElementById('svCat')?.value              || undefined;
+    const city     = document.getElementById('svCity')?.value?.trim()     || undefined;
+    const maxPrice = document.getElementById('svMaxPrice')?.value         || undefined;
+    const sort     = document.getElementById('svSort')?.value             || 'recent';
+
+    const combinedQuery = [query, cat].filter(Boolean).join(' ') || undefined;
+
+    const params = {
+      page, limit: 12,
+      type: 'SERVICE',
+      sort,
+      ...(combinedQuery && { query: combinedQuery }),
+      ...(city          && { city }),
+      ...(maxPrice      && { maxPrice }),
+    };
+
+    try {
+      const r = await API.listings.search(params);
+      const listings   = r.data || [];
+      const pagination = r.pagination || {};
+
+      if (!listings.length) {
+        results.innerHTML = `
+          <div style="color:var(--muted);padding:60px;text-align:center;grid-column:1/-1">
+            <div style="font-size:2.5rem;margin-bottom:12px">🔨</div>
+            <div style="font-size:.88rem;margin-bottom:8px">Nenhum serviço encontrado com esses filtros.</div>
+            <div style="font-size:.75rem;color:var(--muted)">Seja o primeiro a oferecer serviços na sua cidade!</div>
+            <button onclick="Pages.showCreateListing('SERVICE')" style="
+              margin-top:16px;background:rgba(16,185,129,.1);color:var(--green);
+              border:1px solid rgba(16,185,129,.25);padding:10px 22px;border-radius:8px;
+              font-size:.82rem;font-weight:600;cursor:pointer">
+              + Oferecer Serviço
+            </button>
+          </div>`;
+        return;
+      }
+
+      results.innerHTML = listings.map(l => serviceCard(l)).join('');
+
+      const pager = document.getElementById('svPager');
+      if (pager && pagination.totalPages > 1) {
+        const pages = Array.from({ length: Math.min(pagination.totalPages, 7) }, (_, i) => i + 1);
+        pager.innerHTML = pages.map(p => `
+          <button onclick="Pages.searchServicos(${p})" style="
+            padding:7px 13px;border-radius:6px;font-size:.8rem;cursor:pointer;
+            background:${p === svPage ? 'var(--neon)' : 'var(--s3)'};
+            color:${p === svPage ? '#000' : 'var(--muted)'};
+            border:1px solid ${p === svPage ? 'var(--neon)' : 'var(--border)'}">
+            ${p}
+          </button>`).join('');
+      }
+    } catch (e) {
+      results.innerHTML = `<div style="color:var(--red);padding:32px;text-align:center;grid-column:1/-1">
+        ⚠️ ${e.message}</div>`;
+    }
+  };
+
+  function serviceCard(l) {
+    // Detecta categoria pelo título/descrição para exibir ícone
+    const catIcons = { revisao:'🔍', funilaria:'🔨', eletrica:'⚡', mecanica:'🔧',
+                       pneus:'⭕', ar:'❄️', injecao:'💉', cambio:'⚙️',
+                       vidros:'🪟', som:'🔊', higienizacao:'🧹', diagnostico:'💻', gnv:'⛽' };
+    const titleLower = (l.title || '').toLowerCase();
+    const detectedIcon = Object.entries(catIcons).find(([k]) => titleLower.includes(k))?.[1] || '🔧';
+
+    return `
+      <div onclick="App.navigate('listing',${JSON.stringify(l.id)})" style="
+        background:var(--s2);border:1px solid var(--border);border-radius:12px;
+        padding:0;overflow:hidden;cursor:pointer;transition:all .18s"
+        onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--neon)'"
+        onmouseout="this.style.transform='translateY(0)';this.style.borderColor='var(--border)'">
+
+        <!-- Cabeçalho colorido em vez de imagem (serviços raramente têm foto) -->
+        <div style="height:80px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(124,58,237,.08));
+          border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px">
+          <div style="width:48px;height:48px;border-radius:12px;background:rgba(16,185,129,.12);
+            border:1px solid rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;
+            font-size:1.5rem;flex-shrink:0">
+            ${detectedIcon}
+          </div>
+          <div>
+            <div style="font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--neon);
+              letter-spacing:1px;margin-bottom:3px">SERVIÇO AUTOMOTIVO</div>
+            <div style="font-size:.72rem;color:var(--muted)">📍 ${escHtml(l.city)}/${l.state}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:.62rem;color:var(--muted)">${ago(l.createdAt)}</div>
+            <div style="font-size:.62rem;color:var(--muted)">👁 ${fmtNum(l.views)}</div>
+          </div>
+        </div>
+
+        <div style="padding:16px">
+          <div style="font-weight:600;font-size:.9rem;margin-bottom:8px;line-height:1.3">
+            ${escHtml(l.title)}
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;
+            display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+            ${escHtml(l.description || '')}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--neon)">
+              ${l.price > 0 ? fmtBRL(l.price) : 'Consultar'}
+              ${l.priceNegotiable ? `<span style="font-size:.6rem;color:var(--muted);
+                font-family:'Space Grotesk',sans-serif"> · negociável</span>` : ''}
+            </div>
+            ${l.user ? `<div style="font-size:.7rem;color:var(--muted)">
+              👤 ${escHtml(l.user.name || 'Prestador')}
+            </div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+
+  // ═══════════════════════════════════════════════════════════
+  // ATUALIZAR showCreateListing para aceitar tipo pré-selecionado
+  // Substituir a função showCreateListing existente por esta:
+  // ═══════════════════════════════════════════════════════════
+
+  showCreateListing = function(preType = 'SALE') {
+    if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+    const modals = document.getElementById('modals');
+    if (!modals) return;
+
+    const typeOptions = [
+      { v:'SALE',    l:'🚗 Venda de Veículo' },
+      { v:'RENT',    l:'🗝️ Aluguel' },
+      { v:'PART',    l:'⚙️ Peça & Acessório' },
+      { v:'SERVICE', l:'🔧 Serviço Automotivo' },
+    ];
+
+    const placeholders = {
+      SALE:    'Ex: Honda Civic 2022 impecável, único dono...',
+      PART:    'Ex: Pastilha de freio Bosch para Civic 2020-2022...',
+      SERVICE: 'Ex: Revisão completa com troca de óleo, filtros e correias...',
+      RENT:    'Ex: Toyota Corolla disponível por diária ou mensal...',
+    };
+
+    modals.innerHTML = `
+      <div style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);
+        backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center"
+        id="createModal">
+        <div style="background:var(--s2);border:1px solid var(--border2);border-radius:16px;
+          padding:32px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;position:relative">
+          <button onclick="document.getElementById('createModal').remove()" style="
+            position:absolute;top:16px;right:16px;background:none;border:none;
+            color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;margin-bottom:20px">
+            PUBLICAR ANÚNCIO</div>
+
+          <div style="margin-bottom:14px">
+            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">TIPO DE ANÚNCIO *</label>
+            <select id="clTypeNew" onchange="Pages._updateListingPlaceholder()"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+              ${typeOptions.map(t => `<option value="${t.v}" ${t.v === preType ? 'selected' : ''}>${t.l}</option>`).join('')}
+            </select>
+          </div>
+
+          ${[
+            ['clTitle','Título *','text',''],
+            ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0'],
+            ['clCity','Cidade *','text','Ex: São Paulo'],
+            ['clState','Estado *','text','SP'],
+          ].map(([id, lbl, type, ph]) => `
+            <div style="margin-bottom:12px">
+              <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+                letter-spacing:1px;display:block;margin-bottom:5px">${lbl.toUpperCase()}</label>
+              <input id="${id}" type="${type}" placeholder="${ph}" style="
+                width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+                padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+            </div>`).join('')}
+
+          <div style="margin-bottom:18px">
+            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">DESCRIÇÃO *</label>
+            <textarea id="clDesc" rows="4"
+              placeholder="${placeholders[preType]}"
+              style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+          </div>
+
+          <button id="clSubmitBtn" onclick="Pages.submitListing()" style="
+            width:100%;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
+            padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;
+            border:none;cursor:pointer;box-shadow:0 0 20px rgba(124,58,237,.4)">
+            PUBLICAR ANÚNCIO
+          </button>
+        </div>
+      </div>`;
+
+    // Inicia o placeholder correto
+    setTimeout(() => Pages._updateListingPlaceholder(), 50);
+  };
+
+  // Helper para atualizar placeholder da descrição ao trocar tipo
+  Pages._updateListingPlaceholder = function() {
+    const type = document.getElementById('clTypeNew')?.value || 'SALE';
+    const titleInput = document.getElementById('clTitle');
+    const descInput  = document.getElementById('clDesc');
+    const phs = {
+      SALE:    { title: 'Ex: Honda Civic 2022 — único dono', desc: 'Descreva o veículo: ano, km, estado, opcionais...' },
+      PART:    { title: 'Ex: Pastilha Freio Bosch Civic 2020-2022', desc: 'Especifique: marca, compatibilidade, estado (nova/usada/recondicionada), quantidade...' },
+      SERVICE: { title: 'Ex: Revisão Completa com Troca de Óleo', desc: 'Descreva o serviço: o que inclui, tempo estimado, garantia, disponibilidade...' },
+      RENT:    { title: 'Ex: Toyota Corolla disponível p/ locação', desc: 'Descreva: modelo, ano, diária, mensal, condições, km incluso...' },
+    };
+    if (titleInput && phs[type]) titleInput.placeholder = phs[type].title;
+    if (descInput  && phs[type]) descInput.placeholder  = phs[type].desc;
+  };
+
+// ═══════════════════════════════════════════════════════════
+// ADICIONAR AO return {} em pages.js:
+//   renderPecas, renderServicos, searchPecas, searchServicos
+// ═══════════════════════════════════════════════════════════
+//
+// return {
+//   renderHome, renderClassificados, renderAgentes, renderEmergencia,
+//   renderCalculadoras, renderVistoria, renderDocumentacao, renderDashboard,
+//   renderListing, searchListings, showCreateListing, submitListing,
+    renderPecas, renderServicos, searchPecas, searchServicos, _updateListingPlaceholder,
+//   renderPecas, renderServicos, searchPecas, searchServicos,   // ← ADICIONAR
+//   _updateListingPlaceholder,
+// };
+
   return {
     renderHome,
     renderClassificados,
