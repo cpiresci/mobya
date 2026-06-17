@@ -57,13 +57,13 @@ const BASE_PAGES = {
   dashboard:     () => Pages.renderDashboard(),
   chat:          () => renderChatPage(),
   listing:       () => Pages.renderListing(window.__mobyaListingId),
-  pecas:    () => Pages.renderPecas(),
-  aluguel:       () => comingSoon('ALUGUEL DE VEÍCULOS','🗝️'),
-  servicos: () => Pages.renderServicos(),
-  reboque:       () => comingSoon('REBOQUE & GUINCHO','🚛'),
-  chaveiro:      () => comingSoon('CHAVEIRO AUTOMOTIVO','🔑'),
-  seguros:       () => comingSoon('SEGUROS','🛡️'),
-  financiamento: () => comingSoon('FINANCIAMENTO','💰'),
+  pecas:         () => Pages.renderPecas(),
+  aluguel:       () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderAluguel()  : comingSoon('ALUGUEL DE VEÍCULOS','🗝️')),
+  servicos:      () => Pages.renderServicos(),
+  reboque:       () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderReboque()  : comingSoon('REBOQUE & GUINCHO','🚛')),
+  chaveiro:      () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderChaveiro() : comingSoon('CHAVEIRO AUTOMOTIVO','🔑')),
+  seguros:       () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderSeguros()    : comingSoon('SEGUROS','🛡️')),
+  financiamento: () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento() : comingSoon('FINANCIAMENTO','💰')),
 };
 
 window.renderPage = function(page) {

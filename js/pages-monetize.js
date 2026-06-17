@@ -380,6 +380,10 @@
   };
 
   window.PagesMon = PagesMon;
+  // Expõe as páginas de render (eram privadas do closure e nunca chegavam
+  // a app.js — por isso seguros/financiamento caíam no comingSoon).
+  PagesMon.renderSeguros       = renderSeguros;
+  PagesMon.renderFinanciamento = renderFinanciamento;
 
   // ══════════════════════════════════════════════════════════
   // CSS
@@ -434,25 +438,12 @@ input[type=range]{width:100%;accent-color:#7c3aed}
   document.head.appendChild(style);
 
   // ══════════════════════════════════════════════════════════
-  // PATCH DE ROTAS
+  // ROTEAMENTO
   // ══════════════════════════════════════════════════════════
-  const _patch = () => {
-    if (typeof window.App !== 'undefined') {
-      const orig = window.App.navigate.bind(window.App);
-      window.App.navigate = function(page, ...args) {
-        if (page === 'seguros')       { renderSeguros();       _setActive(page); return; }
-        if (page === 'financiamento') { renderFinanciamento(); _setActive(page); return; }
-        return orig(page, ...args);
-      };
-    }
-  };
-
-  function _setActive(page) {
-    document.querySelectorAll('.nb,.sb-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll(`[data-page="${page}"]`).forEach(b => b.classList.add('active'));
-  }
-
-  _patch();
-  window.addEventListener('load', _patch);
+  // O roteamento real de seguros/financiamento é feito direto em
+  // BASE_PAGES (js/app.js), que chama PagesMon.renderX(). O patch
+  // antigo sobrescrevia window.App.navigate, mas os cliques do menu
+  // (data-page) chamam a função `navigate` interna do app.js, não
+  // App.navigate — então o patch nunca era acionado. Removido.
 
 })();

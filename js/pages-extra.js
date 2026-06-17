@@ -275,6 +275,11 @@
     },
   };
   window.PagesExtra = PagesExtra;
+  // Expõe as páginas de render (eram privadas do closure e nunca chegavam
+  // a app.js — por isso reboque/chaveiro/aluguel caíam no comingSoon).
+  PagesExtra.renderReboque  = renderReboque;
+  PagesExtra.renderChaveiro = renderChaveiro;
+  PagesExtra.renderAluguel  = renderAluguel;
 
   // ── CSS INJETADO ───────────────────────────────────────────
   const style = document.createElement('style');
@@ -344,36 +349,11 @@
   `;
   document.head.appendChild(style);
 
-  // ── REGISTRO NO ROTEADOR ───────────────────────────────────
-  // Sobrescreve as entradas comingSoon no App
-  document.addEventListener('DOMContentLoaded', function() {
-    if (typeof App !== 'undefined' && App._pages) {
-      App._pages.reboque   = () => renderReboque();
-      App._pages.chaveiro  = () => renderChaveiro();
-      App._pages.aluguel   = () => renderAluguel();
-    }
-  });
-
-  // Patch direto nas rotas do app (funciona mesmo sem DOMContentLoaded)
-  const _patchRoutes = () => {
-    if (typeof window.App !== 'undefined') {
-      const orig = window.App.navigate.bind(window.App);
-      window.App.navigate = function(page, ...args) {
-        if (page === 'reboque')  { renderReboque();  _setActive(page); return; }
-        if (page === 'chaveiro') { renderChaveiro(); _setActive(page); return; }
-        if (page === 'aluguel')  { renderAluguel();  _setActive(page); return; }
-        return orig(page, ...args);
-      };
-    }
-  };
-
-  function _setActive(page) {
-    document.querySelectorAll('.nb,.sb-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll(`[data-page="${page}"]`).forEach(b => b.classList.add('active'));
-  }
-
-  // Tenta patch imediatamente e também após load
-  _patchRoutes();
-  window.addEventListener('load', _patchRoutes);
+  // ── ROTEAMENTO ──────────────────────────────────────────────
+  // O roteamento real de reboque/chaveiro/aluguel é feito direto em
+  // BASE_PAGES (js/app.js), que chama PagesExtra.renderX(). O patch
+  // antigo sobrescrevia window.App.navigate, mas os cliques do menu
+  // (data-page) chamam a função `navigate` interna do app.js, não
+  // App.navigate — então o patch nunca era acionado. Removido.
 
 })();
