@@ -57,10 +57,50 @@ window.API = (() => {
   };
 
   const emergency = {
-    create: (d)    => post('/emergency', d),
-    mine:   (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
-    update: (id,d) => patch(`/emergency/${id}/status`, d),
+    create:  (d)    => post('/emergency', d),
+    mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
+    update:  (id,d) => patch(`/emergency/${id}/status`, d),
+    nearby:  (lat, lng, opts={}) =>
+      get(`/emergency/nearby?latitude=${lat}&longitude=${lng}` +
+          `&radiusKm=${opts.radiusKm||50}` +
+          (opts.vertical ? `&vertical=${opts.vertical}` : '')),
   };
+
+  const monetization = {
+    rates:            ()       => get('/monetization/rates'),
+    categories:       ()       => get('/monetization/categories'),
+    providers:        (p={})   => get(`/monetization/providers?${new URLSearchParams(p)}`),
+    createProvider:   (d)      => post('/monetization/providers', d),
+    rateProvider:     (id,d)   => post(`/monetization/providers/${id}/rating`, d),
+    quotes:           (p={})   => get(`/monetization/quotes/mine?${new URLSearchParams(p)}`),
+    createQuote:      (d)      => post('/monetization/quotes', d),
+    acceptQuote:      (id)     => patch(`/monetization/quotes/${id}/accept`, {}),
+    completeQuote:    (id,d)   => patch(`/monetization/quotes/${id}/complete`, d||{}),
+    commissionsMine:  (p={})   => get(`/monetization/commissions/mine?${new URLSearchParams(p)}`),
+    dashboard:        ()       => get('/monetization/dashboard'),
+    simulateInsurance:(d)      => post('/monetization/insurance/simulate', d),
+    quoteLogistics:   (d)      => post('/monetization/logistics/quote', d),
+  };
+
+  function pollEmergency(emergencyId, onUpdate, intervalMs = 10000) {
+    const TERMINAL = ['COMPLETED', 'CANCELLED'];
+    let timer = null;
+    let active = true;
+    async function tick() {
+      if (!active) return;
+      try {
+        const data = await get('/emergency/mine');
+        const em = (data?.data || []).find(e => e.id === emergencyId);
+        if (em) {
+          onUpdate(em);
+          if (TERMINAL.includes(em.status)) { active = false; return; }
+        }
+      } catch (_) {}
+      if (active) timer = setTimeout(tick, intervalMs);
+    }
+    tick();
+    return { stop: () => { active = false; if (timer) clearTimeout(timer); } };
+  }
 
   async function ping() {
     try {
@@ -85,5 +125,5 @@ window.API = (() => {
     }
   }
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, auth, ai, listings, emergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, auth, ai, listings, emergency, monetization, pollEmergency, ping };
 })();
