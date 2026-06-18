@@ -67,6 +67,12 @@ const BASE_PAGES = {
   'meus-anuncios': () => Pages.renderDashboard(),
   monetizacao:     () => (typeof Monetization !== 'undefined' && Monetization.renderPartnersPage ? Monetization.renderPartnersPage() : comingSoon('REDE DE PARCEIROS','🤝')),
   'painel-prestador':() => (typeof Monetization !== 'undefined' && Monetization.renderProviderDashboard ? Monetization.renderProviderDashboard() : comingSoon('PAINEL DO PRESTADOR','🛠️')),
+  'gps-tracking':() => {
+    const user = MobyaAuth.getUser();
+    if (!user) { MobyaAuth.showLogin('gps-tracking'); return; }
+    if (typeof GPSTracking !== 'undefined') GPSTracking.render();
+    else comingSoon('GPS TRACKING','📡');
+  },
   'admin-aprovacao':() => { const u=MobyaAuth.getUser(); if(!u||!['ADMIN','SUPER_ADMIN'].includes(u.role)){App.navigate('home');return;} if(typeof AdminApproval!=='undefined') AdminApproval.render(); else comingSoon('APROVACAO','✅'); },
   'painel-receita':() => (typeof Monetization !== 'undefined' && Monetization.renderRevenueDashboard ? Monetization.renderRevenueDashboard() : comingSoon('PAINEL DE RECEITA','📊')),
   'seguros-sim':   () => (typeof Monetization !== 'undefined' && Monetization.renderInsurancePage ? Monetization.renderInsurancePage() : comingSoon('SEGUROS IA','🛡️')),
