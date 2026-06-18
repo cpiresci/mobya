@@ -454,7 +454,7 @@
       </div>
     `;
 
-    requestAnimationFrame(() => el.querySelector('.hp-wrap')?.classList.add('vis')); setTimeout(() => el.querySelector('.hp-wrap')?.classList.add('vis'), 500);
+    requestAnimationFrame(() => el.querySelector('.hp-wrap')?.classList.add('vis')); setTimeout(() => el.querySelector('.hp-wrap')?.classList.add('vis'), 50); el.querySelector('.hp-wrap')?.classList.add('vis');
     bindHomePremiumEvents();
     loadHomePremiumData();
   }
