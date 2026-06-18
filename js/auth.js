@@ -21,6 +21,7 @@ window.MobyaAuth = (() => {
       btn.textContent = 'Entrar';
       btn.onclick = () => showLogin();
     }
+    if (typeof updateSidebarRoles === 'function') updateSidebarRoles(u);
   }
 
   function showLogin(redirect='') {
