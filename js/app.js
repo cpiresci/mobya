@@ -64,6 +64,9 @@ const BASE_PAGES = {
   chaveiro:      () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderChaveiro() : comingSoon('CHAVEIRO AUTOMOTIVO','🔑')),
   seguros:       () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderSeguros()    : comingSoon('SEGUROS','🛡️')),
   financiamento: () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento() : comingSoon('FINANCIAMENTO','💰')),
+  'meus-anuncios': () => Pages.renderDashboard(),
+  monetizacao:     () => (typeof Monetization !== 'undefined' && Monetization.renderPartnersPage ? Monetization.renderPartnersPage() : comingSoon('REDE DE PARCEIROS','🤝')),
+  'painel-receita':() => (typeof Monetization !== 'undefined' && Monetization.renderRevDash ? Monetization.renderRevDash() : comingSoon('PAINEL DE RECEITA','📊')),
 };
 
 window.renderPage = function(page) {
