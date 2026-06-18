@@ -1550,7 +1550,7 @@ window.Pages = (() => {
   };
 
   // Helper para atualizar placeholder da descrição ao trocar tipo
-  Pages._updateListingPlaceholder = function() {
+  function _updateListingPlaceholder() {
     const type = document.getElementById('clTypeNew')?.value || 'SALE';
     const titleInput = document.getElementById('clTitle');
     const descInput  = document.getElementById('clDesc');
