@@ -1168,8 +1168,27 @@ window.Monetization = (() => {
     });
     if (tab==='COMMISSIONS') {
       const list=d.commList||[];
-      content.innerHTML = list.length===0?`<div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:48px">Nenhuma comissão registrada ainda.</div>`
-        :`<div style="display:flex;flex-direction:column;gap:10px">${list.map(c=>{const cm=CSMETA[c.status]||{label:c.status,color:'var(--muted)'}; return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:4px">${c.vertical||'—'} · ${fmtD(c.createdAt)}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${cm.color}">${fmtBRL(c.commissionAmount)}</div></div>${cBadge(c.status)}</div>`;}).join('')}</div>`;
+      if (!list.length) {
+        content.innerHTML=`<div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:48px">Nenhuma comissão registrada ainda.</div>`;
+        return;
+      }
+      content.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">${list.map(c=>{
+        const cm=CSMETA[c.status]||{label:c.status,color:'var(--muted)'};
+        const canCharge=c.status==='CHARGEABLE'&&!c.mpPaymentId;
+        const isPending=c.status==='PENDING'&&!!c.mpPaymentId;
+        return `<div id="ccard-${c.id}" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted);margin-bottom:4px">${c.vertical||'—'} · ${fmtD(c.createdAt)}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${cm.color}">${fmtBRL(c.commissionAmount)}</div>
+            ${c.paidAt?`<div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px">Pago em ${fmtD(c.paidAt)}</div>`:''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${cBadge(c.status)}
+            ${canCharge?`<button onclick="Monetization.chargeViaPix('${c.id}')" style="background:linear-gradient(135deg,#00b4d8,#0077b6);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-weight:700;font-size:.73rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">&#9889; Gerar PIX</button>`:''}
+            ${isPending?`<button onclick="Monetization.checkPayment('${c.id}')" style="background:rgba(251,191,36,.12);color:var(--gold);border:1px solid rgba(251,191,36,.3);border-radius:7px;padding:7px 14px;font-weight:600;font-size:.73rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">&#8635; Ver Status</button>`:''}
+          </div>
+        </div>`;
+      }).join('')}</div>`;
       return;
     }
     const quotes = tab==='OPEN'?(d.open||[]):tab==='ACCEPTED'?(d.accepted||[]):(d.completed||[]);
@@ -1241,12 +1260,68 @@ window.Monetization = (() => {
   }
 
   // Injeta no objeto Monetization existente
+  async function chargeViaPix(id) {
+    const btn=document.querySelector(`#ccard-${id} button`);
+    if(btn){btn.disabled=true;btn.textContent='⟳ Gerando...';}
+    try {
+      const r=await API.monetization.chargeCommission(id);
+      const pix=r.data||r;
+      const qr=pix.pix?.qrCode||'';
+      const qrImg=pix.pix?.qrCodeBase64||'';
+      const amount=pix.amount||0;
+      const overlay=document.createElement('div');
+      overlay.id='pix-modal-overlay';
+      overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
+      overlay.innerHTML=`<div style="background:var(--s1);border:1px solid rgba(0,180,216,.4);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:#00b4d8;margin-bottom:4px">&#9889; PAGAR VIA PIX</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:20px">Comissão MOBYA · ${fmtBRL(amount)}</div>
+        ${qrImg?`<div style="display:flex;justify-content:center;margin-bottom:16px"><img src="data:image/png;base64,${qrImg}" style="width:200px;height:200px;border-radius:8px;border:2px solid rgba(0,180,216,.3)"/></div>`:''}
+        ${qr?`<div style="margin-bottom:14px">
+          <div style="font-size:.65rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px">CÓDIGO PIX COPIA E COLA</div>
+          <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.65rem;word-break:break-all;color:var(--text)">${qr}</div>
+          <button onclick="navigator.clipboard.writeText('${qr}').then(()=>this.textContent='✅ Copiado!')" style="margin-top:8px;width:100%;background:rgba(0,180,216,.1);color:#00b4d8;border:1px solid rgba(0,180,216,.3);border-radius:7px;padding:8px;font-weight:600;font-size:.75rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">&#128203; Copiar Código PIX</button>
+        </div>`:'<div style="color:var(--muted);text-align:center;padding:12px 0;font-size:.8rem">QR Code indisponível. Verifique MP_ACCESS_TOKEN.</div>'}
+        <button onclick="document.getElementById('pix-modal-overlay').remove()" style="width:100%;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:4px">Fechar</button>
+      </div>`;
+      document.body.appendChild(overlay);
+      const d=window._mpd;
+      if(d){const i=d.commList.findIndex(c=>c.id===id);if(i!==-1)d.commList[i]={...d.commList[i],status:'PENDING',mpPaymentId:String(pix.paymentId||'?')};}
+      renderTab('COMMISSIONS');
+    } catch(e){
+      alert('Erro ao gerar PIX: '+e.message);
+      if(btn){btn.disabled=false;btn.textContent='⚡ Gerar PIX';}
+    }
+  }
+
+  async function checkPayment(id) {
+    const btn=document.querySelector(`#ccard-${id} button:last-child`);
+    if(btn){btn.disabled=true;btn.textContent='⟳ Verificando...';}
+    try {
+      const r=await API.monetization.getPayment(id);
+      const p=r.data||r;
+      const statusPT={approved:'✅ Aprovado',pending:'⏳ Aguardando',in_process:'⏳ Em processo',cancelled:'✖ Cancelado',rejected:'✖ Rejeitado'}[p.mpStatus]||p.mpStatus||'—';
+      alert(`Status do pagamento:
+${statusPT}
+
+Comissão: ${p.commissionStatus||'—'}
+${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
+      const d=window._mpd;
+      if(d){const i=d.commList.findIndex(c=>c.id===id);if(i!==-1)d.commList[i]={...d.commList[i],status:p.commissionStatus||d.commList[i].status,paidAt:p.paidAt||null};}
+      renderTab('COMMISSIONS');
+    } catch(e){
+      alert('Erro ao verificar: '+e.message);
+      if(btn){btn.disabled=false;btn.textContent='🔄 Ver Status';}
+    }
+  }
+
   Object.assign(window.Monetization, {
     renderProviderDashboard,
     providerSwitchTab,
     providerAcceptQuote,
     providerDeclineQuote,
     providerCompleteQuote,
+    chargeViaPix,
+    checkPayment,
   });
 
   // Registra a page no roteador
