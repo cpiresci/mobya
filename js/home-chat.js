@@ -1,12 +1,18 @@
+
+// ============================================================
+// MOBYA — home-chat.js  NEXUS v5.0
+// 9 agentes, sugestões contextuais, reset ao sair da home.
+// ============================================================
 window.HomeChat = (() => {
-  let agent = 'orquestrador';
+  let agent   = 'orquestrador';
   let history = [];
-  let busy = false;
+  let busy    = false;
   let conversationId = null;
-  let initialized = false;
+  let initialized    = false;
 
   const AGENTS = {
-    orquestrador: { name:'NEXUS-CORE', orb:'⬡', desc:'Orquestrador · 9 agentes ativos',
+    orquestrador: {
+      name:'NEXUS-CORE', orb:'⬡', desc:'Orquestrador · 9 agentes ativos',
       sugs:[
         { icon:'🚗', q:'Quero comprar um Honda Civic 2022 com 80.000km — qual o preço justo?', short:'Avaliar Civic 2022' },
         { icon:'🔧', q:'Meu motor está fazendo barulho ao frear. O que pode ser?', short:'Barulho ao frear' },
@@ -82,6 +88,15 @@ window.HomeChat = (() => {
     },
   };
 
+  // chamado por App.navigate quando SAI da home
+  function reset() {
+    initialized = false;
+    agent = 'orquestrador';
+    history = [];
+    conversationId = null;
+    busy = false;
+  }
+
   function init() {
     if (initialized) return;
     initialized = true;
@@ -91,14 +106,22 @@ window.HomeChat = (() => {
     busy = false;
     _renderChips();
     _renderExamples();
-    _addMsg('ai', AGENTS[agent].orb, 'Olá! Sou o <strong>NEXUS-CORE</strong>, o orquestrador quântico da MOBYA.<br>Tenho 9 agentes especializados prontos. Como posso ajudar hoje? 🚗');
+    _clearMsgs();
+    _addMsg('ai', AGENTS[agent].orb,
+      'Olá! Sou o <strong>NEXUS-CORE</strong>, orquestrador quântico da MOBYA.<br>' +
+      'Tenho 9 agentes especializados prontos para você. Como posso ajudar? 🚗');
+  }
+
+  function _clearMsgs() {
+    const el = document.getElementById('qcmMsgs');
+    if (el) el.innerHTML = '';
   }
 
   function _renderChips() {
     const el = document.getElementById('qcmChips');
     if (!el) return;
     el.innerHTML = Object.entries(AGENTS).map(([id, ag]) =>
-      '<div class="qcm-chip ' + (id===agent?'on':'') + '" onclick="HomeChat.selectAgent(\'' + id + '\',this)">' + ag.orb + ' ' + ag.name + '</div>'
+      `<div class="qcm-chip ${id===agent?'on':''}" onclick="HomeChat.selectAgent('${id}',this)">${ag.orb} ${ag.name}</div>`
     ).join('');
   }
 
@@ -106,11 +129,11 @@ window.HomeChat = (() => {
     const el = document.getElementById('qcmExamples');
     if (!el) return;
     const sugs = AGENTS[agent].sugs;
+    el.style.display = '';
     el.innerHTML = sugs.map(s =>
-      '<div class="qcm-ex" onclick="HomeChat.inject(\'' + s.q.replace(/'/g,"\\'") + '\')">' +
-      '<span class="qcm-ex-ico">' + s.icon + '</span>' +
-      '<span class="qcm-ex-txt">' + s.short + '</span>' +
-      '</div>'
+      `<div class="qcm-ex" onclick="HomeChat.inject('${s.q.replace(/'/g,"\\'")}')">` +
+      `<span class="qcm-ex-ico">${s.icon}</span>` +
+      `<span class="qcm-ex-txt">${s.short}</span></div>`
     ).join('');
   }
 
@@ -121,23 +144,26 @@ window.HomeChat = (() => {
     history = [];
     conversationId = null;
     const a = AGENTS[id];
-    const orb = document.getElementById('qcmOrb');
+    const orb  = document.getElementById('qcmOrb');
     const name = document.getElementById('qcmName');
     const desc = document.getElementById('qcmDesc');
     const prov = document.getElementById('qcmProvider');
-    if (orb) orb.textContent = a.orb;
+    if (orb)  orb.textContent  = a.orb;
     if (name) name.textContent = a.name;
     if (desc) desc.textContent = a.desc;
     if (prov) prov.textContent = '-';
-    const msgs = document.getElementById('qcmMsgs');
-    if (msgs) msgs.innerHTML = '';
+    _clearMsgs();
     _renderExamples();
-    _addMsg('ai', a.orb, 'Sou o <strong>' + a.name + '</strong> — ' + a.desc + '.<br>' + _greeting(id));
+    _addMsg('ai', a.orb,
+      `Sou o <strong>${a.name}</strong> — ${a.desc}.<br>${_greeting(id)}`);
   }
 
   function inject(text) {
     const inp = document.getElementById('qcmTextarea');
-    if (inp) { inp.value = text; inp.dispatchEvent(new Event('input')); }
+    if (inp) {
+      inp.value = text;
+      inp.dispatchEvent(new Event('input'));
+    }
     send();
   }
 
@@ -153,46 +179,62 @@ window.HomeChat = (() => {
     busy = true;
     inp.value = '';
     inp.style.height = 'auto';
-    document.getElementById('qcmSend').disabled = true;
-    _addMsg('user', '👤', _esc(text));
+    const btn = document.getElementById('qcmSend');
+    if (btn) btn.disabled = true;
+
+    // ocultar sugestões após primeira mensagem
     const ex = document.getElementById('qcmExamples');
     if (ex) ex.style.display = 'none';
-    const tid = 'typing_' + Date.now();
+
+    _addMsg('user', '👤', _esc(text));
+
+    const tid  = 'typing_' + Date.now();
     const msgs = document.getElementById('qcmMsgs');
-    if (msgs) msgs.innerHTML += '<div class="qcm-msg" id="' + tid + '"><div class="qcm-av ai">' + AGENTS[agent].orb + '</div><div class="qcm-bub ai"><div class="typing"><span></span><span></span><span></span></div></div></div>';
+    if (msgs) msgs.innerHTML +=
+      `<div class="qcm-msg" id="${tid}">` +
+      `<div class="qcm-av ai">${AGENTS[agent].orb}</div>` +
+      `<div class="qcm-bub ai"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
     _scroll();
-    history.push({ role: 'user', content: text });
+
+    history.push({ role:'user', content:text });
     try {
-      const r = await API.ai.chat({ agentType: agent, message: text, ...(conversationId && { conversationId }) });
+      const r = await API.ai.chat({
+        agentType: agent, message: text,
+        ...(conversationId && { conversationId }),
+      });
       if (r.data.conversationId) conversationId = r.data.conversationId;
-      history.push({ role: 'assistant', content: r.data.reply });
+      history.push({ role:'assistant', content:r.data.reply });
       document.getElementById(tid)?.remove();
       _addMsg('ai', AGENTS[agent].orb, _fmt(r.data.reply));
       if (r.data.provider) {
         const pt = document.getElementById('qcmProvider');
         if (pt) pt.textContent = r.data.provider;
       }
-    } catch (e) {
+    } catch(e) {
       document.getElementById(tid)?.remove();
-      _addMsg('ai', '⚠️', '<span style="color:var(--red)">' + (e.message || 'Erro no Motor Quântico.') + '</span>');
+      _addMsg('ai', '⚠️',
+        `<span style="color:var(--red)">${e.message || 'Erro no Motor Quântico.'}</span>`);
     }
     _scroll();
     busy = false;
-    document.getElementById('qcmSend').disabled = false;
+    if (btn) btn.disabled = false;
     document.getElementById('qcmTextarea')?.focus();
   }
 
   function _addMsg(type, icon, html) {
-    const area = document.getElementById('qcmMsgs');
+    const area  = document.getElementById('qcmMsgs');
     if (!area) return;
     const isUser = type === 'user';
-    area.innerHTML += '<div class="qcm-msg' + (isUser?' user':'') + '"><div class="qcm-av ' + (isUser?'usr':'ai') + '">' + icon + '</div><div class="qcm-bub ' + (isUser?'usr':'ai') + '">' + html + '</div></div>';
+    area.innerHTML +=
+      `<div class="qcm-msg${isUser?' user':''}">` +
+      `<div class="qcm-av ${isUser?'usr':'ai'}">${icon}</div>` +
+      `<div class="qcm-bub ${isUser?'usr':'ai'}">${html}</div></div>`;
     _scroll();
   }
 
   function _scroll() {
     const a = document.getElementById('qcmMsgs');
-    if (a) setTimeout(() => a.scrollTop = a.scrollHeight, 50);
+    if (a) setTimeout(() => { a.scrollTop = a.scrollHeight; }, 50);
   }
 
   function _fmt(t) {
@@ -205,23 +247,24 @@ window.HomeChat = (() => {
   }
 
   function _esc(t) {
-    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(t)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function _greeting(id) {
     const g = {
-      orquestrador:'Tenho 9 agentes especializados prontos. Como posso ajudar? 🚗',
-      compra:'Me diga o veículo que quer avaliar — modelo, ano e km. 🚗',
-      pecas:'Descreva o sintoma exato ou a peça que precisa. 🔧',
-      aluguel:'Onde e quando precisa do veículo? 🗝️',
-      servico:'Descreva o problema e a cidade. Vou estimar o custo. 🛠️',
-      seguro:'Me diga o veículo, CEP e sua idade para calcular o risco. 🛡️',
+      orquestrador: 'Tenho 9 agentes especializados prontos. Como posso ajudar? 🚗',
+      compra:       'Me diga o veículo que quer avaliar — modelo, ano e km. 🚗',
+      pecas:        'Descreva o sintoma exato ou a peça que precisa. 🔧',
+      aluguel:      'Onde e quando precisa do veículo? 🗝️',
+      servico:      'Descreva o problema e a cidade. Vou estimar o custo. 🛠️',
+      seguro:       'Me diga o veículo, CEP e sua idade para calcular o risco. 🛡️',
       financiamento:'Me diga o valor do veículo e sua renda líquida. 💰',
-      reboque:'🚨 Há feridos? Se sim, SAMU 192 imediatamente. Descreva sua situação.',
-      chaveiro:'Me diga o modelo do veículo e o problema. 🔑',
+      reboque:      '🚨 Há feridos? Se sim, SAMU 192 imediatamente. Descreva sua situação.',
+      chaveiro:     'Me diga o modelo do veículo e o problema. 🔑',
     };
     return g[id] || 'Como posso ajudar?';
   }
 
-  return { init, selectAgent, inject, key, send };
+  return { init, reset, selectAgent, inject, key, send };
 })();

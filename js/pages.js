@@ -48,19 +48,22 @@ window.Pages = (() => {
       </div>`).join('');
   }
 
+
   // ═══════════════════════════════════════════════════════════
-  // HOME — Painel Quântico
+  // HOME — Painel Quântico (v5.0 rewrite)
   // ═══════════════════════════════════════════════════════════
   async function renderHome() {
     const el = main();
     if (!el) return;
     el.innerHTML = `
       <div class="qhome-wrap">
+
         <div class="qhome-header">
-          <div class="qhome-badge"><div class="q-dot"></div><span>NEXUS QUANTUM ENGINE v3.0 · 9 AGENTES ATIVOS</span></div>
+          <div class="qhome-badge"><div class="q-dot"></div><span>⬡ NEXUS QUANTUM ENGINE v3.0 · 9 AGENTES ATIVOS</span></div>
           <h1 class="qhome-title">CONSULTE A IA<br><em>AUTOMOTIVA</em></h1>
           <p class="qhome-sub">Motor multi-agente com fallback quântico — compra, venda, seguro, manutenção e emergência em um único prompt.</p>
         </div>
+
         <div class="qchat-mega" id="homeChatMega">
           <div class="qcm-head">
             <div class="qcm-orb" id="qcmOrb">⬡</div>
@@ -69,29 +72,36 @@ window.Pages = (() => {
               <div class="qcm-desc" id="qcmDesc">Orquestrador · 9 agentes especializados</div>
             </div>
             <div class="qcm-status"><div class="q-dot"></div>ONLINE</div>
-            <div class="qcm-provider" id="qcmProvider">-</div>
+            <div class="qcm-provider" id="qcmProvider">–</div>
           </div>
+
           <div class="qcm-chips" id="qcmChips"></div>
           <div class="qcm-examples" id="qcmExamples"></div>
-          <div class="qcm-msgs" id="qcmMsgs"></div>
+          <div class="qcm-msgs"    id="qcmMsgs"></div>
+
           <div class="qcm-input-wrap">
             <div class="qcm-input-box">
               <textarea class="qcm-textarea" id="qcmTextarea" rows="3"
-                placeholder="Pergunte qualquer coisa sobre veiculos..."
+                placeholder="Pergunte qualquer coisa sobre veículos..."
                 onkeydown="HomeChat.key(event)"
                 oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,200)+'px'"
               ></textarea>
               <div class="qcm-input-footer">
-                <div class="qcm-input-hint"><span>Enter para enviar</span><span>Shift+Enter nova linha</span></div>
+                <div class="qcm-input-hint">
+                  <span>Enter para enviar</span>
+                  <span>Shift+Enter nova linha</span>
+                </div>
                 <button class="qcm-send" id="qcmSend" onclick="HomeChat.send()">
-                  <span class="qcm-send-ico">➤</span><span class="qcm-send-txt">CONSULTAR IA</span>
+                  <span class="qcm-send-ico">➤</span>
+                  <span class="qcm-send-txt">CONSULTAR IA</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
+
         <div class="qhome-quick">
-          \${[
+          ${[
             {page:'classificados',icon:'🚘',label:'Classificados',color:'var(--q4)',bg:'rgba(124,58,237,.1)'},
             {page:'agentes',icon:'🤖',label:'Agentes IA',color:'var(--neon)',bg:'rgba(0,245,255,.07)'},
             {page:'emergencia',icon:'🚨',label:'SOS 24H',color:'var(--red)',bg:'rgba(244,63,94,.1)'},
@@ -100,44 +110,46 @@ window.Pages = (() => {
             {page:'vistoria',icon:'🔍',label:'Vistoria',color:'var(--q4)',bg:'rgba(124,58,237,.1)'},
             {page:'fretes',icon:'🚛',label:'Fretes',color:'var(--gold)',bg:'rgba(251,191,36,.08)'},
             {page:'monetizacao',icon:'💰',label:'Parceiros',color:'var(--green)',bg:'rgba(16,185,129,.08)'},
-          ].map(q=>`<div onclick="renderPage('\${q.page}')" class="qhome-qcard"
-            style="background:\${q.bg};border:1px solid rgba(255,255,255,.06)"
-            onmouseover="this.style.borderColor='rgba(255,255,255,.2)';this.style.transform='translateY(-4px)'"
-            onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.transform='translateY(0)'">
-            <div class="qhome-qico">\${q.icon}</div>
-            <div style="font-size:.76rem;font-weight:600;color:\${q.color}">\${q.label}</div>
-          </div>`).join('')}
+          ].map(q=>`<div onclick="App.navigate('${q.page}')" class="qhome-qcard"
+              style="background:${q.bg};border:1px solid rgba(255,255,255,.06)"
+              onmouseover="this.style.borderColor='rgba(255,255,255,.2)';this.style.transform='translateY(-4px)'"
+              onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.transform='translateY(0)'">
+              <div class="qhome-qico">${q.icon}</div>
+              <div style="font-size:.76rem;font-weight:600;color:${q.color}">${q.label}</div>
+            </div>`).join('')}
         </div>
+
         <div class="qhome-bottom">
           <div class="qhome-listings-col">
             <div class="qhome-sec-hd">
               <span class="qhome-sec-tag">⬡ MELHORES OFERTAS</span>
-              <button onclick="renderPage('classificados')" class="qhome-sec-link">Ver todos →</button>
+              <button onclick="App.navigate('classificados')" class="qhome-sec-link">Ver todos →</button>
             </div>
-            <div id="homeListings" style="display:grid;gap:10px">\${skeleton(3)}</div>
+            <div id="homeListings" style="display:grid;gap:10px">${skeleton(3)}</div>
           </div>
           <div class="qhome-side-col">
-            \${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:2px;color:var(--q4);margin-bottom:14px">⬡ STATUS NEXUS</div>
+            ${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:2px;color:var(--q4);margin-bottom:14px">⬡ STATUS NEXUS</div>
               <div id="homProviders" style="display:flex;flex-direction:column;gap:8px">
-                \${['SambaNova','Cerebras','Gemini','OpenRouter'].map(p=>`
+                ${['SambaNova','Cerebras','Gemini','OpenRouter'].map(p=>`
                   <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span style="font-size:.78rem;color:var(--muted)">\${p}</span>
-                    <span id="hp_\${p.toLowerCase()}" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)">● –</span>
+                    <span style="font-size:.78rem;color:var(--muted)">${p}</span>
+                    <span id="hp_${p.toLowerCase()}" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)">● –</span>
                   </div>`).join('')}
               </div>`)}
-            \${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--green);margin-bottom:10px">💰 GANHE COM MOBYA</div>
+            ${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--green);margin-bottom:10px">💰 GANHE COM MOBYA</div>
               <div style="font-size:.82rem;color:var(--text);margin-bottom:12px;line-height:1.5">Integre sua oficina, locadora ou seguradora e receba leads qualificados.</div>
               <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-                \${[['🔧 Serviços','10%'],['🗝️ Locação','5%'],['🚛 Fretes','10%'],['🛡️ Seguros','até 8%']].map(([l,r])=>`
+                ${[['🔧 Serviços','10%'],['🗝️ Locação','5%'],['🚛 Fretes','10%'],['🛡️ Seguros','até 8%']].map(([l,r])=>`
                   <div style="display:flex;justify-content:space-between;font-size:.76rem">
-                    <span style="color:var(--muted)">\${l}</span>
-                    <span style="color:var(--green);font-family:'JetBrains Mono',monospace">\${r}</span>
+                    <span style="color:var(--muted)">${l}</span>
+                    <span style="color:var(--green);font-family:'JetBrains Mono',monospace">${r}</span>
                   </div>`).join('')}
               </div>
               <button onclick="Monetization.showRegisterPartner()" style="width:100%;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);padding:9px;border-radius:8px;font-weight:600;font-size:.8rem;cursor:pointer">Cadastrar meu negócio →</button>
             `,{border:'rgba(16,185,129,.2)'})}
           </div>
         </div>
+
         <div class="qhome-footer">
           <div class="qhf-item"><span class="qhf-ico">⬡</span><span>9 Agentes NEXUS especializados</span></div>
           <div class="qhf-sep">·</div>
@@ -145,33 +157,39 @@ window.Pages = (() => {
           <div class="qhf-sep">·</div>
           <div class="qhf-item"><span>🔒</span><span>Consultas criptografadas</span></div>
         </div>
-      </div>
-    `;
+
+      </div>`;
+
+    // inicializa chat (flag impede re-init ao voltar)
     HomeChat.init();
+
+    // dados em paralelo
     Promise.all([
       API.listings.search({limit:6,sort:'recent'}).catch(()=>null),
       API.ai.providers().catch(()=>null),
-    ]).then(([listR,provR])=>{
-      const listings=listR?.data||[];
-      const homeEl=document.getElementById('homeListings');
-      if(homeEl){
-        if(!listings.length){
-          homeEl.innerHTML='<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">Nenhum anúncio disponível.</div>';
-        }else{
-          homeEl.innerHTML=listings.map(l=>listingMiniCard(l)).join('');
-        }
+    ]).then(([listR, provR]) => {
+      const listings = listR?.data || [];
+      const homeEl   = document.getElementById('homeListings');
+      if (homeEl) {
+        homeEl.innerHTML = listings.length
+          ? listings.map(l => listingMiniCard(l)).join('')
+          : '<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">Nenhum anúncio disponível.</div>';
       }
-      const providers=provR?.data||[];
-      providers.forEach(p=>{
-        const el=document.getElementById(`hp_${p.name.toLowerCase()}`);
-        if(el){el.style.color=p.configured?'var(--green)":'var(--muted)';el.textContent=p.configured?'● ATIVO':'● OFF';}
+      const providers = provR?.data || [];
+      providers.forEach(p => {
+        const el = document.getElementById(`hp_${p.name.toLowerCase()}`);
+        if (el) {
+          el.style.color   = p.configured ? 'var(--green)' : 'var(--muted)';
+          el.textContent   = p.configured ? '● ATIVO' : '● OFF';
+        }
       });
     });
   }
+
   function listingMiniCard(l) {
     const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
     return `
-      <div onclick="App.navigate('listing',l.id)" style="
+      <div onclick="App.navigate('listing','${l.id}')" style="
         background:var(--s2);border:1px solid var(--border);border-radius:10px;
         padding:14px;display:flex;gap:12px;cursor:pointer;transition:all .15s"
         onmouseover="this.style.borderColor='var(--border2)'"
@@ -179,18 +197,17 @@ window.Pages = (() => {
         <div style="width:72px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;
           background:var(--s3);display:flex;align-items:center;justify-content:center">
           ${imgs[0]
-            ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
+            ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
             : `<span style="font-size:1.6rem">🚗</span>`}
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;
-            text-overflow:ellipsis">${escHtml(l.title)}</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--q4);margin:2px 0">
-            ${fmtBRL(l.price)}</div>
+          <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(l.title)}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--q4);margin:2px 0">${fmtBRL(l.price)}</div>
           <div style="font-size:.7rem;color:var(--muted)">${l.city}/${l.state} · ${ago(l.createdAt)}</div>
         </div>
       </div>`;
   }
+
 
   // ═══════════════════════════════════════════════════════════
   // CLASSIFICADOS
