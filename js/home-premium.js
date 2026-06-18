@@ -316,7 +316,7 @@
 
             <div class="qcm-input-wrap">
               <div class="qcm-input-box">
-                <textarea class="qcm-textarea" id="qcmTextarea" rows="2"
+                <textarea class="qcm-textarea" id="qcmTextarea" rows="1"
                   placeholder="Pergunte qualquer coisa sobre veículos…"
                   onkeydown="HomeChat.key(event)"
                   oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"
