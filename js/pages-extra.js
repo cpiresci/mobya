@@ -282,7 +282,9 @@
   PagesExtra.renderAluguel  = renderAluguel;
 
   // ── CSS INJETADO ───────────────────────────────────────────
+  if (!document.getElementById('px-style-pages-extra')) {
   const style = document.createElement('style');
+  style.id = 'px-style-pages-extra';
   style.textContent = `
 .px-extra{padding:20px;max-width:900px;margin:0 auto}
 .px-hero{display:flex;align-items:center;gap:16px;padding:24px;border-radius:16px;margin-bottom:20px;position:relative}
@@ -348,6 +350,7 @@
 @media(max-width:480px){.px-form-row{grid-template-columns:1fr}.px-grid2{grid-template-columns:1fr 1fr}}
   `;
   document.head.appendChild(style);
+  }
 
   // ── ROTEAMENTO ──────────────────────────────────────────────
   // O roteamento real de reboque/chaveiro/aluguel é feito direto em

@@ -388,7 +388,9 @@
   // ══════════════════════════════════════════════════════════
   // CSS
   // ══════════════════════════════════════════════════════════
+  if (!document.getElementById('px-style-pages-monetize')) {
   const style = document.createElement('style');
+  style.id = 'px-style-pages-monetize';
   style.textContent = `
 .px-hero--green{background:linear-gradient(135deg,rgba(5,150,105,.25),rgba(16,185,129,.1));border:1px solid rgba(16,185,129,.3)}
 .px-hero--gold{background:linear-gradient(135deg,rgba(180,130,0,.25),rgba(245,158,11,.1));border:1px solid rgba(245,158,11,.3)}
@@ -436,6 +438,7 @@
 input[type=range]{width:100%;accent-color:#7c3aed}
   `;
   document.head.appendChild(style);
+  }
 
   // ══════════════════════════════════════════════════════════
   // ROTEAMENTO
