@@ -74,6 +74,7 @@ window.API = (() => {
     rateProvider:     (id,d)   => post(`/monetization/providers/${id}/rating`, d),
     quotes:           (p={})   => get(`/monetization/quotes/mine?${new URLSearchParams(p)}`),
     createQuote:      (d)      => post('/monetization/quotes', d),
+    cancelQuote:      (id)     => patch(`/monetization/quotes/${id}/cancel`, {}),
     acceptQuote:      (id)     => patch(`/monetization/quotes/${id}/accept`, {}),
     completeQuote:    (id,d)   => patch(`/monetization/quotes/${id}/complete`, d||{}),
     commissionsMine:  (p={})   => get(`/monetization/commissions/mine?${new URLSearchParams(p)}`),
