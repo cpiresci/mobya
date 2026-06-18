@@ -33,6 +33,7 @@ window.API = (() => {
     login:    (d)    => post('/auth/login',    d),
     logout:   ()     => post('/auth/logout',   {}),
     me:       ()     => get('/auth/me'),
+    updateMe: (d)    => patch('/auth/me',      d),
   };
 
   const ai = {
