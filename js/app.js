@@ -173,8 +173,8 @@ window.App = (() => {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => { document.getElementById('ls')?.remove(); }, 2000);
   App.init().catch(err => {
-    console.error('Falha ao iniciar MOBYA', err);
+    console.error('Falha ao iniciar MOBYA', err); const m=document.getElementById('main'); if(m) m.innerHTML='<pre style="color:red;padding:20px;font-size:12px">ERRO INIT: '+err+'\n'+(err.stack||'')+'</pre>';
     Toast.show('Erro ao iniciar o motor quântico.', 'err', 6000);
-    document.getElementById('ls')?.remove();
+    const lsEl=document.getElementById('ls'); if(lsEl) lsEl.remove();
   });
 });
