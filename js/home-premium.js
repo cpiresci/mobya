@@ -302,25 +302,49 @@
           </div>
         </section>
 
-        <!-- AI BANNER -->
-        <div class="hp-ai" onclick="renderPage('chat')">
-          <div class="hp-ai-scan"></div>
-          <div class="hp-ai-pip"><div class="hp-pip-dot"></div>NEXUS-CORE · 9 AGENTES QUÂNTICOS</div>
-          <div class="hp-ai-ttl">Consulte a <em>IA do MOBYA</em></div>
-          <div class="hp-ai-sub">Diagnóstico de falhas, score anti-fraude, simulação de financiamento, análise FIPE e assistência de emergência — tudo em linguagem natural.</div>
-          <div class="hp-ai-agents">
-            <span class="hp-ai-chip">NEXUS-CV</span>
-            <span class="hp-ai-chip">NEXUS-PD</span>
-            <span class="hp-ai-chip">NEXUS-SEG</span>
-            <span class="hp-ai-chip">NEXUS-FIN</span>
-            <span class="hp-ai-chip">NEXUS-RBQ</span>
-            <span class="hp-ai-chip">NEXUS-CHV</span>
+        <!-- NEXUS LIVE CHAT — embutido na home (substitui banner estático) -->
+        <section class="hp-sec hp-sec-chat">
+          <div class="hp-sec-hd">
+            <span class="hp-sec-ttl">⬡ CONSULTE A IA NEXUS</span>
+            <span class="hp-sec-lnk" style="cursor:default;opacity:.65">9 agentes · ao vivo</span>
           </div>
-          <button class="hp-ai-cta" onclick="event.stopPropagation();renderPage('chat')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2Z" fill="white"/></svg>
-            Perguntar à IA
-          </button>
-        </div>
+
+          <div class="qchat-mega hp-chat-embed" id="homeChatMega">
+            <div class="qcm-head">
+              <div class="qcm-orb" id="qcmOrb">⬡</div>
+              <div class="qcm-info">
+                <div class="qcm-name" id="qcmName">NEXUS-CORE</div>
+                <div class="qcm-desc" id="qcmDesc">Orquestrador · 9 agentes especializados</div>
+              </div>
+              <div class="qcm-status"><div class="q-dot"></div>ONLINE</div>
+              <div class="qcm-provider" id="qcmProvider">–</div>
+            </div>
+
+            <div class="qcm-chips" id="qcmChips"></div>
+            <div class="qcm-examples" id="qcmExamples"></div>
+            <div class="qcm-msgs" id="qcmMsgs"></div>
+
+            <div class="qcm-input-wrap">
+              <div class="qcm-input-box">
+                <textarea class="qcm-textarea" id="qcmTextarea" rows="2"
+                  placeholder="Pergunte qualquer coisa sobre veículos…"
+                  onkeydown="HomeChat.key(event)"
+                  oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"
+                ></textarea>
+                <div class="qcm-input-footer">
+                  <div class="qcm-input-hint">
+                    <span>Enter para enviar</span>
+                    <span>Shift+Enter nova linha</span>
+                  </div>
+                  <button class="qcm-send" id="qcmSend" onclick="HomeChat.send()">
+                    <span class="qcm-send-ico">➤</span>
+                    <span class="qcm-send-txt">CONSULTAR IA</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <!-- STATS -->
         <div class="hp-stats">
@@ -457,6 +481,11 @@
     requestAnimationFrame(() => el.querySelector('.hp-wrap')?.classList.add('vis')); setTimeout(() => el.querySelector('.hp-wrap')?.classList.add('vis'), 50); el.querySelector('.hp-wrap')?.classList.add('vis');
     bindHomePremiumEvents();
     loadHomePremiumData();
+
+    // Inicializa o chat NEXUS embutido (flag interna impede re-init ao voltar pra home)
+    if (typeof window.HomeChat !== 'undefined' && window.HomeChat.init) {
+      window.HomeChat.init();
+    }
   }
 
   function bindHomePremiumEvents() {

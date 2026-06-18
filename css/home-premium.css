@@ -265,3 +265,19 @@
 /* ─── FADE-IN ─────────────────────────── */
 .hp-fu { opacity:1; transform:none; }
 .hp-fu.vis { opacity:1; transform:none; }
+
+/* ─── NEXUS CHAT EMBUTIDO ──────────────────────────────────────
+   .qchat-mega/.qcm-* vêm de css/style.css (usado originalmente como
+   hero full-screen da home antiga). Aqui ele é só mais uma seção
+   da home premium, então sobrescrevemos a altura para caber no fluxo
+   do super-app em vez de ocupar quase a viewport inteira. ────────── */
+.hp-wrap .qchat-mega.hp-chat-embed {
+  min-height: 420px;
+  max-height: 560px;
+  border-radius: 18px;
+}
+.hp-wrap .qcm-msgs { min-height: 140px; }
+
+@media (max-width:640px) {
+  .hp-wrap .qchat-mega.hp-chat-embed { min-height:380px; max-height:480px; }
+}
