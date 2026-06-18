@@ -54,160 +54,120 @@ window.Pages = (() => {
   async function renderHome() {
     const el = main();
     if (!el) return;
-
     el.innerHTML = `
-      <!-- HERO -->
-      <div style="position:relative;margin-bottom:36px;overflow:hidden;border-radius:16px;
-        background:linear-gradient(135deg,rgba(91,33,182,.18) 0%,rgba(0,245,255,.06) 100%);
-        border:1px solid var(--border2);padding:40px 36px">
-        <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
-          ${Array(12).fill(0).map((_,i)=>`
-            <div style="position:absolute;width:${60+i*20}px;height:1px;
-              background:linear-gradient(90deg,transparent,rgba(0,245,255,.15),transparent);
-              top:${8+i*8}%;left:0;right:0;animation:scanLine ${3+i*.4}s linear infinite;
-              opacity:.6"></div>`).join('')}
+      <div class="qhome-wrap">
+        <div class="qhome-header">
+          <div class="qhome-badge"><div class="q-dot"></div><span>NEXUS QUANTUM ENGINE v3.0 · 9 AGENTES ATIVOS</span></div>
+          <h1 class="qhome-title">CONSULTE A IA<br><em>AUTOMOTIVA</em></h1>
+          <p class="qhome-sub">Motor multi-agente com fallback quântico — compra, venda, seguro, manutenção e emergência em um único prompt.</p>
         </div>
-        <div style="position:relative;z-index:1;max-width:700px">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:3px;
-            color:var(--neon);margin-bottom:12px">⬡ QUANTUM ENGINE v3.0 · 9 AGENTES NEXUS ATIVOS</div>
-          <h1 style="font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:5px;
-            line-height:.95;background:linear-gradient(135deg,#fff 40%,var(--q4),var(--neon));
-            -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px">
-            INTELIGÊNCIA<br>AUTOMOTIVA<br>QUÂNTICA
-          </h1>
-          <p style="color:var(--muted);font-size:.9rem;line-height:1.6;margin-bottom:24px;max-width:500px">
-            O ecossistema mais avançado para compra, venda, manutenção, seguro e logística
-            automotiva do Brasil. Powered by IA multi-agente com fallback quântico.
-          </p>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <button onclick="renderPage('agentes')" style="
-              background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
-              padding:12px 26px;border-radius:8px;font-weight:700;font-size:.88rem;
-              border:none;cursor:pointer;box-shadow:0 0 24px rgba(124,58,237,.4)">
-              🤖 CONSULTAR IA
-            </button>
-            <button onclick="renderPage('classificados')" style="
-              background:rgba(0,245,255,.08);color:var(--neon);
-              border:1px solid rgba(0,245,255,.25);padding:12px 26px;border-radius:8px;
-              font-weight:600;font-size:.88rem;cursor:pointer">
-              🚘 VER CLASSIFICADOS
-            </button>
-            <button onclick="renderPage('emergencia')" style="
-              background:rgba(244,63,94,.1);color:var(--red);
-              border:1px solid rgba(244,63,94,.3);padding:12px 26px;border-radius:8px;
-              font-weight:600;font-size:.88rem;cursor:pointer">
-              🚨 SOS EMERGÊNCIA
-            </button>
+        <div class="qchat-mega" id="homeChatMega">
+          <div class="qcm-head">
+            <div class="qcm-orb" id="qcmOrb">⬡</div>
+            <div class="qcm-info">
+              <div class="qcm-name" id="qcmName">NEXUS-CORE</div>
+              <div class="qcm-desc" id="qcmDesc">Orquestrador · 9 agentes especializados</div>
+            </div>
+            <div class="qcm-status"><div class="q-dot"></div>ONLINE</div>
+            <div class="qcm-provider" id="qcmProvider">-</div>
+          </div>
+          <div class="qcm-chips" id="qcmChips"></div>
+          <div class="qcm-examples" id="qcmExamples"></div>
+          <div class="qcm-msgs" id="qcmMsgs"></div>
+          <div class="qcm-input-wrap">
+            <div class="qcm-input-box">
+              <textarea class="qcm-textarea" id="qcmTextarea" rows="3"
+                placeholder="Pergunte qualquer coisa sobre veiculos..."
+                onkeydown="HomeChat.key(event)"
+                oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,200)+'px'"
+              ></textarea>
+              <div class="qcm-input-footer">
+                <div class="qcm-input-hint"><span>Enter para enviar</span><span>Shift+Enter nova linha</span></div>
+                <button class="qcm-send" id="qcmSend" onclick="HomeChat.send()">
+                  <span class="qcm-send-ico">➤</span><span class="qcm-send-txt">CONSULTAR IA</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- QUICK ACCESS GRID -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:32px" id="quickGrid">
-        ${[
-          { page:'classificados', icon:'🚘', label:'Classificados',  color:'var(--q4)',  bg:'rgba(124,58,237,.1)' },
-          { page:'agentes',       icon:'🤖', label:'Agentes IA',     color:'var(--neon)',bg:'rgba(0,245,255,.07)' },
-          { page:'emergencia',    icon:'🚨', label:'SOS 24H',        color:'var(--red)', bg:'rgba(244,63,94,.1)'  },
-          { page:'calculadoras',  icon:'🧮', label:'Calculadoras',   color:'var(--gold)',bg:'rgba(251,191,36,.08)'},
-          { page:'monetizacao',   icon:'💰', label:'Parceiros',      color:'var(--green)',bg:'rgba(16,185,129,.08)'},
-          { page:'seguros-sim',   icon:'🛡️', label:'Seguros IA',     color:'var(--green)',bg:'rgba(16,185,129,.08)'},
-          { page:'fretes',        icon:'🚛', label:'Fretes',         color:'var(--gold)',bg:'rgba(251,191,36,.08)'},
-          { page:'vistoria',      icon:'🔍', label:'Vistoria',       color:'var(--q4)', bg:'rgba(124,58,237,.1)' },
-        ].map(q=>`
-          <div onclick="renderPage('${q.page}')" style="
-            background:${q.bg};border:1px solid rgba(255,255,255,.06);border-radius:10px;
-            padding:18px 14px;cursor:pointer;text-align:center;transition:all .18s"
-            onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(255,255,255,.15)'"
-            onmouseout="this.style.transform='translateY(0)';this.style.borderColor='rgba(255,255,255,.06)'">
-            <div style="font-size:1.6rem;margin-bottom:8px">${q.icon}</div>
-            <div style="font-size:.78rem;font-weight:600;color:${q.color}">${q.label}</div>
+        <div class="qhome-quick">
+          \${[
+            {page:'classificados',icon:'🚘',label:'Classificados',color:'var(--q4)',bg:'rgba(124,58,237,.1)'},
+            {page:'agentes',icon:'🤖',label:'Agentes IA',color:'var(--neon)',bg:'rgba(0,245,255,.07)'},
+            {page:'emergencia',icon:'🚨',label:'SOS 24H',color:'var(--red)',bg:'rgba(244,63,94,.1)'},
+            {page:'calculadoras',icon:'🧮',label:'Calculadoras',color:'var(--gold)',bg:'rgba(251,191,36,.08)'},
+            {page:'seguros-sim',icon:'🛡️',label:'Seguros IA',color:'var(--green)',bg:'rgba(16,185,129,.08)'},
+            {page:'vistoria',icon:'🔍',label:'Vistoria',color:'var(--q4)',bg:'rgba(124,58,237,.1)'},
+            {page:'fretes',icon:'🚛',label:'Fretes',color:'var(--gold)',bg:'rgba(251,191,36,.08)'},
+            {page:'monetizacao',icon:'💰',label:'Parceiros',color:'var(--green)',bg:'rgba(16,185,129,.08)'},
+          ].map(q=>`<div onclick="renderPage('\${q.page}')" class="qhome-qcard"
+            style="background:\${q.bg};border:1px solid rgba(255,255,255,.06)"
+            onmouseover="this.style.borderColor='rgba(255,255,255,.2)';this.style.transform='translateY(-4px)'"
+            onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.transform='translateY(0)'">
+            <div class="qhome-qico">\${q.icon}</div>
+            <div style="font-size:.76rem;font-weight:600;color:\${q.color}">\${q.label}</div>
           </div>`).join('')}
-      </div>
-
-      <!-- STATS + ÚLTIMOS CLASSIFICADOS -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;align-items:start">
-        <!-- Últimos anúncios -->
-        <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:2px;color:var(--q4)">
-              ⬡ MELHORES OFERTAS</div>
-            <button onclick="renderPage('classificados')" style="background:none;color:var(--muted);
-              font-size:.75rem;border:none;cursor:pointer">Ver todos →</button>
-          </div>
-          <div id="homeListings" style="display:grid;gap:10px">${skeleton(3)}</div>
         </div>
-
-        <!-- Painel lateral -->
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <!-- NEXUS STATUS -->
-          ${card(`
-            <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
-              color:var(--q4);margin-bottom:14px">⬡ STATUS NEXUS</div>
-            <div id="homProviders" style="display:flex;flex-direction:column;gap:8px">
-              ${['SambaNova','Cerebras','Gemini','OpenRouter'].map(p=>`
-                <div style="display:flex;justify-content:space-between;align-items:center">
-                  <span style="font-size:.78rem;color:var(--muted)">${p}</span>
-                  <span id="hp_${p.toLowerCase().replace(' ','')}" style="font-family:'JetBrains Mono',monospace;
-                    font-size:.65rem;color:var(--muted)">●  –</span>
-                </div>`).join('')}
+        <div class="qhome-bottom">
+          <div class="qhome-listings-col">
+            <div class="qhome-sec-hd">
+              <span class="qhome-sec-tag">⬡ MELHORES OFERTAS</span>
+              <button onclick="renderPage('classificados')" class="qhome-sec-link">Ver todos →</button>
             </div>
-          `)}
-
-          <!-- DESTAQUE MONETIZAÇÃO -->
-          ${card(`
-            <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:2px;
-              color:var(--green);margin-bottom:10px">💰 GANHE COM MOBYA</div>
-            <div style="font-size:.82rem;color:var(--text);margin-bottom:12px;line-height:1.5">
-              Integre sua oficina, locadora ou seguradora e receba leads qualificados.
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-              ${[['🔧 Serviços','10%'],['🗝️ Locação','5%'],['🚛 Fretes','10%'],['🛡️ Seguros','até 8%']].map(
-                ([l,r])=>`<div style="display:flex;justify-content:space-between;font-size:.76rem">
-                  <span style="color:var(--muted)">${l}</span>
-                  <span style="color:var(--green);font-family:'JetBrains Mono',monospace">${r}</span>
-                </div>`).join('')}
-            </div>
-            <button onclick="Monetization.showRegisterPartner()" style="
-              width:100%;background:rgba(16,185,129,.12);color:var(--green);
-              border:1px solid rgba(16,185,129,.25);padding:9px;border-radius:8px;
-              font-weight:600;font-size:.8rem;cursor:pointer">
-              Cadastrar meu negócio →
-            </button>
-          `, { border:'rgba(16,185,129,.2)' })}
+            <div id="homeListings" style="display:grid;gap:10px">\${skeleton(3)}</div>
+          </div>
+          <div class="qhome-side-col">
+            \${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:2px;color:var(--q4);margin-bottom:14px">⬡ STATUS NEXUS</div>
+              <div id="homProviders" style="display:flex;flex-direction:column;gap:8px">
+                \${['SambaNova','Cerebras','Gemini','OpenRouter'].map(p=>`
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:.78rem;color:var(--muted)">\${p}</span>
+                    <span id="hp_\${p.toLowerCase()}" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)">● –</span>
+                  </div>`).join('')}
+              </div>`)}
+            \${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--green);margin-bottom:10px">💰 GANHE COM MOBYA</div>
+              <div style="font-size:.82rem;color:var(--text);margin-bottom:12px;line-height:1.5">Integre sua oficina, locadora ou seguradora e receba leads qualificados.</div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+                \${[['🔧 Serviços','10%'],['🗝️ Locação','5%'],['🚛 Fretes','10%'],['🛡️ Seguros','até 8%']].map(([l,r])=>`
+                  <div style="display:flex;justify-content:space-between;font-size:.76rem">
+                    <span style="color:var(--muted)">\${l}</span>
+                    <span style="color:var(--green);font-family:'JetBrains Mono',monospace">\${r}</span>
+                  </div>`).join('')}
+              </div>
+              <button onclick="Monetization.showRegisterPartner()" style="width:100%;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);padding:9px;border-radius:8px;font-weight:600;font-size:.8rem;cursor:pointer">Cadastrar meu negócio →</button>
+            `,{border:'rgba(16,185,129,.2)'})}
+          </div>
+        </div>
+        <div class="qhome-footer">
+          <div class="qhf-item"><span class="qhf-ico">⬡</span><span>9 Agentes NEXUS especializados</span></div>
+          <div class="qhf-sep">·</div>
+          <div class="qhf-item"><span class="qhf-ico neon">●</span><span>SambaNova · Cerebras · Gemini · OpenRouter</span></div>
+          <div class="qhf-sep">·</div>
+          <div class="qhf-item"><span>🔒</span><span>Consultas criptografadas</span></div>
         </div>
       </div>
     `;
-
-    // Carrega ofertas e providers em paralelo
+    HomeChat.init();
     Promise.all([
-      API.listings.search({ limit: 6, sort: 'recent' }).catch(() => null),
-      API.ai.providers().catch(() => null),
-    ]).then(([listR, provR]) => {
-      // Listings
-      const listings = listR?.data || [];
-      const homeEl   = document.getElementById('homeListings');
-      if (homeEl) {
-        if (!listings.length) {
-          homeEl.innerHTML = `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
-            Nenhum anúncio disponível. <button onclick="renderPage('classificados')" style="
-              background:none;color:var(--q4);border:none;cursor:pointer;font-weight:600">
-              Seja o primeiro!</button></div>`;
-        } else {
-          homeEl.innerHTML = listings.map(l => listingMiniCard(l)).join('');
+      API.listings.search({limit:6,sort:'recent'}).catch(()=>null),
+      API.ai.providers().catch(()=>null),
+    ]).then(([listR,provR])=>{
+      const listings=listR?.data||[];
+      const homeEl=document.getElementById('homeListings');
+      if(homeEl){
+        if(!listings.length){
+          homeEl.innerHTML='<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">Nenhum anúncio disponível.</div>';
+        }else{
+          homeEl.innerHTML=listings.map(l=>listingMiniCard(l)).join('');
         }
       }
-      // Providers
-      const providers = provR?.data || [];
-      providers.forEach(p => {
-        const el = document.getElementById(`hp_${p.name.toLowerCase()}`);
-        if (el) {
-          el.style.color = p.configured ? 'var(--green)' : 'var(--muted)';
-          el.textContent = p.configured ? '● ATIVO' : '● OFF';
-        }
+      const providers=provR?.data||[];
+      providers.forEach(p=>{
+        const el=document.getElementById(`hp_${p.name.toLowerCase()}`);
+        if(el){el.style.color=p.configured?'var(--green)":'var(--muted)';el.textContent=p.configured?'● ATIVO':'● OFF';}
       });
     });
   }
-
   function listingMiniCard(l) {
     const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
     return `
