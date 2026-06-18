@@ -2,6 +2,7 @@ window.Chat = (() => {
   let agent = 'orquestrador';
   let history = [];
   let busy = false;
+  let conversationId = null;
 
   const AGENTS = {
     orquestrador: { name:'NEXUS-CORE', orb:'⬡', desc:'Orquestrador · 9 agentes ativos', sugs:['🚗 Quero comprar um carro','🔧 Diagnóstico de peça','🛡️ Cotar seguro','🚨 Preciso de guincho'] },
@@ -18,6 +19,7 @@ window.Chat = (() => {
   function render(containerId, initialAgent='orquestrador') {
     agent = initialAgent;
     history = [];
+    conversationId = null;
     const a = AGENTS[agent];
     const chips = Object.entries(AGENTS).map(([id,ag]) =>
       `<div class="achip ${id===agent?'on':''}" onclick="Chat.selectAgent('${id}',this)">${ag.orb} ${ag.name}</div>`
@@ -47,6 +49,7 @@ window.Chat = (() => {
     el.classList.add('on');
     agent = id;
     history = [];
+    conversationId = null;
     const a = AGENTS[id];
     document.getElementById('chatOrb').textContent  = a.orb;
     document.getElementById('chatName').textContent = a.name;
@@ -80,7 +83,8 @@ window.Chat = (() => {
     scroll();
     history.push({ role:'user', content:text });
     try {
-      const r = await API.ai.chat({ agentType:agent, message:text });
+      const r = await API.ai.chat({ agentType:agent, message:text, ...(conversationId && { conversationId }) });
+      if (r.data.conversationId) conversationId = r.data.conversationId;
       history.push({ role:'assistant', content:r.data.reply });
       document.getElementById(tid)?.remove();
       addMsg('ai', AGENTS[agent].orb, fmt(r.data.reply));

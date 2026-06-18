@@ -211,7 +211,7 @@ window.Pages = (() => {
   function listingMiniCard(l) {
     const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
     return `
-      <div onclick="renderPage('listing-${l.id}')" style="
+      <div onclick="App.navigate('listing',l.id)" style="
         background:var(--s2);border:1px solid var(--border);border-radius:10px;
         padding:14px;display:flex;gap:12px;cursor:pointer;transition:all .15s"
         onmouseover="this.style.borderColor='var(--border2)'"
@@ -364,7 +364,7 @@ window.Pages = (() => {
     const typeLabels = { SALE:'Venda', RENT:'Aluguel', PART:'Peça', SERVICE:'Serviço',
                          INSURANCE:'Seguro', FINANCING:'Financiamento' };
     return `
-      <div onclick="renderPage('listing-${l.id}')" style="
+      <div onclick="App.navigate('listing',l.id)" style="
         background:var(--s2);border:1px solid var(--border);border-radius:12px;
         overflow:hidden;cursor:pointer;transition:all .18s"
         onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border2)'"
@@ -397,60 +397,6 @@ window.Pages = (() => {
         </div>
       </div>`;
   }
-
-  showCreateListing = function() {
-    if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
-    const modals = document.getElementById('modals');
-    if (!modals) return;
-    modals.innerHTML = `
-      <div style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);
-        backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center"
-        id="createModal">
-        <div style="background:var(--s2);border:1px solid var(--border2);border-radius:16px;
-          padding:32px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;position:relative">
-          <button onclick="document.getElementById('createModal').remove()" style="
-            position:absolute;top:16px;right:16px;background:none;border:none;
-            color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;margin-bottom:20px">
-            PUBLICAR ANÚNCIO</div>
-          ${[
-            ['clTitle','Título *','text','Ex: Honda Civic 2022 — impecável'],
-            ['clPrice','Preço (R$) *','number','Ex: 95000'],
-            ['clCity','Cidade *','text','Ex: São Paulo'],
-            ['clState','Estado *','text','SP'],
-          ].map(([id,lbl,type,ph])=>`
-            <div style="margin-bottom:12px">
-              <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
-                letter-spacing:1px;display:block;margin-bottom:5px">${lbl.toUpperCase()}</label>
-              <input id="${id}" type="${type}" placeholder="${ph}" style="
-                width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
-                padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
-            </div>`).join('')}
-          <div style="margin-bottom:12px">
-            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
-              letter-spacing:1px;display:block;margin-bottom:5px">TIPO *</label>
-            <select id="clTypeNew" style="width:100%;background:var(--s3);border:1px solid var(--border);
-              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
-              <option value="SALE">🚗 Venda</option><option value="RENT">🗝️ Aluguel</option>
-              <option value="PART">⚙️ Peça</option><option value="SERVICE">🔧 Serviço</option>
-            </select>
-          </div>
-          <div style="margin-bottom:18px">
-            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
-              letter-spacing:1px;display:block;margin-bottom:5px">DESCRIÇÃO *</label>
-            <textarea id="clDesc" rows="3" placeholder="Descreva o veículo, peça ou serviço..." style="
-              width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
-              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical"></textarea>
-          </div>
-          <button id="clSubmitBtn" onclick="Pages.submitListing()" style="
-            width:100%;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
-            padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;
-            border:none;cursor:pointer;box-shadow:0 0 20px rgba(124,58,237,.4)">
-            PUBLICAR ANÚNCIO
-          </button>
-        </div>
-      </div>`;
-  };
 
   submitListing = async function() {
     const btn   = document.getElementById('clSubmitBtn');

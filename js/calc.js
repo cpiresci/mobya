@@ -20,7 +20,7 @@ window.Calc = (() => {
     const p=parseFloat(document.getElementById('fipe-preco')?.value)||0;
     const base=parseFloat(document.getElementById('fipe-base')?.value)||70000;
     if(!m){alert('Informe o modelo.');return;}
-    const anos=2025-a;
+    const anos=new Date().getFullYear()-a;
     const fipe=base*Math.pow(0.925,anos);
     const jMin=Math.max(fipe*.87,fipe-(Math.max(0,k-15000*anos)*.4));
     const jMax=fipe*1.04;

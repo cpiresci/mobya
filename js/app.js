@@ -67,6 +67,8 @@ const BASE_PAGES = {
   'meus-anuncios': () => Pages.renderDashboard(),
   monetizacao:     () => (typeof Monetization !== 'undefined' && Monetization.renderPartnersPage ? Monetization.renderPartnersPage() : comingSoon('REDE DE PARCEIROS','🤝')),
   'painel-receita':() => (typeof Monetization !== 'undefined' && Monetization.renderRevDash ? Monetization.renderRevDash() : comingSoon('PAINEL DE RECEITA','📊')),
+  'seguros-sim':   () => (typeof Monetization !== 'undefined' && Monetization.renderInsurancePage ? Monetization.renderInsurancePage() : comingSoon('SEGUROS IA','🛡️')),
+  fretes:          () => (typeof Monetization !== 'undefined' && Monetization.renderLogisticsPage ? Monetization.renderLogisticsPage() : comingSoon('FRETES & REBOQUES','🚛')),
 };
 
 window.renderPage = function(page) {
