@@ -286,15 +286,37 @@
   position: relative;
 }
 
-/* área de resposta — 4x maior que a base original (140px → 560px) */
+/* área de resposta — agora a peça dominante do card */
 .hp-wrap .qcm-msgs {
-  min-height: 560px;
+  min-height: 640px;
   flex: 1 1 auto;
   padding: 22px 20px;
   background:
     linear-gradient(180deg, rgba(124,58,237,.05), transparent 18%),
     repeating-linear-gradient(0deg, rgba(124,58,237,.025) 0px, rgba(124,58,237,.025) 1px, transparent 1px, transparent 38px);
 }
+
+/* barra de agentes — compacta, sempre lado a lado em uma linha só com scroll */
+.hp-wrap .qcm-chips {
+  padding: 8px 14px;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.hp-wrap .qcm-chip {
+  padding: 5px 11px;
+  font-size: .68rem;
+  flex-shrink: 0;
+}
+
+/* caixa de pergunta — reduzida, dá mais espaço pra resposta */
+.hp-wrap .qcm-input-wrap { padding: 8px 14px 10px; }
+.hp-wrap .qcm-textarea {
+  min-height: 38px;
+  padding: 9px 14px 4px;
+  font-size: .85rem;
+}
+.hp-wrap .qcm-input-footer { padding: 4px 10px 8px; }
+.hp-wrap .qcm-send { padding: 7px 16px; }
 
 .hp-wrap .qcm-head {
   background: linear-gradient(135deg, rgba(124,58,237,.14), rgba(0,245,255,.04));
@@ -351,7 +373,9 @@
 }
 
 @media (max-width:640px) {
-  .hp-wrap .qchat-mega.hp-chat-embed { min-height:620px; max-height:840px; }
-  .hp-wrap .qcm-msgs { min-height:460px; }
+  .hp-wrap .qchat-mega.hp-chat-embed { min-height:680px; max-height:900px; }
+  .hp-wrap .qcm-msgs { min-height:540px; }
   .hp-wrap .qcm-ex-grid { grid-template-columns: 1fr; padding-left: 0; }
+  .hp-wrap .qcm-chip { padding:4px 9px; font-size:.64rem; }
+  .hp-wrap .qcm-textarea { min-height:34px; }
 }
