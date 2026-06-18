@@ -293,16 +293,6 @@
           </div>
         </div>
 
-        <!-- SERVIÇOS -->
-        <section class="hp-sec">
-          <div class="hp-sec-hd">
-            <span class="hp-sec-ttl">⬡ SERVIÇOS</span>
-          </div>
-          <div class="hp-svc-grid">
-            ${SERVICES.map(svcOrb).join('')}
-          </div>
-        </section>
-
         <!-- NEXUS LIVE CHAT — embutido na home (substitui banner estático) -->
         <section class="hp-sec hp-sec-chat">
           <div class="hp-sec-hd">
@@ -343,6 +333,16 @@
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- SERVIÇOS -->
+        <section class="hp-sec">
+          <div class="hp-sec-hd">
+            <span class="hp-sec-ttl">⬡ SERVIÇOS</span>
+          </div>
+          <div class="hp-svc-grid">
+            ${SERVICES.map(svcOrb).join('')}
           </div>
         </section>
 
