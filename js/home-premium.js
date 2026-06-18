@@ -235,8 +235,9 @@
   ];
 
   function svcOrb(svc) {
+    const action = svc.page === 'chat' ? 'HomePremium.focusChat()' : `renderPage('${svc.page}')`;
     return `
-      <div class="hp-svc-item" onclick="renderPage('${svc.page}')">
+      <div class="hp-svc-item" onclick="${action}">
         <div class="hp-orb ${svc.cls}">
           <div class="hp-orb-bg"></div>
           ${icon(svc.icon)}
@@ -264,7 +265,7 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </div>
             <input type="text" id="hpSrchInput" placeholder="Buscar carros, reboques, mecânicos…" autocomplete="off">
-            <button class="hp-srch-ai" title="Buscar com IA" onclick="renderPage('chat')">
+            <button class="hp-srch-ai" title="Buscar com IA" onclick="HomePremium.focusChat()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2Z" fill="white"/></svg>
             </button>
           </div>
@@ -646,7 +647,25 @@
     }
   }
 
-  window.HomePremium = { toggleFavorite };
+  // ── FOCO NO CHAT NEXUS EMBUTIDO (substitui navegação pra /chat) ─
+  function focusChat() {
+    const chatEl = document.getElementById('homeChatMega');
+    if (!chatEl) { renderPage('chat'); return; } // fallback de segurança
+
+    chatEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    setTimeout(() => {
+      const ta = document.getElementById('qcmTextarea');
+      const srch = document.getElementById('hpSrchInput');
+      if (ta && srch && srch.value.trim()) {
+        ta.value = srch.value.trim();
+        ta.dispatchEvent(new Event('input'));
+      }
+      ta?.focus();
+    }, 450);
+  }
+
+  window.HomePremium = { toggleFavorite, focusChat };
 
   // ── OVERRIDE ─────────────────────────────────────────────────
   window.Pages.renderHome = renderHomePremium;
