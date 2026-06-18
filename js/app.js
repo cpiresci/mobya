@@ -171,7 +171,7 @@ window.App = (() => {
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => { document.getElementById('ls')?.remove(); }, 8000);
+  setTimeout(() => { document.getElementById('ls')?.remove(); }, 2000);
   App.init().catch(err => {
     console.error('Falha ao iniciar MOBYA', err);
     Toast.show('Erro ao iniciar o motor quântico.', 'err', 6000);
