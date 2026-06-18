@@ -68,6 +68,7 @@ const BASE_PAGES = {
   monetizacao:     () => (typeof Monetization !== 'undefined' && Monetization.renderPartnersPage ? Monetization.renderPartnersPage() : comingSoon('REDE DE PARCEIROS','🤝')),
   'painel-receita':() => (typeof Monetization !== 'undefined' && Monetization.renderRevDash ? Monetization.renderRevDash() : comingSoon('PAINEL DE RECEITA','📊')),
   'seguros-sim':   () => (typeof Monetization !== 'undefined' && Monetization.renderInsurancePage ? Monetization.renderInsurancePage() : comingSoon('SEGUROS IA','🛡️')),
+  seguros:         () => (typeof PagesMon !== 'undefined' ? PagesMon.renderSeguros() : comingSoon('SEGUROS','🛡️')),
   fretes:          () => (typeof Monetization !== 'undefined' && Monetization.renderLogisticsPage ? Monetization.renderLogisticsPage() : comingSoon('FRETES & REBOQUES','🚛')),
 };
 

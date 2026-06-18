@@ -511,7 +511,7 @@
     const [g1, g2, wc] = colorSets[Math.abs(hashStr(l.id || l.title || '')) % colorSets.length];
 
     return `
-      <div class="hp-car" onclick="renderPage('listing-${l.id}')">
+      <div class="hp-car" onclick="App.navigate('listing',l.id)">
         <div class="hp-car-img" style="background:linear-gradient(135deg,${g1},${g2})">
           ${imgs[0]
             ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover;position:relative;z-index:0">`
@@ -548,8 +548,8 @@
       const statEl = document.getElementById('hpStatListings');
       const countAutos = document.getElementById('hpCountAutos');
 
-      if (statEl) statEl.textContent = listR?.total ? formatCompact(listR.total) : (listings.length || '0');
-      if (countAutos) countAutos.textContent = listR?.total ? `${formatCompact(listR.total)} anúncios` : `${listings.length} anúncios`;
+      if (statEl) statEl.textContent = listR?.pagination?.total ? formatCompact(listR.pagination.total) : (listings.length || '0');
+      if (countAutos) countAutos.textContent = listR?.pagination?.total ? `${formatCompact(listR.pagination.total)} anúncios` : `${listings.length} anúncios`;
 
       if (carsEl) {
         if (!listings.length) {

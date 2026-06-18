@@ -305,6 +305,12 @@ window.Pages = (() => {
       <div id="clPager" style="display:flex;justify-content:center;gap:8px;margin-top:24px"></div>
     `;
 
+    // Aplica query vinda da busca da home (home-premium.js)
+    if (window.__mobyaSearchQuery) {
+      const inp = document.getElementById('clQuery');
+      if (inp) inp.value = window.__mobyaSearchQuery;
+      window.__mobyaSearchQuery = null;
+    }
     Pages.searchListings && Pages.searchListings();
   }
 

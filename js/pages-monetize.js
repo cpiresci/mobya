@@ -36,7 +36,7 @@
       <div class="pm-field">
         <label>Ano</label>
         <select class="px-input" id="segAno">
-          ${Array.from({length:15},(_,i)=>2025-i).map(y=>`<option>${y}</option>`).join('')}
+          ${Array.from({length:15},(_,i)=>new Date().getFullYear()-i).map(y=>`<option>${y}</option>`).join('')}
         </select>
       </div>
       <div class="pm-field">
@@ -276,7 +276,7 @@
     },
 
     contratarSeguro(nome) {
-      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) { MobyaAuth.showLogin(); return; }
+      if (!API.isAuth()) { MobyaAuth?.showLogin(); return; }
       Toast?.show(`🛡️ Iniciando contratação ${nome}...`,'ok');
     },
 
@@ -373,7 +373,7 @@
     },
 
     iniciarFinanciamento(banco) {
-      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) { MobyaAuth.showLogin(); return; }
+      if (!API.isAuth()) { MobyaAuth?.showLogin(); return; }
       const msg = banco ? `💰 Proposta enviada ao ${banco}!` : '💰 Iniciando sua proposta de financiamento!';
       Toast?.show(msg,'ok');
     },
