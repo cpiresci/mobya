@@ -263,5 +263,5 @@
 }
 
 /* ─── FADE-IN ─────────────────────────── */
-.hp-fu { opacity:0; transform:translateY(16px); transition:opacity .5s ease, transform .5s ease; }
+.hp-fu { opacity:1; transform:none; }
 .hp-fu.vis { opacity:1; transform:none; }
