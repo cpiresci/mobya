@@ -39,7 +39,6 @@
     <button class="nb" data-page="aluguel">Aluguel</button>
     <button class="nb" data-page="servicos">Serviços</button>
     <button class="nb" data-page="agentes">Agentes IA</button>
-    <button class="nb" data-page="monetizacao">Parceiros</button>
     <button class="nb nb-sos" data-page="emergencia">🚨 SOS</button>
   </nav>
   <div class="h-right">
@@ -112,6 +111,33 @@
 <!-- MODALS -->
 <div id="modals"></div>
 
+<!-- BOTTOM NAV (mobile) -->
+<nav id="bottom-nav">
+  <div class="bn-wrap">
+    <button class="bn-item active" data-page="home" onclick="App.navigate('home')">
+      <span class="bn-ico">⬡</span>
+      <span>Início</span>
+    </button>
+    <button class="bn-item" data-page="classificados" onclick="App.navigate('classificados')">
+      <span class="bn-ico">🚘</span>
+      <span>Autos</span>
+    </button>
+    <button class="bn-item" data-page="chat" onclick="App.navigate('chat')">
+      <span class="bn-ico">💬</span>
+      <span>Chat IA</span>
+      <span class="bn-dot" id="bnDotChat"></span>
+    </button>
+    <button class="bn-item bn-sos" data-page="emergencia" onclick="App.navigate('emergencia')">
+      <span class="bn-ico">🚨</span>
+      <span>SOS</span>
+    </button>
+    <button class="bn-item" id="bnMenuBtn" onclick="toggleBnMenu()">
+      <span class="bn-ico">☰</span>
+      <span>Menu</span>
+    </button>
+  </div>
+</nav>
+
 <!-- SCRIPTS -->
 <script>
   // API URL — detecta ambiente automaticamente
@@ -135,3 +161,4 @@
 <script src="js/app.js?v=20260618"></script>
 </body>
 </html>
+
