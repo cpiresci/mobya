@@ -322,7 +322,6 @@
             </div>
 
             <div class="qcm-chips" id="qcmChips"></div>
-            <div class="qcm-examples" id="qcmExamples"></div>
             <div class="qcm-msgs" id="qcmMsgs"></div>
 
             <div class="qcm-input-wrap">

@@ -266,18 +266,92 @@
 .hp-fu { opacity:1; transform:none; }
 .hp-fu.vis { opacity:1; transform:none; }
 
-/* ─── NEXUS CHAT EMBUTIDO ──────────────────────────────────────
+/* ─── NEXUS CHAT EMBUTIDO — ULTRA QUÂNTICO PREMIUM ──────────────
    .qchat-mega/.qcm-* vêm de css/style.css (usado originalmente como
-   hero full-screen da home antiga). Aqui ele é só mais uma seção
-   da home premium, então sobrescrevemos a altura para caber no fluxo
-   do super-app em vez de ocupar quase a viewport inteira. ────────── */
+   hero full-screen da home antiga). Aqui ele é a peça central da home:
+   a área de resposta (qcm-msgs) é quadriplicada e o invólucro recebe
+   um tratamento visual premium (glass, glow, scanlines quânticas). ── */
 .hp-wrap .qchat-mega.hp-chat-embed {
-  min-height: 420px;
-  max-height: 560px;
-  border-radius: 18px;
+  min-height: 760px;
+  max-height: 1040px;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(124,58,237,.16), transparent 60%),
+    var(--s2);
+  border: 1px solid rgba(124,58,237,.28);
+  box-shadow:
+    0 0 0 1px rgba(124,58,237,.18),
+    0 0 90px rgba(124,58,237,.20),
+    inset 0 1px 0 rgba(255,255,255,.04);
+  position: relative;
 }
-.hp-wrap .qcm-msgs { min-height: 140px; }
+
+/* área de resposta — 4x maior que a base original (140px → 560px) */
+.hp-wrap .qcm-msgs {
+  min-height: 560px;
+  flex: 1 1 auto;
+  padding: 22px 20px;
+  background:
+    linear-gradient(180deg, rgba(124,58,237,.05), transparent 18%),
+    repeating-linear-gradient(0deg, rgba(124,58,237,.025) 0px, rgba(124,58,237,.025) 1px, transparent 1px, transparent 38px);
+}
+
+.hp-wrap .qcm-head {
+  background: linear-gradient(135deg, rgba(124,58,237,.14), rgba(0,245,255,.04));
+}
+.hp-wrap .qcm-orb {
+  box-shadow: 0 0 26px rgba(124,58,237,.45), 0 0 0 1px rgba(124,58,237,.5) inset;
+  animation: qcmOrbPulse 3.2s ease-in-out infinite;
+}
+@keyframes qcmOrbPulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(124,58,237,.35), 0 0 0 1px rgba(124,58,237,.4) inset; }
+  50%      { box-shadow: 0 0 32px rgba(124,58,237,.6),  0 0 0 1px rgba(124,58,237,.6) inset; }
+}
+
+.hp-wrap .qcm-bub.ai {
+  background: linear-gradient(135deg, var(--s3), rgba(124,58,237,.06));
+  border: 1px solid rgba(124,58,237,.22);
+  box-shadow: 0 4px 22px rgba(124,58,237,.08);
+  font-size: .92rem;
+  line-height: 1.75;
+}
+.hp-wrap .qcm-bub.usr {
+  background: linear-gradient(135deg, rgba(0,245,255,.16), rgba(124,58,237,.10));
+  border: 1px solid rgba(0,245,255,.3);
+}
+
+/* cartão de sugestões — agora vive dentro da própria área de resposta */
+.hp-wrap .qcm-ex-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+  padding-left: 42px;
+}
+.hp-wrap .qcm-ex {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, rgba(124,58,237,.10), rgba(0,245,255,.04));
+  border: 1px solid rgba(124,58,237,.22); border-radius: 12px;
+  padding: 11px 14px; cursor: pointer;
+  font-size: .78rem; color: var(--muted);
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all .2s;
+}
+.hp-wrap .qcm-ex:hover {
+  border-color: var(--q3); color: var(--text);
+  background: linear-gradient(135deg, rgba(124,58,237,.18), rgba(0,245,255,.07));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124,58,237,.22);
+}
+.hp-wrap .qcm-ex-ico { font-size: 1rem; }
+
+.hp-wrap .qcm-send {
+  background: linear-gradient(135deg, var(--q1), var(--q3), var(--neon));
+  box-shadow: 0 0 22px rgba(124,58,237,.45);
+}
 
 @media (max-width:640px) {
-  .hp-wrap .qchat-mega.hp-chat-embed { min-height:380px; max-height:480px; }
+  .hp-wrap .qchat-mega.hp-chat-embed { min-height:620px; max-height:840px; }
+  .hp-wrap .qcm-msgs { min-height:460px; }
+  .hp-wrap .qcm-ex-grid { grid-template-columns: 1fr; padding-left: 0; }
 }

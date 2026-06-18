@@ -105,11 +105,11 @@ window.HomeChat = (() => {
     conversationId = null;
     busy = false;
     _renderChips();
-    _renderExamples();
     _clearMsgs();
     _addMsg('ai', AGENTS[agent].orb,
       'Olá! Sou o <strong>NEXUS-CORE</strong>, orquestrador quântico da MOBYA.<br>' +
       'Tenho 9 agentes especializados prontos para você. Como posso ajudar? 🚗');
+    _renderExamplesInMsgs();
   }
 
   function _clearMsgs() {
@@ -125,37 +125,43 @@ window.HomeChat = (() => {
     ).join('');
   }
 
-  function _renderExamples() {
-    const el = document.getElementById('qcmExamples');
-    if (!el) return;
+  // Exemplos agora vivem DENTRO da própria área de resposta (qcmMsgs),
+  // como um cartão de sugestões — não mais numa faixa separada acima.
+  function _renderExamplesInMsgs() {
+    const area = document.getElementById('qcmMsgs');
+    if (!area) return;
     const sugs = AGENTS[agent].sugs;
-    el.style.display = '';
-    el.innerHTML = sugs.map(s =>
-      `<div class="qcm-ex" onclick="HomeChat.inject('${s.q.replace(/'/g,"\\'")}')">` +
-      `<span class="qcm-ex-ico">${s.icon}</span>` +
-      `<span class="qcm-ex-txt">${s.short}</span></div>`
-    ).join('');
+    const html =
+      `<div class="qcm-ex-grid" id="qcmExGrid">` +
+      sugs.map(s =>
+        `<div class="qcm-ex" onclick="HomeChat.inject('${s.q.replace(/'/g,"\\'")}')">` +
+        `<span class="qcm-ex-ico">${s.icon}</span>` +
+        `<span class="qcm-ex-txt">${s.short}</span></div>`
+      ).join('') +
+      `</div>`;
+    area.insertAdjacentHTML('beforeend', html);
+    _scroll();
   }
 
+  function _removeExamples() {
+    document.getElementById('qcmExGrid')?.remove();
+  }
+
+  // Trocar de agente NÃO troca a identidade do cabeçalho (que permanece
+  // sempre NEXUS-CORE, o orquestrador) — a seleção visível do agente fica
+  // só nos chips, no topo. O nome do agente não precisa reaparecer nas
+  // mensagens, evitando redundância.
   function selectAgent(id, el) {
     document.querySelectorAll('.qcm-chip').forEach(c => c.classList.remove('on'));
     el.classList.add('on');
     agent = id;
     history = [];
     conversationId = null;
-    const a = AGENTS[id];
-    const orb  = document.getElementById('qcmOrb');
-    const name = document.getElementById('qcmName');
-    const desc = document.getElementById('qcmDesc');
     const prov = document.getElementById('qcmProvider');
-    if (orb)  orb.textContent  = a.orb;
-    if (name) name.textContent = a.name;
-    if (desc) desc.textContent = a.desc;
     if (prov) prov.textContent = '-';
     _clearMsgs();
-    _renderExamples();
-    _addMsg('ai', a.orb,
-      `Sou o <strong>${a.name}</strong> — ${a.desc}.<br>${_greeting(id)}`);
+    _addMsg('ai', AGENTS[id].orb, _greeting(id));
+    _renderExamplesInMsgs();
   }
 
   function inject(text) {
@@ -183,8 +189,7 @@ window.HomeChat = (() => {
     if (btn) btn.disabled = true;
 
     // ocultar sugestões após primeira mensagem
-    const ex = document.getElementById('qcmExamples');
-    if (ex) ex.style.display = 'none';
+    _removeExamples();
 
     _addMsg('user', '👤', _esc(text));
 
