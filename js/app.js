@@ -90,11 +90,18 @@ window.renderPage = function(page) {
 window.App = (() => {
   let currentPage = 'home';
 
+  function syncBottomNav(page) {
+    document.querySelectorAll('#bottom-nav .bn-item[data-page]').forEach(el => {
+      el.classList.toggle('active', el.dataset.page === page);
+    });
+  }
+
   function navigate(page, param) {
     currentPage = page;
     if (param !== undefined) window.__mobyaListingId = param;
     history.replaceState(null, '', `#${page}`);
     closeMenu();
+    syncBottomNav(page);
     window.renderPage(page);
   }
 
@@ -112,6 +119,15 @@ window.App = (() => {
   }
   window.toggleMenu = toggleMenu;
 
+  // Bottom nav — botão Menu abre/fecha sidebar
+  window.toggleBnMenu = function() {
+    const sidebar = document.getElementById('sidebar');
+    const bnBtn   = document.getElementById('bnMenuBtn');
+    if (!sidebar) return;
+    const isOpen = sidebar.classList.toggle('open');
+    if (bnBtn) bnBtn.classList.toggle('active', isOpen);
+  };
+
   function bindNavigation() {
     document.querySelectorAll('[data-page]').forEach(el => {
       el.addEventListener('click', ev => {
@@ -122,10 +138,13 @@ window.App = (() => {
     });
     document.addEventListener('click', ev => {
       const sidebar = document.getElementById('sidebar');
-      const btn = document.getElementById('btnMenu');
+      const btnMenu = document.getElementById('btnMenu');
+      const bnMenuBtn = document.getElementById('bnMenuBtn');
       if (!sidebar || !sidebar.classList.contains('open')) return;
-      if (sidebar.contains(ev.target) || ev.target === btn) return;
-      closeMenu();
+      if (sidebar.contains(ev.target) || ev.target === btnMenu || ev.target === bnMenuBtn) return;
+      sidebar.classList.remove('open');
+      document.getElementById('bnMenuBtn')?.classList.remove('active');
+      document.getElementById('header')?.classList.remove('menu-open');
     });
   }
 
