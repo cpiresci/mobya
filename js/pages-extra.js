@@ -244,8 +244,8 @@
   // ── AÇÕES ──────────────────────────────────────────────────
   const PagesExtra = {
     solicitarReboque() {
-      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) {
-        MobyaAuth.showLogin(); return;
+      if (!API.isAuth()) {
+        window.MobyaAuth?.showLogin(); return;
       }
       const t = document.getElementById('reboqueTracking');
       if (t) t.style.display = 'block';
@@ -255,8 +255,8 @@
       setTimeout(()=>{ const s=document.getElementById('trStep2'); if(s){s.classList.add('px-track-done');s.textContent='✓ Motorista a caminho';} const s3=document.getElementById('trStep3'); if(s3)s3.classList.add('px-track-active'); }, 8000);
     },
     solicitarChaveiro() {
-      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) {
-        MobyaAuth.showLogin(); return;
+      if (!API.isAuth()) {
+        window.MobyaAuth?.showLogin(); return;
       }
       if (typeof Toast !== 'undefined') Toast.show('🔑 Técnico acionado! Chegada em até 30 minutos.','ok');
     },
@@ -268,8 +268,8 @@
       setTimeout(()=>{ if(typeof Toast!=='undefined') Toast.show('✅ 12 veículos disponíveis no período!','ok'); },1200);
     },
     reservarCarro(cat) {
-      if (typeof MobyaAuth !== 'undefined' && !MobyaAuth.isLogged()) {
-        MobyaAuth.showLogin(); return;
+      if (!API.isAuth()) {
+        window.MobyaAuth?.showLogin(); return;
       }
       if (typeof Toast !== 'undefined') Toast.show(`🗝️ Reserva de ${cat} iniciada! Complete no checkout.`,'ok');
     },

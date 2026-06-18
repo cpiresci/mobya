@@ -284,7 +284,7 @@ window.Monetization = (() => {
   }
 
   // ── MODAL COTAÇÃO ─────────────────────────────────────────
-  window.Monetization.openQuoteModal = function(providerId, providerName, vertical) {
+  function openQuoteModal(providerId, providerName, vertical) {
     const modal   = document.getElementById('quoteModal');
     const content = document.getElementById('quoteContent');
     if (!modal || !content) return;
@@ -370,12 +370,12 @@ window.Monetization = (() => {
     });
   };
 
-  window.Monetization.closeQuoteModal = function() {
+  function closeQuoteModal() {
     const modal = document.getElementById('quoteModal');
     if (modal) modal.style.display = 'none';
   };
 
-  window.Monetization.submitQuote = async function(providerId, vertical) {
+  async function submitQuote(providerId, vertical) {
     const btn  = document.getElementById('qSubmitBtn');
     const desc = document.getElementById('qdesc')?.value?.trim();
     const amt  = document.getElementById('qamount')?.value;
@@ -387,7 +387,7 @@ window.Monetization = (() => {
     try {
       await api.createQuote({
         providerId, vertical, description: desc,
-        amount:          amt  || undefined,
+        estimatedAmount: amt  || undefined,
         scheduledAt:     dt   || undefined,
         insuranceProduct: ins || undefined,
       });
@@ -401,7 +401,7 @@ window.Monetization = (() => {
   };
 
   // ── MODAL CADASTRO DE PARCEIRO ────────────────────────────
-  window.Monetization.showRegisterPartner = function() {
+  function showRegisterPartner() {
     if (!API.isAuth()) {
       toast('Faça login para cadastrar seu negócio.', 'warn');
       window.MobyaAuth?.showLogin();
@@ -454,7 +454,7 @@ window.Monetization = (() => {
             padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
         </div>
         <div>
-          <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Meio',monospace;
+          <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
             letter-spacing:1px;display:block;margin-bottom:5px">ESTADO *</label>
           <input id="rp_state" maxlength="2" placeholder="SP" style="
             width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
@@ -502,7 +502,7 @@ window.Monetization = (() => {
     modal.style.display = 'flex';
   };
 
-  window.Monetization.onVerticalChange = function() {
+  function onVerticalChange() {
     const v    = document.getElementById('rp_vertical')?.value;
     const prev = document.getElementById('rp_commPreview');
     if (!prev || !v) return;
@@ -510,7 +510,7 @@ window.Monetization = (() => {
     prev.innerHTML = `💡 Vertical ${vm.label}: comissão de <strong>${vm.rate}</strong> sobre cada negócio fechado via MOBYA.`;
   };
 
-  window.Monetization.submitRegisterPartner = async function() {
+  async function submitRegisterPartner() {
     const btn  = document.getElementById('rpSubmitBtn');
     const name = document.getElementById('rp_name')?.value?.trim();
     const vert = document.getElementById('rp_vertical')?.value;
@@ -632,7 +632,7 @@ window.Monetization = (() => {
     `;
   }
 
-  window.Monetization.runInsuranceSim = async function() {
+  async function runInsuranceSim() {
     const btn = document.getElementById('insSimBtn');
     const res = document.getElementById('insResult');
     if (!API.isAuth()) { toast('Faça login para simular.', 'warn'); window.MobyaAuth?.showLogin(); return; }
@@ -825,7 +825,7 @@ window.Monetization = (() => {
     `;
   }
 
-  window.Monetization.runLogisticsSim = async function() {
+  async function runLogisticsSim() {
     const btn    = document.getElementById('logSimBtn');
     const result = document.getElementById('logResult');
     if (!API.isAuth()) { toast('Faça login para cotar.', 'warn'); window.MobyaAuth?.showLogin(); return; }
@@ -1082,29 +1082,28 @@ window.Monetization = (() => {
       }
     };
 
-    // Expõe utilitários
-    window.Monetization.searchProviders   = searchProviders;
-    window.Monetization.renderRevDash     = renderRevDash;
-    window.Monetization.renderInsurancePage = renderInsurancePage;
-    window.Monetization.renderLogisticsPage = renderLogisticsPage;
-
-    console.log('[MOBYA] 💰 Módulo de Monetização Quântica v1.0 carregado');
+    // Expõe utilitários console.log('[MOBYA] 💰 Módulo de Monetização Quântica v1.0 carregado');
   }
 
   // Auto-init REMOVIDO — init() é chamado pelo App.init() em app.js
 
   return {
-    // Exposto imediatamente para chamadas inline do HTML
-    filterByVertical:    filterByVertical,
-    openQuoteModal:      () => {},
-    closeQuoteModal:     () => {},
-    submitQuote:         () => {},
-    showRegisterPartner: () => {},
-    onVerticalChange:    () => {},
-    submitRegisterPartner:() => {},
-    runInsuranceSim:     () => {},
-    runLogisticsSim:     () => {},
-    searchProviders:     searchProviders,
+    filterByVertical,
+    openQuoteModal,
+    closeQuoteModal,
+    submitQuote,
+    showRegisterPartner,
+    onVerticalChange,
+    submitRegisterPartner,
+    runInsuranceSim,
+    runLogisticsSim,
+    searchProviders,
+    renderPartnersPage,
+    renderInsurancePage,
+    renderLogisticsPage,
+    renderRevenueDashboard,
+    renderRevDash,
+    init,
   };
 
 })();
