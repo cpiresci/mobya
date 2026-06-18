@@ -78,6 +78,7 @@ window.API = (() => {
     acceptQuote:      (id)     => patch(`/monetization/quotes/${id}/accept`, {}),
     completeQuote:    (id,d)   => patch(`/monetization/quotes/${id}/complete`, d||{}),
     commissionsMine:  (p={})   => get(`/monetization/commissions/mine?${new URLSearchParams(p)}`),
+    quotesProvider:   (p={})   => get(`/monetization/quotes/provider?${new URLSearchParams(p)}`),
     dashboard:        ()       => get('/monetization/dashboard'),
     simulateInsurance:(d)      => post('/monetization/insurance/simulate', d),
     quoteLogistics:   (d)      => post('/monetization/logistics/quote', d),
