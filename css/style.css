@@ -64,21 +64,25 @@ body::after{
   background:rgba(4,4,10,.92);backdrop-filter:blur(24px);
   border-bottom:1px solid var(--border);z-index:200;gap:16px;
 }
-.h-left{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.h-left{display:flex;align-items:center;gap:11px;flex-shrink:0}
+/* ── MOBYA brand mark (polígono SVG) ── */
 .logo-ico{
-  width:32px;height:32px;border-radius:8px;
-  background:linear-gradient(135deg,var(--q1),var(--neon));
-  display:flex;align-items:center;justify-content:center;font-size:1rem;
-  box-shadow:0 0 18px rgba(124,58,237,.4);
+  width:34px;height:34px;border-radius:0;background:none;
+  display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 0 10px rgba(124,58,237,.55));
+  animation:qcmOrbPulse 3.2s ease-in-out infinite;
 }
+.logo-ico .mobya-mark{width:100%;height:100%;display:block}
+.mobya-mark{overflow:visible}
 .logo-wrap{display:flex;flex-direction:column}
 .logo{
-  font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:5px;
+  font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:7px;
   background:linear-gradient(135deg,#fff,var(--q4),var(--neon));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;
+  filter:drop-shadow(0 0 10px rgba(168,85,247,.35));
 }
-.logo-sub{font-family:'JetBrains Mono',monospace;font-size:.48rem;letter-spacing:3px;
-          color:var(--q4);opacity:.8}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:.44rem;letter-spacing:4px;
+          color:var(--muted);text-transform:uppercase;opacity:.9;margin-top:1px}
 
 #nav{display:flex;gap:2px;align-items:center;flex:1;justify-content:center}
 .nb{
@@ -105,12 +109,13 @@ body::after{
 .btn-cta{
   background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
   padding:8px 18px;border-radius:6px;font-family:'Space Grotesk',sans-serif;
-  font-weight:600;font-size:.8rem;cursor:pointer;border:none;
+  font-weight:600;font-size:.8rem;letter-spacing:.3px;cursor:pointer;border:none;
   box-shadow:0 0 16px rgba(124,58,237,.3);transition:all .2s;
 }
 .btn-cta:hover{transform:translateY(-1px);box-shadow:0 0 24px rgba(124,58,237,.5)}
-.btn-menu{display:none;background:none;border:none;color:var(--muted);
-          font-size:1.2rem;cursor:pointer;padding:6px}
+.btn-menu{display:none;background:none;border:1px solid transparent;color:var(--muted);
+          font-size:1.2rem;cursor:pointer;padding:6px 9px;border-radius:6px;transition:all .15s}
+.btn-menu:hover{color:var(--q4);border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.08)}
 
 /* ─── LAYOUT ─────────────────────────────────────────────────── */
 .layout{display:flex;padding-top:var(--hh);min-height:100vh;position:relative;z-index:1}
@@ -500,25 +505,29 @@ body::after{
 /* ─── BOTTOM NAV ─────────────────────────────────────────────── */
 #bottom-nav{
   display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bnh);
-  background:rgba(4,4,10,.97);backdrop-filter:blur(24px);
-  border-top:1px solid var(--border);z-index:200;
-  padding:0 4px;padding-bottom:env(safe-area-inset-bottom);
+  background:linear-gradient(180deg,rgba(8,6,18,.9),rgba(4,4,10,.98));
+  backdrop-filter:blur(26px);
+  border-top:1px solid rgba(124,58,237,.28);
+  box-shadow:0 -1px 24px rgba(124,58,237,.18),0 -1px 0 rgba(0,245,255,.12);
+  z-index:200;padding:0 4px;padding-bottom:env(safe-area-inset-bottom);
 }
 .bn-wrap{display:flex;align-items:stretch;height:100%}
 .bn-item{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);
-  font-family:'Space Grotesk',sans-serif;font-size:.6rem;font-weight:500;letter-spacing:.5px;
+  gap:4px;cursor:pointer;background:none;border:none;color:var(--muted);
+  font-family:'Space Grotesk',sans-serif;font-size:.58rem;font-weight:600;letter-spacing:.4px;
   padding:6px 2px;transition:color .15s;position:relative;-webkit-tap-highlight-color:transparent;
 }
 .bn-item:active{opacity:.7}
-.bn-item.active{color:var(--q4)}
-.bn-item.active .bn-ico{filter:drop-shadow(0 0 6px var(--q3))}
-.bn-ico{font-size:1.3rem;line-height:1;transition:transform .15s}
+.bn-item.active{color:var(--neon)}
+.bn-item.active .bn-ico{filter:drop-shadow(0 0 8px var(--q3)) drop-shadow(0 0 4px var(--neon))}
+.bn-ico{font-size:1.3rem;line-height:1;transition:transform .15s;display:flex;align-items:center;justify-content:center}
+.bn-ico-mark{width:1.25rem;height:1.25rem}
+.bn-ico-mark .mobya-mark{width:100%;height:100%;display:block}
 .bn-item:active .bn-ico{transform:scale(.88)}
 .bn-sos{color:var(--red)}
 .bn-sos.active{color:var(--red)}
-.bn-sos .bn-ico{animation:epulse 2s infinite}
+.bn-sos .bn-ico{animation:epulse 2s infinite;filter:drop-shadow(0 0 6px rgba(244,63,94,.6))}
 .bn-dot{
   position:absolute;top:6px;right:calc(50% - 14px);width:7px;height:7px;
   border-radius:50%;background:var(--neon);box-shadow:0 0 6px var(--neon);display:none;
