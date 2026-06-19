@@ -260,6 +260,7 @@ window.App = (() => {
           clearTimeout(_backPressTimer);
           _backPressTimer = setTimeout(() => { _backPressedOnHome = false; }, 2000);
           if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 1800);
+          history.back();
           return;
         }
         _backPressedOnHome = false;
