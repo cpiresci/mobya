@@ -241,6 +241,19 @@ window.App = (() => {
 
     window.addEventListener('popstate', (ev) => {
       const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
+
+      // Se chegou na home e nao ha historico anterior, reempilha
+      // para impedir que o browser saia do app
+      if (page === 'home' || !ev.state) {
+        history.pushState({ page: 'home' }, '', '#home');
+        if (currentPage !== 'home') {
+          currentPage = 'home';
+          closeMenu();
+          window.renderPage('home');
+        }
+        return;
+      }
+
       const leaving = currentPage;
       currentPage = page;
       if (leaving === 'home' && page !== 'home') {
