@@ -245,9 +245,83 @@
   }
 
   // ══════════════════════════════════════════════════════════
-  // AÇÕES E LÓGICA
+  // CONSÓRCIO
   // ══════════════════════════════════════════════════════════
-  let _prazoAtual = 36;
+  function renderConsorcio() {
+    const el = main(); if (!el) return;
+    el.innerHTML = `
+<div class="px-extra">
+
+  <!-- HERO -->
+  <div class="px-hero px-hero--gold">
+    <div class="px-hero-icon">🤝</div>
+    <div>
+      <div class="px-hero-title">CONSÓRCIO DE VEÍCULOS</div>
+      <div class="px-hero-sub">Sem juros · Carta de crédito · Planeje sua compra</div>
+    </div>
+  </div>
+
+  <!-- SIMULADOR -->
+  <div class="px-card">
+    <div class="px-card-title">◈ SIMULE SUA CARTA DE CRÉDITO</div>
+    <div class="pm-form">
+      <div class="pm-field">
+        <label>Valor do veículo / carta desejada</label>
+        <input type="text" class="px-input" id="conValor" placeholder="R$ 0,00" oninput="PagesMon.fmtValorCon(this)">
+      </div>
+      <div class="pm-field">
+        <label>Prazo do grupo</label>
+        <div class="pm-prazo-btns">
+          ${[48,60,72,80].map(p=>`
+            <button class="pm-prazo-btn ${p===60?'active':''}" onclick="PagesMon.setPrazoCon(${p},this)">${p}x</button>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="pm-resultado" id="conResultado">
+      <div class="pm-res-row"><span>Taxa de administração</span><strong id="conTaxaAdm">16%</strong></div>
+      <div class="pm-res-row"><span>Custo total do grupo</span><strong id="conCustoTotal">—</strong></div>
+      <div class="pm-res-row pm-res-dest"><span>Parcela média estimada</span><strong id="conParcela">—</strong></div>
+    </div>
+    <button class="px-btn" style="margin-top:14px" onclick="PagesMon.simularConsorcio()">
+      🤝 SIMULAR CONSÓRCIO
+    </button>
+    <button class="px-btn px-btn--sm" style="margin-top:10px;width:100%" onclick="PagesMon.aderirConsorcio()">
+      🚀 SOLICITAR ADESÃO
+    </button>
+  </div>
+
+  <!-- COMO FUNCIONA -->
+  <div class="px-card-title" style="margin:24px 0 12px">COMO FUNCIONA</div>
+  <div class="px-grid2">
+    ${_finModal('📝','1. Adesão','Escolha o grupo e o valor da carta','Sem análise de crédito','Entrada de até 2 parcelas')}
+    ${_finModal('🎲','2. Contemplação','Sorteio mensal + lances','Lance livre ou fixo','Aumenta a chance de antecipar')}
+    ${_finModal('🚘','3. Compra','Use a carta em qualquer concessionária','0% juros','Só taxa de administração')}
+    ${_finModal('💳','4. Pagamento','Parcelas fixas até o fim do grupo','Sem IOF','Pode quitar antecipado')}
+  </div>
+
+  <!-- AVISO -->
+  <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:12px 16px;margin:20px 0;display:flex;gap:10px;align-items:flex-start">
+    <span style="font-size:1.1rem;line-height:1">ℹ️</span>
+    <span style="font-size:.78rem;color:var(--muted,#888);line-height:1.5">
+      Simulação estimada com taxa de administração de referência (16% sobre o valor da carta).
+      A contemplação não tem data garantida — depende de sorteio ou lance. Confirme taxas e prazos
+      exatos com a administradora antes de aderir.
+    </span>
+  </div>
+
+  <!-- ADMINISTRADORAS -->
+  <div class="px-card">
+    <div class="px-card-title">◈ ADMINISTRADORAS PARCEIRAS</div>
+    <div class="pm-parceiros">
+      ${['Porto Seguro Consórcio','Itaú Consórcio','Bradesco Consórcio','Embracon','Rodobens'].map(p=>`
+        <div class="pm-parceiro">${p}</div>`).join('')}
+    </div>
+  </div>
+
+</div>`;
+  }
+
+
 
   const PagesMon = {
 
@@ -463,6 +537,65 @@
         Toast?.show(e.message || 'Não foi possível enviar a proposta agora.', 'err');
       }
     },
+
+    // — CONSÓRCIO —
+    fmtValorCon(el) {
+      let v = el.value.replace(/\D/g,'');
+      if (!v) { el.value=''; return; }
+      v = (parseInt(v)/100).toFixed(2);
+      el.value = 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    },
+    _getValorCon() {
+      const elv = document.getElementById('conValor');
+      if (!elv||!elv.value) return 0;
+      return parseFloat(elv.value.replace(/[^\d,]/g,'').replace(',','.')) || 0;
+    },
+    setPrazoCon(p, btn) {
+      this._prazoCon = p;
+      btn.parentElement.querySelectorAll('.pm-prazo-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    },
+    _prazoCon: 60,
+    _lastConsorcio: null,
+    async simularConsorcio() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      const valor = this._getValorCon();
+      if (!valor) { Toast?.show('Informe o valor da carta de crédito','err'); return; }
+
+      Toast?.show('🤝 Calculando simulação...','info');
+      try {
+        // O backend já calcula o bloco "consorcio" dentro de /ai/financing-simulation
+        // (taxa adm 16%, sem juros) — reaproveitamos o mesmo endpoint determinístico.
+        const r = await API.ai.financing({ vehicleValue: valor, downPayment: 0, income: 0 });
+        const c = r.data?.consorcio;
+        if (!c) throw new Error('Resposta inválida do simulador.');
+        this._lastConsorcio = { valor, data: c };
+
+        const n = this._prazoCon;
+        document.getElementById('conTaxaAdm').textContent = c.adminFee;
+        document.getElementById('conCustoTotal').textContent = 'R$ ' + c.totalCost.toLocaleString('pt-BR');
+        document.getElementById('conParcela').textContent = 'R$ ' + Math.round(c.totalCost / n).toLocaleString('pt-BR');
+
+        Toast?.show('✅ Simulação de consórcio pronta!','ok');
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível simular o consórcio agora.', 'err');
+      }
+    },
+
+    async aderirConsorcio(administradora) {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        const valor = this._getValorCon() || this._lastConsorcio?.valor;
+        await API.monetization.createQuote({
+          vertical: 'CONSORCIO',
+          description: administradora ? `Adesão a consórcio junto à ${administradora}` : 'Adesão a consórcio de veículo',
+          estimatedAmount: valor || null,
+        });
+        Toast?.show('🤝 Solicitação de adesão enviada!','ok');
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível enviar a solicitação agora.', 'err');
+      }
+    },
   };
 
   window.PagesMon = PagesMon;
@@ -470,6 +603,7 @@
   // a app.js — por isso seguros/financiamento caíam no comingSoon).
   PagesMon.renderSeguros       = renderSeguros;
   PagesMon.renderFinanciamento = renderFinanciamento;
+  PagesMon.renderConsorcio     = renderConsorcio;
 
   // ══════════════════════════════════════════════════════════
   // CSS
