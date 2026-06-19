@@ -239,18 +239,25 @@ window.App = (() => {
       try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r,5000))]); } catch {}
     }
 
+    let lastBackAtHome = 0;
     window.addEventListener('popstate', (ev) => {
       const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
 
-      // Se chegou na home e nao ha historico anterior, reempilha
-      // para impedir que o browser saia do app
       if (page === 'home' || !ev.state) {
-        history.pushState({ page: 'home' }, '', '#home');
         if (currentPage !== 'home') {
+          history.pushState({ page: 'home' }, '', '#home');
           currentPage = 'home';
           closeMenu();
           window.renderPage('home');
+          return;
         }
+        const now = Date.now();
+        if (now - lastBackAtHome < 2000) {
+          return;
+        }
+        lastBackAtHome = now;
+        history.pushState({ page: 'home' }, '', '#home');
+        if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 2000);
         return;
       }
 
