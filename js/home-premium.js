@@ -594,7 +594,7 @@
       // Providers
       const providers = provR?.data || [];
       const statProv = document.getElementById('hpStatProviders');
-      if (statProv && providers.length) statProv.textContent = providers.length;
+      /* agentes NEXUS fixo — nao sobrescrever */
 
       providers.forEach(p => {
         const elp = document.getElementById(`hpProv_${p.name.toLowerCase()}`);
