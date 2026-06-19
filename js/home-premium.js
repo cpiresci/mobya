@@ -235,7 +235,7 @@
   ];
 
   function svcOrb(svc) {
-    const action = svc.page === 'chat' ? 'HomePremium.focusChat()' : `renderPage('${svc.page}')`;
+    const action = svc.page === 'chat' ? 'HomePremium.focusChat()' : `App.navigate('${svc.page}')`;
     return `
       <div class="hp-svc-item" onclick="${action}">
         <div class="hp-orb ${svc.cls}">
@@ -282,7 +282,7 @@
         </section>
 
         <!-- SOS QUICK CALL -->
-        <div class="hp-sos" onclick="renderPage('emergencia')">
+        <div class="hp-sos" onclick="App.navigate('emergencia')">
           <div class="hp-sos-row">
             <div class="hp-sos-orb">${icon('reboque')}</div>
             <div class="hp-sos-info">
@@ -357,7 +357,7 @@
         <section class="hp-sec">
           <div class="hp-sec-hd">
             <span class="hp-sec-ttl">⬡ MELHORES OFERTAS</span>
-            <button class="hp-sec-lnk" onclick="renderPage('classificados')">Ver todos →</button>
+            <button class="hp-sec-lnk" onclick="App.navigate('classificados')">Ver todos →</button>
           </div>
           <div class="hp-cars-scroll" id="hpCarsScroll">
             ${'<div style="width:210px;height:220px;background:var(--s2);border:1px solid var(--border);border-radius:14px;flex-shrink:0;animation:pulse 2s infinite"></div>'.repeat(4)}
@@ -371,7 +371,7 @@
           </div>
 
           <div class="hp-cats-big">
-            <div class="hp-cat-big" onclick="renderPage('classificados')">
+            <div class="hp-cat-big" onclick="App.navigate('classificados')">
               <div class="hp-cat-big-bg" style="background:linear-gradient(135deg,#1e1b4b,#5b21b6)"></div>
               <div class="hp-cat-big-shine"></div>
               <div class="hp-cat-big-grad"></div>
@@ -393,7 +393,7 @@
               </div>
             </div>
 
-            <div class="hp-cat-big" onclick="renderPage('classificados')">
+            <div class="hp-cat-big" onclick="App.navigate('classificados')">
               <div class="hp-cat-big-bg" style="background:linear-gradient(135deg,#164e63,#0891b2)"></div>
               <div class="hp-cat-big-shine"></div>
               <div class="hp-cat-big-grad"></div>
@@ -426,11 +426,11 @@
               <div class="hp-cat-sm-orb">${icon('eletronicos')}</div>
               <span class="hp-cat-sm-lbl">Eletrônicos</span>
             </div>
-            <div class="hp-cat-sm hp-oc-gold" onclick="renderPage('pecas')">
+            <div class="hp-cat-sm hp-oc-gold" onclick="App.navigate('pecas')">
               <div class="hp-cat-sm-orb">${icon('pecas')}</div>
               <span class="hp-cat-sm-lbl">Peças</span>
             </div>
-            <div class="hp-cat-sm hp-oc-indigo" onclick="renderPage('vistoria')">
+            <div class="hp-cat-sm hp-oc-indigo" onclick="App.navigate('vistoria')">
               <div class="hp-cat-sm-orb">${icon('vistoria')}</div>
               <span class="hp-cat-sm-lbl">Vistoria</span>
             </div>
@@ -444,19 +444,19 @@
             <button class="hp-tab" data-hp-tab="pop">Pesquisas Populares</button>
           </div>
           <div class="hp-pop-list" id="hpTabCats">
-            <div class="hp-pop-row" onclick="renderPage('classificados')"><div class="hp-pop-n hot">1</div><span class="hp-pop-txt">Carros Usados e Seminovos</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('classificados')"><div class="hp-pop-n hot">1</div><span class="hp-pop-txt">Carros Usados e Seminovos</span><span class="hp-pop-arr">›</span></div>
             <div class="hp-pop-row" onclick="comingSoon('MOTOS','🏍️')"><div class="hp-pop-n hot">2</div><span class="hp-pop-txt">Motos</span><span class="hp-pop-arr">›</span></div>
-            <div class="hp-pop-row" onclick="renderPage('pecas')"><div class="hp-pop-n hot">3</div><span class="hp-pop-txt">Peças e Acessórios Auto</span><span class="hp-pop-arr">›</span></div>
-            <div class="hp-pop-row" onclick="renderPage('aluguel')"><div class="hp-pop-n">4</div><span class="hp-pop-txt">Aluguel de Veículos</span><span class="hp-pop-arr">›</span></div>
-            <div class="hp-pop-row" onclick="renderPage('seguros')"><div class="hp-pop-n">5</div><span class="hp-pop-txt">Seguros</span><span class="hp-pop-arr">›</span></div>
-            <div class="hp-pop-row" onclick="renderPage('financiamento')"><div class="hp-pop-n">6</div><span class="hp-pop-txt">Financiamento</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('pecas')"><div class="hp-pop-n hot">3</div><span class="hp-pop-txt">Peças e Acessórios Auto</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('aluguel')"><div class="hp-pop-n">4</div><span class="hp-pop-txt">Aluguel de Veículos</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('seguros')"><div class="hp-pop-n">5</div><span class="hp-pop-txt">Seguros</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('financiamento')"><div class="hp-pop-n">6</div><span class="hp-pop-txt">Financiamento</span><span class="hp-pop-arr">›</span></div>
           </div>
           <div class="hp-pop-list" id="hpTabPop" style="display:none">
-            <div class="hp-pop-row" onclick="renderPage('classificados')"><div class="hp-pop-n hot">1</div><span class="hp-pop-txt">HB20 2022 2023</span><span class="hp-pop-arr">🔥</span></div>
-            <div class="hp-pop-row" onclick="renderPage('classificados')"><div class="hp-pop-n hot">2</div><span class="hp-pop-txt">Onix Seminovo</span><span class="hp-pop-arr">🔥</span></div>
-            <div class="hp-pop-row" onclick="renderPage('reboque')"><div class="hp-pop-n hot">3</div><span class="hp-pop-txt">Reboque Urgente</span><span class="hp-pop-arr">🚨</span></div>
-            <div class="hp-pop-row" onclick="renderPage('servicos')"><div class="hp-pop-n">4</div><span class="hp-pop-txt">Mecânico 24h</span><span class="hp-pop-arr">›</span></div>
-            <div class="hp-pop-row" onclick="renderPage('financiamento')"><div class="hp-pop-n">5</div><span class="hp-pop-txt">Financiamento Auto</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('classificados')"><div class="hp-pop-n hot">1</div><span class="hp-pop-txt">HB20 2022 2023</span><span class="hp-pop-arr">🔥</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('classificados')"><div class="hp-pop-n hot">2</div><span class="hp-pop-txt">Onix Seminovo</span><span class="hp-pop-arr">🔥</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('reboque')"><div class="hp-pop-n hot">3</div><span class="hp-pop-txt">Reboque Urgente</span><span class="hp-pop-arr">🚨</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('servicos')"><div class="hp-pop-n">4</div><span class="hp-pop-txt">Mecânico 24h</span><span class="hp-pop-arr">›</span></div>
+            <div class="hp-pop-row" onclick="App.navigate('financiamento')"><div class="hp-pop-n">5</div><span class="hp-pop-txt">Financiamento Auto</span><span class="hp-pop-arr">›</span></div>
           </div>
         </section>
 
@@ -506,7 +506,7 @@
       input.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
           window.__mobyaSearchQuery = input.value.trim();
-          renderPage('classificados');
+          App.navigate('classificados');
         }
       });
     }
@@ -649,7 +649,7 @@
   // ── FOCO NO CHAT NEXUS EMBUTIDO (substitui navegação pra /chat) ─
   function focusChat() {
     const chatEl = document.getElementById('homeChatMega');
-    if (!chatEl) { renderPage('chat'); return; } // fallback de segurança
+    if (!chatEl) { App.navigate('chat'); return; } // fallback de segurança
 
     chatEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 

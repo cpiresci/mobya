@@ -412,7 +412,7 @@ window.Pages = (() => {
   async function renderListing(id) {
     const el = main();
     if (!el) return;
-    el.innerHTML = `<button onclick="renderPage('classificados')" style="
+    el.innerHTML = `<button onclick="App.navigate('classificados')" style="
       background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:20px">
       ← Voltar aos classificados</button>${skeleton(2)}`;
 
@@ -422,7 +422,7 @@ window.Pages = (() => {
       const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
 
       el.innerHTML = `
-        <button onclick="renderPage('classificados')" style="
+        <button onclick="App.navigate('classificados')" style="
           background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:20px">
           ← Voltar aos classificados</button>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px;align-items:start">
@@ -480,7 +480,7 @@ window.Pages = (() => {
                   text-align:center;font-weight:700;font-size:.84rem;text-decoration:none;margin-bottom:10px">
                   📱 WHATSAPP
                 </a>`:''}
-              <button onclick="renderPage('agentes')" style="
+              <button onclick="App.navigate('agentes')" style="
                 width:100%;background:rgba(124,58,237,.12);color:var(--q4);
                 border:1px solid rgba(124,58,237,.25);padding:10px;border-radius:8px;
                 font-weight:600;font-size:.82rem;cursor:pointer">
@@ -855,7 +855,7 @@ window.Pages = (() => {
             <div style="font-size:2rem;margin-bottom:10px">${d.icon}</div>
             <div style="font-weight:600;font-size:.93rem;margin-bottom:6px">${d.title}</div>
             <div style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:14px">${d.desc}</div>
-            <button onclick="renderPage('agentes');setTimeout(()=>Chat.selectAgent('${d.agent}',document.querySelector('.achip')),200)" style="
+            <button onclick="App.navigate('agentes');setTimeout(()=>Chat.selectAgent('${d.agent}',document.querySelector('.achip')),200)" style="
               background:rgba(124,58,237,.1);color:var(--q4);border:1px solid rgba(124,58,237,.2);
               padding:8px 16px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer">
               🤖 ${d.btn}
@@ -932,7 +932,7 @@ window.Pages = (() => {
                   <div style="color:var(--muted);font-size:.76rem">${escHtml((q.description||'').slice(0,60))}…</div>
                 </div>`).join('')
               : `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
-                  Nenhuma cotação ainda. <button onclick="renderPage('monetizacao')" style="background:none;
+                  Nenhuma cotação ainda. <button onclick="App.navigate('monetizacao')" style="background:none;
                     color:var(--green);border:none;cursor:pointer;font-weight:600">Solicitar agora</button></div>`}
           </div>
         </div>

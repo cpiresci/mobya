@@ -1324,12 +1324,4 @@ ${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
     checkPayment,
   });
 
-  // Registra a page no roteador
-  const origRender=window.renderPage;
-  window.renderPage=function(page){
-    if(page==='painel-prestador'){
-      document.querySelectorAll('.sb-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
-      renderProviderDashboard();
-    } else if(origRender){ origRender(page); }
-  };
 })();
