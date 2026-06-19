@@ -1653,57 +1653,6 @@ window.Pages = (() => {
     if (descInput  && phs[type]) descInput.placeholder  = phs[type].desc;
   };
 
-  // ═══════════════════════════════════════════════════════════
-  // MECÂNICO (Emergência 24H)
-  // ═══════════════════════════════════════════════════════════
-  async function renderMecanico() {
-    await renderServicos();
-    const el = main();
-    if (!el) return;
-
-    el.insertAdjacentHTML('afterbegin', `
-      ${pageHeader('MECÂNICO DE EMERGÊNCIA','Oficinas próximas agora · Triagem rápida por IA','var(--red),var(--gold)')}
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px">
-        <label style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
-          letter-spacing:1px;display:block;margin-bottom:8px">QUAL O PROBLEMA? (TRIAGEM NEXUS-SV)</label>
-        <textarea id="mecSintoma" rows="2" placeholder="Ex: carro não pega, barulho no motor, fumaça branca..." style="
-          width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
-          padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical;margin-bottom:10px"></textarea>
-        <button id="mecBtnTriagem" onclick="Pages.triagemMecanico()" style="
-          background:linear-gradient(135deg,var(--red),var(--gold));color:#fff;font-weight:700;
-          padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem">
-          🔧 TRIAGEM RÁPIDA
-        </button>
-        <div id="mecTriagemResult" style="margin-top:14px"></div>
-      </div>
-    `);
-
-    const cat = document.getElementById('svCat');
-    if (cat) cat.value = 'mecanica';
-    searchServicos();
-  }
-
-  triagemMecanico = async function() {
-    if (!API.isAuth()) { App.toast('Faça login para usar a triagem.','warn'); window.MobyaAuth?.showLogin(); return; }
-    const sintoma = document.getElementById('mecSintoma')?.value?.trim();
-    if (!sintoma) { App.toast('Descreva o problema.','warn'); return; }
-    const btn = document.getElementById('mecBtnTriagem');
-    const res = document.getElementById('mecTriagemResult');
-    if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
-    res.innerHTML = `<div style="font-size:.78rem;color:var(--muted)">⟳ NEXUS-SV analisando...</div>`;
-    try {
-      const r = await API.ai.chat({ agentType: 'servico', message: sintoma });
-      const d = r.data || r;
-      res.innerHTML = `<div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;
-        padding:14px;font-size:.82rem;color:var(--text);white-space:pre-wrap;line-height:1.5">${d.reply || ''}</div>`;
-    } catch (e) {
-      res.innerHTML = `<div style="color:var(--red);font-size:.8rem">⚠️ ${e.message}</div>`;
-    } finally {
-      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
-    }
-  };
-
-
   return {
     renderHome,
     renderClassificados,
@@ -1727,8 +1676,6 @@ window.Pages = (() => {
     cotarPeca,
     solicitarPeca,
     _updateListingPlaceholder,
-    renderMecanico,
-    triagemMecanico,
   };
 
 })();
