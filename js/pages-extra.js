@@ -312,18 +312,62 @@
         Toast?.show(e.message || 'Não foi possível acionar o chaveiro agora.', 'err');
       }
     },
-    buscarVeiculos() {
+    async buscarVeiculos() {
       const i = document.getElementById('aluguelIn')?.value;
       const o = document.getElementById('aluguelOut')?.value;
       if (!i||!o||i>=o) { if(typeof Toast!=='undefined') Toast.show('Selecione datas válidas','err'); return; }
-      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando disponibilidade...','info');
-      setTimeout(()=>{ if(typeof Toast!=='undefined') Toast.show('✅ 12 veículos disponíveis no período!','ok'); },1200);
+      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando locadoras disponíveis...','info');
+      try {
+        const r = await API.monetization.providers({ vertical:'RENTAL', limit:10 });
+        const frota = document.getElementById('aluguelFrota');
+        if (!frota) return;
+
+        const dias = Math.max(1, Math.round((new Date(o) - new Date(i)) / 86400000));
+
+        if (r.data?.providers?.length) {
+          frota.innerHTML = r.data.providers.map(p => `
+            <div class="px-car">
+              <div class="px-car-icon">🚗</div>
+              <div class="px-car-info">
+                <div class="px-car-cat">${p.category || 'Locadora'}</div>
+                <div class="px-car-name">${p.name}</div>
+                <div class="px-car-meta">⭐ ${p.ratingAvg?.toFixed(1) || '—'} · 📍 ${p.city||''}${p.state?', '+p.state:''} · ${dias} dia(s)</div>
+              </div>
+              <div class="px-car-right">
+                <button class="px-btn px-btn--sm" onclick="PagesExtra.reservarCarro('${p.name.replace(/'/g,"\\'")}','${p.id}',${dias})">🗝️ Reservar</button>
+              </div>
+            </div>`).join('');
+          Toast?.show(`✅ ${r.data.providers.length} locadoras encontradas!`,'ok');
+        } else {
+          frota.innerHTML = `<div style="color:var(--muted,#888);font-size:.84rem;padding:20px 0">
+            Nenhuma locadora parceira nesta região ainda.
+            <button class="px-btn px-btn--sm" style="margin-top:10px" onclick="App.navigate('monetizacao')">
+              Cadastrar minha locadora
+            </button>
+          </div>`;
+          Toast?.show('Nenhuma locadora parceira por aqui ainda.','info');
+        }
+      } catch(e) {
+        Toast?.show(e.message || 'Erro ao buscar locadoras.','err');
+      }
     },
-    reservarCarro(cat) {
+    async reservarCarro(nome, providerId, dias) {
       if (!API.isAuth()) {
         window.MobyaAuth?.showLogin(); return;
       }
-      if (typeof Toast !== 'undefined') Toast.show(`🗝️ Reserva de ${cat} iniciada! Complete no checkout.`,'ok');
+      const i = document.getElementById('aluguelIn')?.value;
+      const o = document.getElementById('aluguelOut')?.value;
+      try {
+        await API.monetization.createQuote({
+          vertical: 'RENTAL',
+          providerId: providerId || null,
+          description: `Reserva de veículo em ${nome} — ${dias||''} dia(s) (${i||''} → ${o||''})`,
+          scheduledAt: i ? new Date(i).toISOString() : null,
+        });
+        Toast?.show(`🗝️ Reserva enviada para ${nome}! A locadora entrará em contato.`,'ok');
+      } catch(e) {
+        Toast?.show(e.message || 'Erro ao enviar reserva.','err');
+      }
     },
   };
   window.PagesExtra = PagesExtra;
