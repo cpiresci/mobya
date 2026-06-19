@@ -155,11 +155,11 @@ window.App = (() => {
     currentPage = page;
     if (param !== undefined) window.__mobyaListingId = param;
     if (_firstNav) {
-      history.replaceState({ page: 'home' }, '', '#home');
-      history.pushState({ page: 'home' }, '', '#home');
+      history.replaceState({ page }, '', `#${page}`);
       _firstNav = false;
+    } else {
+      history.pushState({ page }, '', `#${page}`);
     }
-    history.pushState({ page }, '', `#${page}`);
     closeMenu();
     if (leaving === 'home' && page !== 'home') {
       if (typeof HomeChat !== 'undefined' && HomeChat.reset) HomeChat.reset();
@@ -254,12 +254,13 @@ window.App = (() => {
           window.renderPage('home');
           return;
         }
+        // ja em home - segurar saida
         if (!_backPressedOnHome) {
           _backPressedOnHome = true;
           clearTimeout(_backPressTimer);
           _backPressTimer = setTimeout(() => { _backPressedOnHome = false; }, 2000);
           if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 1800);
-          history.go(1);
+          history.pushState({ page: 'home' }, '', '#home');
           return;
         }
         _backPressedOnHome = false;
