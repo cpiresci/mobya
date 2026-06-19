@@ -350,7 +350,7 @@
         <div class="hp-stats">
           <div class="hp-stat s1"><div class="hp-stat-v" id="hpStatListings">…</div><div class="hp-stat-l">Anúncios ativos</div></div>
           <div class="hp-stat s2"><div class="hp-stat-v" id="hpStatProviders">9</div><div class="hp-stat-l">Agentes NEXUS</div></div>
-          <div class="hp-stat s3"><div class="hp-stat-v">&lt;8min</div><div class="hp-stat-l">Guincho médio</div></div>
+          <div class="hp-stat s3"><div class="hp-stat-v">&lt;15min</div><div class="hp-stat-l">Guincho médio</div></div>
         </div>
 
         <!-- DESTAQUES — ofertas reais via API -->
