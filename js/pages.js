@@ -739,6 +739,15 @@ window.Pages = (() => {
     if (!el) return;
     el.innerHTML = `
       ${pageHeader('VISTORIA & LAUDO IA','Análise anti-fraude · 27 vetores de risco','var(--neon),var(--q4)')}
+      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:1.1rem;line-height:1">ℹ️</span>
+        <span style="font-size:.78rem;color:var(--muted);line-height:1.5">
+          Esta é uma <strong style="color:var(--text)">análise de risco gerada por IA</strong> a partir dos dados que você informa —
+          não é um laudo técnico oficial, não inspeciona o veículo fisicamente e não consulta bases de
+          sinistro/leilão em tempo real. Para decisão de compra, complemente com uma
+          <strong style="color:var(--text)">vistoria cautelar presencial</strong>.
+        </span>
+      </div>
       <div style="display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start">
         <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:24px">
           <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
@@ -842,6 +851,14 @@ window.Pages = (() => {
     if (!el) return;
     el.innerHTML = `
       ${pageHeader('DOCUMENTAÇÃO AUTOMOTIVA','DETRAN · IPVA · Licenciamento · Transferência','var(--q4),var(--green)')}
+      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:1.1rem;line-height:1">ℹ️</span>
+        <span style="font-size:.78rem;color:var(--muted);line-height:1.5">
+          As respostas aqui são geradas por <strong style="color:var(--text)">inteligência artificial</strong> com base em conhecimento geral —
+          não consultam diretamente DETRAN, Receita Federal ou SISCOMEX. Use como orientação inicial e
+          <strong style="color:var(--text)">sempre confirme valores, prazos e exigências no site oficial do seu estado</strong> antes de agir.
+        </span>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:28px">
         ${[
           { icon:'📋', title:'Transferência de Veículo', desc:'Documentos, taxas DETRAN, prazo legal de 30 dias.', btn:'Consultar IA', agent:'compra' },
