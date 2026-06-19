@@ -95,7 +95,7 @@ const BASE_PAGES = {
   seguros:       () => (typeof PagesMon !=='undefined' ? PagesMon.renderSeguros()     : comingSoon('SEGUROS','🛡️')),
   consorcio:     () => (typeof PagesMon !=='undefined' ? PagesMon.renderConsorcio()   : comingSoon('CONSÓRCIOS','🤝')),
   financiamento: () => (typeof PagesMon !=='undefined' ? PagesMon.renderFinanciamento(): comingSoon('FINANCIAMENTO','💰')),
-  mecanico:      () => Pages.renderMecanico(),
+  mecanico:      () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderMecanico() : comingSoon('MECÂNICO DE EMERGÊNCIA','🔧')),
   'meus-anuncios':    () => Pages.renderDashboard(),
   monetizacao:        () => (typeof Monetization!=='undefined'&&Monetization.renderPartnersPage   ? Monetization.renderPartnersPage()    : comingSoon('REDE DE PARCEIROS','🤝')),
   'painel-prestador': () => (typeof Monetization!=='undefined'&&Monetization.renderProviderDashboard ? Monetization.renderProviderDashboard() : comingSoon('PAINEL DO PRESTADOR','🛠️')),
@@ -113,7 +113,7 @@ const BASE_PAGES = {
   },
   'painel-receita': () => (typeof Monetization!=='undefined'&&Monetization.renderRevenueDashboard  ? Monetization.renderRevenueDashboard()  : comingSoon('PAINEL DE RECEITA','📊')),
   'seguros-sim':    () => (typeof Monetization!=='undefined'&&Monetization.renderInsurancePage      ? Monetization.renderInsurancePage()      : comingSoon('SEGUROS IA','🛡️')),
-  fretes:           () => (typeof Monetization!=='undefined'&&Monetization.renderLogisticsPage      ? Monetization.renderLogisticsPage()      : comingSoon('FRETES & REBOQUES','🚛')),
+  fretes:           () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderFrete() : comingSoon('FRETE & TRANSPORTE','🚚')),
 };
 
 // ── Sync total de navegação ────────────────────────────────────
