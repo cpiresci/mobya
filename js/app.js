@@ -156,6 +156,7 @@ window.App = (() => {
     if (param !== undefined) window.__mobyaListingId = param;
     if (_firstNav) {
       history.replaceState({ page }, '', `#${page}`);
+      history.pushState({ page }, '', `#${page}`);
       _firstNav = false;
     } else {
       history.pushState({ page }, '', `#${page}`);
@@ -239,7 +240,6 @@ window.App = (() => {
       try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r,5000))]); } catch {}
     }
 
-    let lastBackAtHome = 0;
     window.addEventListener('popstate', (ev) => {
       const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
 
@@ -251,13 +251,7 @@ window.App = (() => {
           window.renderPage('home');
           return;
         }
-        const now = Date.now();
-        if (now - lastBackAtHome < 2000) {
-          return;
-        }
-        lastBackAtHome = now;
-        history.pushState({ page: 'home' }, '', '#home');
-        if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 2000);
+        if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 1500);
         return;
       }
 
