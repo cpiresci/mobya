@@ -189,6 +189,19 @@
       <path d="M22 15L18 25H21L17 35H18L22 24H19L22 15Z" fill="#10b981"/>
       <defs><linearGradient id="hpPhone" x1="8" y1="6" x2="32" y2="42" gradientUnits="userSpaceOnUse"><stop stop-color="#064e3b"/><stop offset="1" stop-color="#059669"/></linearGradient></defs>
     </svg>`,
+    consorcio: `<svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+      <circle cx="16" cy="16" r="6" fill="url(#hpCsP1)"/>
+      <circle cx="32" cy="16" r="6" fill="url(#hpCsP2)"/>
+      <circle cx="24" cy="27" r="6.5" fill="url(#hpCsP3)"/>
+      <path d="M10 39C10 33.5 14.3 30 19.5 30H28.5C33.7 30 38 33.5 38 39" stroke="url(#hpCsP3)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M16 30V35C16 37.5 17.8 39.5 22 40" stroke="url(#hpCsP1)" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/>
+      <path d="M32 30V35C32 37.5 30.2 39.5 26 40" stroke="url(#hpCsP2)" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/>
+      <defs>
+        <linearGradient id="hpCsP1" x1="10" y1="10" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+        <linearGradient id="hpCsP2" x1="26" y1="10" x2="38" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#6d28d9"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+        <linearGradient id="hpCsP3" x1="17.5" y1="20.5" x2="30.5" y2="33.5" gradientUnits="userSpaceOnUse"><stop stop-color="#5b21b6"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+      </defs>
+    </svg>`,
   };
 
   // Os ícones acima usam IDs fixos em <defs> (gradientes). Como o mesmo ícone
@@ -393,38 +406,39 @@
               </div>
             </div>
 
-            <div class="hp-cat-big" onclick="App.navigate('classificados')">
-              <div class="hp-cat-big-bg" style="background:linear-gradient(135deg,#164e63,#0891b2)"></div>
+            <div class="hp-cat-big" onclick="comingSoon('MOTOS','🏍️')">
+              <div class="hp-cat-big-bg" style="background:linear-gradient(135deg,#7c2d12,#ea580c)"></div>
               <div class="hp-cat-big-shine"></div>
               <div class="hp-cat-big-grad"></div>
               <div class="hp-cat-big-icon">
-                <svg width="52" height="50" viewBox="0 0 70 60" fill="none">
-                  <path d="M35 8L58 28H54V52H16V28H12L35 8Z" fill="url(#bigHse)"/>
-                  <path d="M35 8L58 28H12L35 8Z" fill="url(#bigRoof)"/>
-                  <rect x="29" y="36" width="12" height="16" rx="6" fill="rgba(0,245,255,.4)"/>
-                  <rect x="17" y="33" width="9" height="7" rx="1.5" fill="rgba(0,245,255,.35)"/>
-                  <rect x="44" y="33" width="9" height="7" rx="1.5" fill="rgba(0,245,255,.35)"/>
-                  <defs><linearGradient id="bigHse" x1="16" y1="8" x2="54" y2="52" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#0c4a6e"/><stop offset="1" stop-color="#0891b2"/></linearGradient>
-                  <linearGradient id="bigRoof" x1="12" y1="8" x2="58" y2="28" gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#164e63"/><stop offset="1" stop-color="#0e7490"/></linearGradient></defs>
+                <svg width="58" height="50" viewBox="0 0 70 60" fill="none">
+                  <path d="M14 38C14 33 17 27 24 26L34 25L42 28L48 34L48 42H12C12 41 13 39 14 38Z" fill="url(#bigMoto)"/>
+                  <path d="M28 21C28 18 31 16 34 16C37 16 40 18 40 21V26H28V21Z" fill="url(#bigTank)"/>
+                  <circle cx="16" cy="44" r="7" fill="#0d0d20" stroke="#fb923c" stroke-width="2.2"/>
+                  <circle cx="16" cy="44" r="3.4" fill="#fb923c"/>
+                  <circle cx="46" cy="44" r="7" fill="#0d0d20" stroke="#fb923c" stroke-width="2.2"/>
+                  <circle cx="46" cy="44" r="3.4" fill="#fb923c"/>
+                  <defs><linearGradient id="bigMoto" x1="12" y1="25" x2="48" y2="42" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#9a3412"/><stop offset="1" stop-color="#fb923c"/></linearGradient>
+                  <linearGradient id="bigTank" x1="28" y1="16" x2="40" y2="26" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#7c2d12"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs>
                 </svg>
               </div>
               <div class="hp-cat-big-label">
-                <div class="hp-cat-big-name">Imóveis</div>
+                <div class="hp-cat-big-name">Motos</div>
                 <div class="hp-cat-big-count">em breve</div>
               </div>
             </div>
           </div>
 
           <div class="hp-cats-sm">
-            <div class="hp-cat-sm hp-oc-orange" onclick="comingSoon('MOTOS','🏍️')">
-              <div class="hp-cat-sm-orb">${icon('motos')}</div>
-              <span class="hp-cat-sm-lbl">Motos</span>
+            <div class="hp-cat-sm hp-oc-blue" onclick="comingSoon('SEGURO AUTO','🛡️')">
+              <div class="hp-cat-sm-orb">${icon('seguro')}</div>
+              <span class="hp-cat-sm-lbl">Seguro Auto</span>
             </div>
-            <div class="hp-cat-sm hp-oc-green" onclick="comingSoon('ELETRÔNICOS','📱')">
-              <div class="hp-cat-sm-orb">${icon('eletronicos')}</div>
-              <span class="hp-cat-sm-lbl">Eletrônicos</span>
+            <div class="hp-cat-sm hp-oc-purple" onclick="comingSoon('CONSÓRCIO','🤝')">
+              <div class="hp-cat-sm-orb">${icon('consorcio')}</div>
+              <span class="hp-cat-sm-lbl">Consórcio</span>
             </div>
             <div class="hp-cat-sm hp-oc-gold" onclick="App.navigate('pecas')">
               <div class="hp-cat-sm-orb">${icon('pecas')}</div>
