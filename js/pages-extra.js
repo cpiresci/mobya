@@ -163,6 +163,147 @@
     </div>`;
   }
 
+  // ── FRETE (EMERGÊNCIA 24H) ──────────────────────────────────
+  function renderFrete() {
+    const el = main(); if (!el) return;
+    el.innerHTML = `
+<div class="px-extra">
+
+  <div class="px-hero px-hero--red">
+    <div class="px-hero-icon">🚚</div>
+    <div>
+      <div class="px-hero-title">FRETE & TRANSPORTE</div>
+      <div class="px-hero-sub">Carga, mudança e socorro de veículo · 24h</div>
+    </div>
+    <div class="px-badge px-badge--live">● AO VIVO</div>
+  </div>
+
+  <button class="px-btn-sos" onclick="PagesExtra.solicitarFrete()">
+    🚨 SOLICITAR FRETE AGORA
+  </button>
+
+  <div class="px-card">
+    <div class="px-card-title">◈ TRANSPORTADORES DISPONÍVEIS</div>
+    <div class="px-grid3" id="freteDrivers">
+      ${_freteCards()}
+    </div>
+  </div>
+
+  <div class="px-card-title" style="margin:24px 0 12px">NOSSOS SERVIÇOS</div>
+  <div class="px-grid2">
+    ${_serviceCard('🚚','Frete de Veículo','Transporte em cegonha/plataforma','R$ 280','fretes')}
+    ${_serviceCard('📦','Mudança de Peças','Entrega de auto peças','R$ 60','fretes')}
+    ${_serviceCard('🏍️','Frete de Moto','Transporte de motocicletas','R$ 140','fretes')}
+    ${_serviceCard('🛻','Carga Pesada','Caminhões e implementos','R$ 450','fretes')}
+  </div>
+
+  <div class="px-card" id="freteTracking" style="display:none">
+    <div class="px-card-title">◈ SEU FRETE</div>
+    <div class="px-tracking">
+      <div class="px-track-step px-track-done">✓ Solicitação recebida</div>
+      <div class="px-track-step px-track-active" id="frStep2">⟳ Transportador a caminho</div>
+      <div class="px-track-step" id="frStep3">○ Chegada ao local</div>
+      <div class="px-track-step" id="frStep4">○ Serviço concluído</div>
+    </div>
+    <div class="px-eta" id="freteETA">Chegada estimada: <strong>25 min</strong></div>
+  </div>
+
+  <div class="px-card">
+    <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
+    ${_review('Marcelo T.','⭐⭐⭐⭐⭐','Transportou minha moto sem nenhum arranhão.','3h atrás')}
+    ${_review('Juliana K.','⭐⭐⭐⭐⭐','Chegou rápido e o preço foi justo.','ontem')}
+  </div>
+
+</div>`;
+  }
+
+  function _freteCards() {
+    const drivers = [
+      {name:'Carlos Frete', dist:'2,0 km', eta:'15 min', rating:'4.8', status:'livre'},
+      {name:'Transp. Lima', dist:'4,5 km', eta:'24 min', rating:'4.7', status:'livre'},
+      {name:'Rota Express', dist:'5,8 km', eta:'30 min', rating:'4.9', status:'ocupado'},
+    ];
+    return drivers.map(d => `
+      <div class="px-driver ${d.status==='ocupado'?'px-driver--busy':''}">
+        <div class="px-driver-avatar">🚚</div>
+        <div class="px-driver-name">${d.name}</div>
+        <div class="px-driver-info">${d.dist} · ${d.eta}</div>
+        <div class="px-driver-rating">★ ${d.rating}</div>
+        <div class="px-driver-status ${d.status==='livre'?'px-status-free':'px-status-busy'}">${d.status==='livre'?'● Livre':'● Ocupado'}</div>
+      </div>`).join('');
+  }
+
+  // ── MECÂNICO (EMERGÊNCIA 24H) ───────────────────────────────
+  function renderMecanico() {
+    const el = main(); if (!el) return;
+    el.innerHTML = `
+<div class="px-extra">
+
+  <div class="px-hero px-hero--red">
+    <div class="px-hero-icon">🔧</div>
+    <div>
+      <div class="px-hero-title">MECÂNICO DE EMERGÊNCIA</div>
+      <div class="px-hero-sub">Pane no local ou em rota · Atendimento 24h</div>
+    </div>
+    <div class="px-badge px-badge--live">● AO VIVO</div>
+  </div>
+
+  <button class="px-btn-sos" onclick="PagesExtra.solicitarMecanico()">
+    🚨 SOLICITAR MECÂNICO AGORA
+  </button>
+
+  <div class="px-card">
+    <div class="px-card-title">◈ MECÂNICOS DISPONÍVEIS</div>
+    <div class="px-grid3" id="mecDrivers">
+      ${_mecCards()}
+    </div>
+  </div>
+
+  <div class="px-card-title" style="margin:24px 0 12px">NOSSOS SERVIÇOS</div>
+  <div class="px-grid2">
+    ${_serviceCard('🔧','Pane Mecânica','Diagnóstico e reparo no local','R$ 150','servicos')}
+    ${_serviceCard('🔋','Pane Elétrica','Carga ou troca de bateria','R$ 80','servicos')}
+    ${_serviceCard('⭕','Pneu Furado','Troca ou reparo no local','R$ 70','servicos')}
+    ${_serviceCard('⛽','Pane Seca','Entrega de combustível','R$ 40','servicos')}
+    ${_serviceCard('🌡️','Superaquecimento','Verificação do sistema de arrefecimento','R$ 90','servicos')}
+  </div>
+
+  <div class="px-card" id="mecTracking" style="display:none">
+    <div class="px-card-title">◈ SEU ATENDIMENTO</div>
+    <div class="px-tracking">
+      <div class="px-track-step px-track-done">✓ Solicitação recebida</div>
+      <div class="px-track-step px-track-active" id="mcStep2">⟳ Mecânico a caminho</div>
+      <div class="px-track-step" id="mcStep3">○ Chegada ao local</div>
+      <div class="px-track-step" id="mcStep4">○ Serviço concluído</div>
+    </div>
+    <div class="px-eta" id="mecETA">Chegada estimada: <strong>20 min</strong></div>
+  </div>
+
+  <div class="px-card">
+    <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
+    ${_review('Bruno A.','⭐⭐⭐⭐⭐','Resolveu a pane elétrica em 15 minutos.','1h atrás')}
+    ${_review('Sandra V.','⭐⭐⭐⭐⭐','Mecânico muito atencioso, explicou tudo.','4h atrás')}
+  </div>
+
+</div>`;
+  }
+
+  function _mecCards() {
+    const drivers = [
+      {name:'Edson Mecânico', dist:'1,5 km', eta:'10 min', rating:'4.9', status:'livre'},
+      {name:'Rafael Auto', dist:'2,8 km', eta:'16 min', rating:'4.8', status:'livre'},
+      {name:'Vinícius Socorro', dist:'3,9 km', eta:'22 min', rating:'4.6', status:'ocupado'},
+    ];
+    return drivers.map(d => `
+      <div class="px-driver ${d.status==='ocupado'?'px-driver--busy':''}">
+        <div class="px-driver-avatar">🔧</div>
+        <div class="px-driver-name">${d.name}</div>
+        <div class="px-driver-info">${d.dist} · ${d.eta}</div>
+        <div class="px-driver-rating">★ ${d.rating}</div>
+        <div class="px-driver-status ${d.status==='livre'?'px-status-free':'px-status-busy'}">${d.status==='livre'?'● Livre':'● Ocupado'}</div>
+      </div>`).join('');
+  }
+
   // ── ALUGUEL DE VEÍCULOS ────────────────────────────────────
   function renderAluguel() {
     const el = main(); if (!el) return;
@@ -256,10 +397,10 @@
   // ── MAPA DE STATUS REAL (Emergency.status) → passos da UI ───
   const _STATUS_STEP = { PENDING:2, DISPATCHED:2, IN_PROGRESS:3, COMPLETED:4, CANCELLED:0 };
 
-  function _applyTrackingStatus(status) {
-    const s2 = document.getElementById('trStep2');
-    const s3 = document.getElementById('trStep3');
-    const s4 = document.getElementById('trStep4');
+  function _applyTrackingStatus(status, prefix = 'tr') {
+    const s2 = document.getElementById(`${prefix}Step2`);
+    const s3 = document.getElementById(`${prefix}Step3`);
+    const s4 = document.getElementById(`${prefix}Step4`);
     const step = _STATUS_STEP[status] || 2;
     [s2,s3,s4].forEach(el => el?.classList.remove('px-track-active','px-track-done'));
     if (step >= 2) s2?.classList.add(step>2?'px-track-done':'px-track-active');
@@ -310,6 +451,48 @@
         });
       } catch (e) {
         Toast?.show(e.message || 'Não foi possível acionar o chaveiro agora.', 'err');
+      }
+    },
+    async solicitarFrete() {
+      if (!API.isAuth()) {
+        window.MobyaAuth?.showLogin(); return;
+      }
+      try {
+        Toast?.show('📍 Localizando e acionando transportador...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({
+          type: 'FREIGHT',
+          description: 'Solicitação de frete via app MOBYA',
+          ...coords,
+        });
+        const t = document.getElementById('freteTracking');
+        if (t) { t.style.display = 'block'; t.scrollIntoView({behavior:'smooth'}); }
+        Toast?.show('🚚 ' + (r.message || 'Transportador acionado! Acompanhe o rastreamento abaixo.'), 'ok');
+        _applyTrackingStatus(r.data.status, 'fr');
+        API.pollEmergency(r.data.id, (em) => _applyTrackingStatus(em.status, 'fr'));
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível acionar o frete agora.', 'err');
+      }
+    },
+    async solicitarMecanico() {
+      if (!API.isAuth()) {
+        window.MobyaAuth?.showLogin(); return;
+      }
+      try {
+        Toast?.show('📍 Localizando mecânico mais próximo...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({
+          type: 'MECHANIC',
+          description: 'Solicitação de mecânico de emergência via app MOBYA',
+          ...coords,
+        });
+        const t = document.getElementById('mecTracking');
+        if (t) { t.style.display = 'block'; t.scrollIntoView({behavior:'smooth'}); }
+        Toast?.show('🔧 ' + (r.message || 'Mecânico acionado! Acompanhe o rastreamento abaixo.'), 'ok');
+        _applyTrackingStatus(r.data.status, 'mc');
+        API.pollEmergency(r.data.id, (em) => _applyTrackingStatus(em.status, 'mc'));
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível acionar o mecânico agora.', 'err');
       }
     },
     async buscarVeiculos() {
@@ -376,6 +559,8 @@
   PagesExtra.renderReboque  = renderReboque;
   PagesExtra.renderChaveiro = renderChaveiro;
   PagesExtra.renderAluguel  = renderAluguel;
+  PagesExtra.renderFrete    = renderFrete;
+  PagesExtra.renderMecanico = renderMecanico;
 
   // ── CSS INJETADO ───────────────────────────────────────────
   if (!document.getElementById('px-style-pages-extra')) {
