@@ -156,7 +156,6 @@ window.App = (() => {
     if (param !== undefined) window.__mobyaListingId = param;
     if (_firstNav) {
       history.replaceState({ page }, '', `#${page}`);
-      history.pushState({ page }, '', `#${page}`);
       _firstNav = false;
     } else {
       history.pushState({ page }, '', `#${page}`);
