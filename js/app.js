@@ -148,19 +148,22 @@ window.renderPage = function(page) {
 
 window.App = (() => {
   let currentPage = 'home';
+  let _firstNav = true;
 
   function navigate(page, param) {
     const leaving = currentPage;
     currentPage = page;
     if (param !== undefined) window.__mobyaListingId = param;
-    history.replaceState(null, '', `#${page}`);
+    if (_firstNav) {
+      history.replaceState({ page }, '', `#${page}`);
+      _firstNav = false;
+    } else {
+      history.pushState({ page }, '', `#${page}`);
+    }
     closeMenu();
-
-    // Reset do HomeChat ao sair da home
     if (leaving === 'home' && page !== 'home') {
       if (typeof HomeChat !== 'undefined' && HomeChat.reset) HomeChat.reset();
     }
-
     window.renderPage(page);
   }
 
@@ -230,18 +233,28 @@ window.App = (() => {
       try { Monetization.init(); } catch(e) { console.warn('Monetization init falhou', e); }
     }
 
+    setLoadingProgress(60, 'Verificando sessao...');
+    try { await Promise.race([API.ping(), new Promise(r => setTimeout(r,5000))]); } catch {}
+    if (typeof MobyaAuth !== 'undefined') {
+      try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r,5000))]); } catch {}
+    }
+
+    window.addEventListener('popstate', (ev) => {
+      const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
+      const leaving = currentPage;
+      currentPage = page;
+      if (leaving === 'home' && page !== 'home') {
+        if (typeof HomeChat !== 'undefined' && HomeChat.reset) HomeChat.reset();
+      }
+      closeMenu();
+      window.renderPage(page);
+    });
+
     const initial = (location.hash || '#home').replace('#','') || 'home';
     setLoadingProgress(100, 'Pronto.');
     navigate(initial);
     setTimeout(hideLoadingScreen, 300);
-
-    setTimeout(async () => {
-      try { await Promise.race([API.ping(), new Promise(r => setTimeout(r,8000))]); } catch {}
-      if (typeof MobyaAuth !== 'undefined') {
-        try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r,8000))]); } catch {}
-      }
-      setInterval(() => API.ping().catch(()=>{}), 60000);
-    }, 200);
+    setInterval(() => API.ping().catch(()=>{}), 60000);
   }
 
   return { navigate, toast, getCurrentPage, toggleMenu, init };
