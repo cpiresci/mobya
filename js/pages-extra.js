@@ -241,24 +241,76 @@
     </div>`;
   }
 
+  // ── GEOLOCALIZAÇÃO (best-effort) ────────────────────────────
+  function _getCoords() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve({});
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => resolve({}),
+        { timeout: 5000 }
+      );
+    });
+  }
+
+  // ── MAPA DE STATUS REAL (Emergency.status) → passos da UI ───
+  const _STATUS_STEP = { PENDING:2, DISPATCHED:2, IN_PROGRESS:3, COMPLETED:4, CANCELLED:0 };
+
+  function _applyTrackingStatus(status) {
+    const s2 = document.getElementById('trStep2');
+    const s3 = document.getElementById('trStep3');
+    const s4 = document.getElementById('trStep4');
+    const step = _STATUS_STEP[status] || 2;
+    [s2,s3,s4].forEach(el => el?.classList.remove('px-track-active','px-track-done'));
+    if (step >= 2) s2?.classList.add(step>2?'px-track-done':'px-track-active');
+    if (step >= 3) s3?.classList.add(step>3?'px-track-done':'px-track-active');
+    if (step >= 4) s4?.classList.add('px-track-done');
+  }
+
   // ── AÇÕES ──────────────────────────────────────────────────
   const PagesExtra = {
-    solicitarReboque() {
+    async solicitarReboque() {
       if (!API.isAuth()) {
         window.MobyaAuth?.showLogin(); return;
       }
-      const t = document.getElementById('reboqueTracking');
-      if (t) t.style.display = 'block';
-      if (typeof Toast !== 'undefined') Toast.show('🚛 Motorista acionado! Acompanhe o rastreamento abaixo.','ok');
-      t && t.scrollIntoView({behavior:'smooth'});
-      // Simula progresso
-      setTimeout(()=>{ const s=document.getElementById('trStep2'); if(s){s.classList.add('px-track-done');s.textContent='✓ Motorista a caminho';} const s3=document.getElementById('trStep3'); if(s3)s3.classList.add('px-track-active'); }, 8000);
+      try {
+        Toast?.show('📍 Localizando e acionando motorista...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({
+          type: 'TOW',
+          description: 'Solicitação de reboque via app MOBYA',
+          ...coords,
+        });
+        const t = document.getElementById('reboqueTracking');
+        if (t) { t.style.display = 'block'; t.scrollIntoView({behavior:'smooth'}); }
+        Toast?.show('🚛 ' + (r.message || 'Motorista acionado! Acompanhe o rastreamento abaixo.'), 'ok');
+        _applyTrackingStatus(r.data.status);
+        // Acompanha status real via polling (10s) usando o id retornado pelo backend
+        API.pollEmergency(r.data.id, (em) => _applyTrackingStatus(em.status));
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível acionar o reboque agora.', 'err');
+      }
     },
-    solicitarChaveiro() {
+    async solicitarChaveiro() {
       if (!API.isAuth()) {
         window.MobyaAuth?.showLogin(); return;
       }
-      if (typeof Toast !== 'undefined') Toast.show('🔑 Técnico acionado! Chegada em até 30 minutos.','ok');
+      try {
+        Toast?.show('📍 Localizando técnico mais próximo...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({
+          type: 'LOCKSMITH',
+          description: 'Solicitação de chaveiro via app MOBYA',
+          ...coords,
+        });
+        Toast?.show('🔑 ' + (r.message || 'Técnico acionado! Chegada em até 30 minutos.'), 'ok');
+        API.pollEmergency(r.data.id, (em) => {
+          if (em.status === 'COMPLETED') Toast?.show('🔑 Atendimento de chaveiro concluído!', 'ok');
+          if (em.status === 'CANCELLED') Toast?.show('🔑 Atendimento de chaveiro cancelado.', 'err');
+        });
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível acionar o chaveiro agora.', 'err');
+      }
     },
     buscarVeiculos() {
       const i = document.getElementById('aluguelIn')?.value;
