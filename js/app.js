@@ -240,18 +240,31 @@ window.App = (() => {
       try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r,5000))]); } catch {}
     }
 
+    let _backPressedOnHome = false;
+    let _backPressTimer    = null;
+
     window.addEventListener('popstate', (ev) => {
       const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
 
       if (page === 'home' || !ev.state) {
         if (currentPage !== 'home') {
-          history.pushState({ page: 'home' }, '', '#home');
           currentPage = 'home';
+          _backPressedOnHome = false;
+          clearTimeout(_backPressTimer);
           closeMenu();
           window.renderPage('home');
           return;
         }
-        if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 1500);
+        if (!_backPressedOnHome) {
+          _backPressedOnHome = true;
+          clearTimeout(_backPressTimer);
+          _backPressTimer = setTimeout(() => { _backPressedOnHome = false; }, 2000);
+          if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 1800);
+          history.pushState({ page: 'home' }, '', '#home');
+          return;
+        }
+        _backPressedOnHome = false;
+        clearTimeout(_backPressTimer);
         return;
       }
 
