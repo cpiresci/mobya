@@ -1,8 +1,8 @@
 window.API = (() => {
   const base = () => window.MOBYA.API;
-  let _token = localStorage.getItem('mobya_token') || null;
+  let _token = null;
 
-  const setToken  = (t) => { _token = t; if(t) localStorage.setItem('mobya_token',t); else localStorage.removeItem('mobya_token'); };
+  const setToken  = (t) => { _token = t;  };
   const getToken  = ()  => _token;
   const isAuth    = ()  => !!_token;
 

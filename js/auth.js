@@ -2,7 +2,11 @@ window.MobyaAuth = (() => {
   let user = null;
 
   async function init() {
-    if (!API.isAuth()) { updateUI(null); return false; }
+    if (!API.isAuth()) {
+      const refreshed = await fetch(window.MOBYA.API+'/api/v1/auth/refresh',{method:'POST',credentials:'include'}).then(r=>r.ok?r.json():null).catch(()=>null);
+      if (refreshed?.data?.accessToken) API.setToken(refreshed.data.accessToken);
+      else { updateUI(null); return false; }
+    }
     try {
       const r = await API.auth.me();
       user = r.data;
