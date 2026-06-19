@@ -252,6 +252,7 @@ window.App = (() => {
           clearTimeout(_backPressTimer);
           closeMenu();
           window.renderPage('home');
+          history.pushState({ page: 'home' }, '', '#home');
           return;
         }
         if (!_backPressedOnHome) {
