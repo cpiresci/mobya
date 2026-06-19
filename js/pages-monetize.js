@@ -34,6 +34,14 @@
         <input type="text" class="px-input" id="segVeiculo" placeholder="Ex: Toyota Corolla 2022">
       </div>
       <div class="pm-field">
+        <label>Valor estimado do veículo</label>
+        <input type="text" class="px-input" id="segValor" placeholder="R$ 0,00" oninput="PagesMon.fmtValorSeg(this)">
+      </div>
+      <div class="pm-field">
+        <label>Idade do condutor</label>
+        <input type="number" class="px-input" id="segIdade" placeholder="Ex: 32" min="18" max="99">
+      </div>
+      <div class="pm-field">
         <label>Ano</label>
         <select class="px-input" id="segAno">
           ${Array.from({length:15},(_,i)=>new Date().getFullYear()-i).map(y=>`<option>${y}</option>`).join('')}
@@ -145,6 +153,10 @@
         <input type="text" class="px-input" id="finValor" placeholder="R$ 0,00" oninput="PagesMon.fmtValor(this)">
       </div>
       <div class="pm-field">
+        <label>Sua renda líquida mensal</label>
+        <input type="text" class="px-input" id="finRenda" placeholder="R$ 0,00" oninput="PagesMon.fmtRenda(this)">
+      </div>
+      <div class="pm-field">
         <label>Entrada (%)</label>
         <input type="range" id="finEntradaRange" min="0" max="80" value="20" oninput="PagesMon.updateEntrada()">
         <div class="pm-range-label">Entrada: <strong id="finEntradaPct">20%</strong> = <strong id="finEntradaVal">R$ 0</strong></div>
@@ -240,44 +252,85 @@
   const PagesMon = {
 
     // — SEGUROS —
-    simularSeguro() {
-      const v = document.getElementById('segVeiculo')?.value;
-      if (!v || v.length < 3) { Toast?.show('Informe o modelo do veículo','err'); return; }
+    fmtValorSeg(el) {
+      let v = el.value.replace(/\D/g,'');
+      if (!v) { el.value=''; return; }
+      v = (parseInt(v)/100).toFixed(2);
+      el.value = 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    },
+    _getValorSeg() {
+      const el = document.getElementById('segValor');
+      if (!el||!el.value) return 0;
+      return parseFloat(el.value.replace(/[^\d,]/g,'').replace(',','.')) || 0;
+    },
+    _lastSeguro: null,
+    async simularSeguro() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      const veiculoRaw = document.getElementById('segVeiculo')?.value?.trim();
+      const valor = this._getValorSeg();
+      if (!veiculoRaw || veiculoRaw.length < 3) { Toast?.show('Informe o modelo do veículo','err'); return; }
+      if (!valor) { Toast?.show('Informe o valor estimado do veículo','err'); return; }
+
+      const [vehicleBrand, ...rest] = veiculoRaw.split(' ');
+      const vehicleModel = rest.join(' ') || veiculoRaw;
+      const vehicleYear   = document.getElementById('segAno')?.value;
+      const driverAge     = document.getElementById('segIdade')?.value;
+      const cep           = document.getElementById('segCep')?.value;
+
       Toast?.show('🔍 Consultando seguradoras...','info');
-      setTimeout(() => {
-        const res = document.getElementById('segResultados');
+      try {
+        const r = await API.monetization.simulateInsurance({
+          vehicleBrand, vehicleModel, vehicleYear, vehicleValue: valor,
+          driverAge: driverAge || undefined,
+        });
+        this._lastSeguro = { veiculo: veiculoRaw, valor, data: r.data };
+
+        const res   = document.getElementById('segResultados');
         const cards = document.getElementById('segCards');
         if (!res||!cards) return;
-        const ofertas = [
-          {seg:'Porto Seguro', cobertura:'Completo', parcela:'R$ 234/mês', economia:'40%', stars:'⭐⭐⭐⭐⭐', dest:true},
-          {seg:'Allianz',      cobertura:'Completo', parcela:'R$ 251/mês', economia:'36%', stars:'⭐⭐⭐⭐⭐', dest:false},
-          {seg:'Bradesco',     cobertura:'Intermediário', parcela:'R$ 178/mês', economia:'28%', stars:'⭐⭐⭐⭐', dest:false},
-          {seg:'Suhai',        cobertura:'Básico',  parcela:'R$ 97/mês',  economia:'15%', stars:'⭐⭐⭐⭐', dest:false},
-        ];
-        cards.innerHTML = ofertas.map(o => `
-          <div class="pm-oferta ${o.dest?'pm-oferta--dest':''}">
-            ${o.dest?'<div class="pm-popular">MELHOR OFERTA</div>':''}
+
+        const stars = '⭐⭐⭐⭐⭐';
+        cards.innerHTML = r.data.insurers.map((o,i) => `
+          <div class="pm-oferta ${i===0?'pm-oferta--dest':''}">
+            ${i===0?'<div class="pm-popular">MELHOR OFERTA</div>':''}
             <div class="pm-oferta-top">
               <div>
-                <div class="pm-oferta-seg">${o.seg}</div>
-                <div class="pm-oferta-cob">${o.cobertura} · ${o.stars}</div>
+                <div class="pm-oferta-seg">${o.name}</div>
+                <div class="pm-oferta-cob">Risco ${r.data.riskLevel} · ${stars}</div>
               </div>
-              <div class="pm-oferta-preco">${o.parcela}</div>
+              <div class="pm-oferta-preco">R$ ${o.estimatedPremium.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>
             </div>
-            <div class="pm-oferta-eco">💰 Economia de até ${o.economia} vs mercado</div>
-            <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.contratarSeguro('${o.seg}')">
-              Contratar ${o.seg}
+            <div class="pm-oferta-eco">📊 Score de risco: ${r.data.riskScore}/100</div>
+            <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.contratarSeguro('${o.name}', ${o.estimatedPremium})">
+              Contratar ${o.name}
             </button>
-          </div>`).join('');
+          </div>`).join('') +
+          (r.data.savingTips?.length ? `<div class="px-card" style="margin-top:12px"><div class="px-card-title">◈ DICAS PARA ECONOMIZAR</div>${
+            r.data.savingTips.map(t=>`<div style="font-size:.82rem;color:var(--muted,#888);margin-bottom:6px">💡 ${t}</div>`).join('')
+          }</div>` : '');
+
         res.style.display = 'block';
         res.scrollIntoView({behavior:'smooth'});
-        Toast?.show('✅ 4 ofertas encontradas!','ok');
-      }, 1800);
+        Toast?.show(`✅ ${r.data.insurers.length} ofertas encontradas!`,'ok');
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível simular o seguro agora.', 'err');
+      }
     },
 
-    contratarSeguro(nome) {
-      if (!API.isAuth()) { MobyaAuth?.showLogin(); return; }
-      Toast?.show(`🛡️ Iniciando contratação ${nome}...`,'ok');
+    async contratarSeguro(nome, premium) {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        const veiculo = this._lastSeguro?.veiculo || document.getElementById('segVeiculo')?.value || 'veículo';
+        await API.monetization.createQuote({
+          vertical: 'SEGUROS',
+          description: `Contratação de seguro com ${nome} para ${veiculo}`,
+          estimatedAmount: premium || this._lastSeguro?.data?.monthlyPremium?.max || null,
+          insuranceProduct: 'AUTO_FULL',
+        });
+        Toast?.show(`🛡️ Cotação enviada para ${nome}! Nossa equipe entrará em contato.`,'ok');
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível enviar a cotação agora.', 'err');
+      }
     },
 
     // — FINANCIAMENTO —
@@ -287,6 +340,13 @@
       v = (parseInt(v)/100).toFixed(2);
       el.value = 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
       this.calcParcela();
+    },
+
+    fmtRenda(el) {
+      let v = el.value.replace(/\D/g,'');
+      if (!v) { el.value=''; return; }
+      v = (parseInt(v)/100).toFixed(2);
+      el.value = 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
     },
 
     setPrazo(p, btn) {
@@ -313,14 +373,22 @@
       return parseFloat(el.value.replace(/[^\d,]/g,'').replace(',','.')) || 0;
     },
 
+    _getRenda() {
+      const el = document.getElementById('finRenda');
+      if (!el||!el.value) return 0;
+      return parseFloat(el.value.replace(/[^\d,]/g,'').replace(',','.')) || 0;
+    },
+
+    // Pré-visualização local instantânea (mesma fórmula Price usada pelo backend,
+    // só para feedback em tempo real ao mover o slider — a simulação oficial
+    // com bancos reais vem de simularFinanciamento()).
     calcParcela() {
       const total = this._getValor();
       if (!total) return;
       const entrada = total * (parseInt(document.getElementById('finEntradaRange')?.value||20)/100);
       const financiado = total - entrada;
-      const taxa = 0.0109; // 1.09% a.m.
+      const taxa = 0.0109; // 1.09% a.m. — taxa de referência para preview
       const n = _prazoAtual;
-      // Fórmula Price
       const parcela = financiado * (taxa * Math.pow(1+taxa,n)) / (Math.pow(1+taxa,n)-1);
       const totalPagar = parcela * n + entrada;
 
@@ -331,51 +399,69 @@
       document.getElementById('finTotal').textContent = fmt(totalPagar);
     },
 
-    simularFinanciamento() {
+    _lastFinanciamento: null,
+    async simularFinanciamento() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
       const total = this._getValor();
       if (!total) { Toast?.show('Informe o valor do veículo','err'); return; }
+      const renda = this._getRenda();
+      const entradaPct = parseInt(document.getElementById('finEntradaRange')?.value||20);
+      const downPayment = total * entradaPct / 100;
+
       Toast?.show('⚡ Consultando bancos parceiros...','info');
-      setTimeout(() => {
-        const entrada = total * (parseInt(document.getElementById('finEntradaRange')?.value||20)/100);
-        const fin = total - entrada;
-        const n = _prazoAtual;
-        const bancos = [
-          {nome:'Caixa Econômica', taxa:0.0095, cor:'#0ea5e9'},
-          {nome:'Banco do Brasil', taxa:0.0099, cor:'#f59e0b'},
-          {nome:'Bradesco',        taxa:0.0109, cor:'#ef4444'},
-          {nome:'Santander',       taxa:0.0119, cor:'#dc2626'},
-        ];
-        const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      try {
+        const r = await API.ai.financing({
+          vehicleValue: total, downPayment, income: renda,
+        });
+        this._lastFinanciamento = { total, data: r.data };
+
         const cards = document.getElementById('finBancosCards');
         const container = document.getElementById('finBancos');
         if (!cards||!container) return;
-        cards.innerHTML = bancos.map((b,i) => {
-          const parc = fin * (b.taxa * Math.pow(1+b.taxa,n)) / (Math.pow(1+b.taxa,n)-1);
-          return `
+
+        const n = _prazoAtual;
+        const installmentKey = n <= 48 ? 'installment48' : 'installment60';
+        cards.innerHTML = r.data.simulations.map((b,i) => `
           <div class="pm-oferta ${i===0?'pm-oferta--dest':''}">
             ${i===0?'<div class="pm-popular">MENOR TAXA</div>':''}
             <div class="pm-oferta-top">
               <div>
-                <div class="pm-oferta-seg">${b.nome}</div>
-                <div class="pm-oferta-cob">${(b.taxa*100).toFixed(2).replace('.',',')}% a.m. · ${n}x</div>
+                <div class="pm-oferta-seg">${b.bank}</div>
+                <div class="pm-oferta-cob">${b.monthlyRate}% a.m. · ${n}x ${b.approved ? '· ✅ Pré-aprovado' : '· ⚠️ Sujeito a análise'}</div>
               </div>
-              <div class="pm-oferta-preco">${fmt(parc)}</div>
+              <div class="pm-oferta-preco">R$ ${b[installmentKey].toLocaleString('pt-BR')}</div>
             </div>
-            <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.iniciarFinanciamento('${b.nome}')">
-              Solicitar ao ${b.nome}
+            <button class="px-btn px-btn--sm" style="width:100%;margin-top:10px" onclick="PagesMon.iniciarFinanciamento('${b.bank}')">
+              Solicitar ao ${b.bank}
             </button>
+          </div>`).join('') +
+          `<div class="px-card" style="margin-top:12px">
+            <div class="px-card-title">◈ COMPROMETIMENTO MÁXIMO RECOMENDADO</div>
+            <div style="font-size:.84rem;color:var(--muted,#888)">${r.data.summary.note} — R$ ${r.data.summary.maxInstallment.toLocaleString('pt-BR')}/mês</div>
           </div>`;
-        }).join('');
+
         container.style.display = 'block';
         container.scrollIntoView({behavior:'smooth'});
-        Toast?.show('✅ 4 propostas encontradas!','ok');
-      }, 2000);
+        Toast?.show(`✅ ${r.data.simulations.length} propostas encontradas!`,'ok');
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível simular o financiamento agora.', 'err');
+      }
     },
 
-    iniciarFinanciamento(banco) {
-      if (!API.isAuth()) { MobyaAuth?.showLogin(); return; }
-      const msg = banco ? `💰 Proposta enviada ao ${banco}!` : '💰 Iniciando sua proposta de financiamento!';
-      Toast?.show(msg,'ok');
+    async iniciarFinanciamento(banco) {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        const total = this._getValor() || this._lastFinanciamento?.total;
+        await API.monetization.createQuote({
+          vertical: 'FINANCIAMENTO',
+          description: banco ? `Proposta de financiamento junto ao ${banco}` : 'Proposta de financiamento veicular',
+          estimatedAmount: total || null,
+        });
+        const msg = banco ? `💰 Proposta enviada ao ${banco}!` : '💰 Proposta de financiamento enviada!';
+        Toast?.show(msg,'ok');
+      } catch (e) {
+        Toast?.show(e.message || 'Não foi possível enviar a proposta agora.', 'err');
+      }
     },
   };
 
