@@ -886,19 +886,22 @@ window.Pages = (() => {
       <div id="dashContent">${skeleton(4)}</div>`;
 
     try {
-      const [listingsR, quotesR] = await Promise.all([
+      const [listingsR, quotesR, emergenciesR] = await Promise.all([
         API.listings.mine({ limit: 10 }).catch(() => null),
-        API.monetization?.quotesMine('?limit=5').catch(() => null),
+        API.monetization.quotes({ limit: 5 }).catch(() => null),
+        API.emergency.mine({ limit: 10 }).catch(() => null),
       ]);
-      const listings = listingsR?.data || [];
-      const quotes   = quotesR?.data?.quotes || quotesR?.data || [];
+      const listings    = listingsR?.data || [];
+      const quotes      = quotesR?.data?.quotes || quotesR?.data || [];
+      const emergencies = emergenciesR?.data || [];
+      const activeEmerg = emergencies.filter(e => !['COMPLETED','CANCELLED'].includes(e.status));
 
       document.getElementById('dashContent').innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
           ${[
-            {label:'MEUS ANÚNCIOS',  value:fmtNum(listingsR?.pagination?.total||listings.length), color:'var(--q4)'},
-            {label:'MINHAS COTAÇÕES',value:fmtNum(quotesR?.pagination?.total||quotes.length),      color:'var(--green)'},
-            {label:'STATUS',         value:'ATIVO',                                                color:'var(--neon)'},
+            {label:'MEUS ANÚNCIOS',      value:fmtNum(listingsR?.pagination?.total||listings.length), color:'var(--q4)'},
+            {label:'MINHAS COTAÇÕES',    value:fmtNum(quotesR?.pagination?.total||quotes.length),   color:'var(--green)'},
+            {label:'EMERGÊNCIAS ATIVAS', value:fmtNum(activeEmerg.length), color: activeEmerg.length ? 'var(--red)' : 'var(--neon)'},
           ].map(k=>`
             <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center">
               <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);margin-bottom:8px">${k.label}</div>
