@@ -1060,7 +1060,6 @@ window.Monetization = (() => {
   const PAGES = {
     'monetizacao':      renderPartnersPage,
     'seguros-sim':      renderInsurancePage,
-    'fretes':           renderLogisticsPage,
     'painel-receita':   renderRevenueDashboard,
   };
 
