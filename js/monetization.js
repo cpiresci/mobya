@@ -1126,6 +1126,7 @@ window.Monetization = (() => {
     DISPUTED:   { label:'Disputado',color:'var(--red)',   bg:'rgba(239,68,68,.1)'   },
     REFUNDED:   { label:'Reembolso',color:'var(--orange)',bg:'rgba(249,115,22,.1)'  },
   };
+  const escHtml = t => String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const fmtBRL = v => `R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const fmtNum = v => parseInt(v||0).toLocaleString('pt-BR');
   const fmtD   = iso => { if(!iso) return '—'; const d=new Date(iso); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
@@ -1314,6 +1315,60 @@ ${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
     }
   }
 
+  // ── DETALHE DE COTAÇÃO (visão do CLIENTE, a partir do Dashboard) ──
+  function openClientQuoteDetail(id) {
+    const q = (window.__mobyaQuoteCache || {})[id];
+    if (!q) { window.App?.toast?.('Cotação não encontrada.', 'err'); return; }
+    closeClientQuoteDetail();
+    const vm = VMETA[q.providerVertical||q.vertical] || { icon:'📋', color:'var(--muted)' };
+    const canCancel = ['OPEN','ACCEPTED'].includes(q.status);
+    const overlay = document.createElement('div');
+    overlay.id = 'quote-detail-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.onclick = (e) => { if (e.target === overlay) closeClientQuoteDetail(); };
+    overlay.innerHTML = `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:440px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.5rem">${vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">${q.providerName||q.vertical||'COTAÇÃO'}</span></div>
+        ${qBadge(q.status)}
+      </div>
+      <div style="font-size:.84rem;color:var(--text);line-height:1.5;background:var(--s3);border-radius:8px;padding:12px;margin:14px 0">${escHtml(q.description||'')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Vertical</span><br><span style="font-family:'JetBrains Mono',monospace">${q.vertical||'—'}</span></div>
+        <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Valor estimado</span><br><span style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${q.estimatedAmount?fmtBRL(q.estimatedAmount):'A combinar'}</span></div>
+        <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Solicitado em</span><br><span style="font-family:'JetBrains Mono',monospace">${fmtD(q.createdAt)}</span></div>
+        ${q.scheduledAt?`<div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Agendado</span><br><span style="font-family:'JetBrains Mono',monospace;color:var(--neon)">${fmtD(q.scheduledAt)}</span></div>`:''}
+      </div>
+      <div style="display:flex;gap:8px">
+        ${canCancel?`<button id="qd-cancel-btn" onclick="Monetization.cancelMyQuote('${q.id}')" style="flex:1;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px;font-weight:600;font-size:.8rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">✖ Cancelar Cotação</button>`:''}
+        <button onclick="Monetization.closeClientQuoteDetail()" style="flex:1;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-weight:600;font-size:.8rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">Fechar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+  }
+
+  function closeClientQuoteDetail() {
+    document.getElementById('quote-detail-overlay')?.remove();
+  }
+
+  async function cancelMyQuote(id) {
+    if (!confirm('Cancelar esta cotação?')) return;
+    const btn = document.getElementById('qd-cancel-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⟳ Cancelando...'; }
+    try {
+      await API.monetization.cancelQuote(id);
+      const cache = window.__mobyaQuoteCache || {};
+      if (cache[id]) cache[id] = { ...cache[id], status: 'CANCELLED' };
+      closeClientQuoteDetail();
+      window.App?.toast?.('Cotação cancelada.', 'ok');
+      if (typeof Pages !== 'undefined' && Pages.renderDashboard && window.App?.getCurrentPage?.() === 'dashboard') {
+        Pages.renderDashboard();
+      }
+    } catch (e) {
+      alert('Erro ao cancelar: ' + e.message);
+      if (btn) { btn.disabled = false; btn.textContent = '✖ Cancelar Cotação'; }
+    }
+  }
+
   Object.assign(window.Monetization, {
     renderProviderDashboard,
     providerSwitchTab,
@@ -1322,6 +1377,9 @@ ${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
     providerCompleteQuote,
     chargeViaPix,
     checkPayment,
+    openClientQuoteDetail,
+    closeClientQuoteDetail,
+    cancelMyQuote,
   });
 
 })();
