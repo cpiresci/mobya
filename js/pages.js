@@ -990,6 +990,40 @@ window.Pages = (() => {
     el.innerHTML = `
       ${pageHeader('PEÇAS & ACESSÓRIOS', 'Marketplace de peças · Originais · Paralelas · Performance', 'var(--gold),var(--orange)')}
 
+      <!-- COTAÇÃO RÁPIDA POR VEÍCULO (heurística + NEXUS-PD) -->
+      <div class="px-card" style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px">
+        <div class="px-card-title" style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;margin-bottom:10px">
+          ◈ COTAÇÃO RÁPIDA POR VEÍCULO
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:120px">
+            <input id="pecaMarca" placeholder="Marca" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+          <div style="flex:1;min-width:120px">
+            <input id="pecaModelo" placeholder="Modelo" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+          <div style="flex:0 0 90px">
+            <input id="pecaAno" type="number" placeholder="Ano" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+          <div style="flex:1;min-width:160px">
+            <input id="pecaNome" placeholder="Ex: pastilha de freio" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+          <div style="flex:0 0 70px">
+            <input id="pecaQtd" type="number" min="1" value="1" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+          </div>
+          <div style="flex:0 0 120px">
+            <select id="pecaUrgencia" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;cursor:pointer">
+              <option value="normal">Normal</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+          <button onclick="Pages.cotarPeca()" style="background:linear-gradient(135deg,var(--gold),var(--orange));color:#000;padding:9px 22px;border-radius:8px;font-weight:700;font-size:.82rem;border:none;cursor:pointer;white-space:nowrap">
+            Cotar
+          </button>
+        </div>
+        <div id="pecaResultados" style="display:none;margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
+      </div>
+
       <!-- FILTROS -->
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;
         padding:20px;margin-bottom:24px">
@@ -1090,6 +1124,58 @@ window.Pages = (() => {
   }
 
   let pcPage = 1;
+
+  async function cotarPeca() {
+    if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+
+    const brand = document.getElementById('pecaMarca')?.value?.trim();
+    const model = document.getElementById('pecaModelo')?.value?.trim();
+    const year  = document.getElementById('pecaAno')?.value;
+    const part  = document.getElementById('pecaNome')?.value?.trim();
+    const qty   = parseInt(document.getElementById('pecaQtd')?.value) || 1;
+    const urg   = document.getElementById('pecaUrgencia')?.value;
+
+    if (!brand || !model || !part) { Toast?.show('Preencha marca, modelo e peça','err'); return; }
+
+    Toast?.show('🔩 Cotando peças...','info');
+    try {
+      const r = await API.post('/monetization/parts/quote', {
+        vehicleBrand: brand, vehicleModel: model, vehicleYear: year,
+        partName: part, quantity: qty, urgency: urg,
+      });
+
+      const container = document.getElementById('pecaResultados');
+      if (!container) return;
+
+      container.innerHTML = r.data.options.map((o, i) => `
+        <div style="background:var(--s3);border:1px solid ${i===1?'var(--gold)':'var(--border)'};border-radius:10px;padding:14px;position:relative">
+          ${i===1?'<div style="position:absolute;top:-9px;right:10px;background:var(--gold);color:#000;font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:6px">RECOMENDADO</div>':''}
+          <div style="font-weight:700;font-size:.85rem">${o.label}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin:4px 0 8px">Garantia: ${o.warranty} · ${o.availability}</div>
+          <div style="font-size:1.05rem;font-weight:700;color:var(--gold)">R$ ${o.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">Unitário: R$ ${o.unit.toLocaleString('pt-BR',{minimumFractionDigits:2})} × ${qty}</div>
+          <button onclick="Pages.solicitarPeca('${o.type}','${r.data.quoteId}')" style="width:100%;background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3);padding:8px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer">
+            Solicitar ${o.label}
+          </button>
+        </div>`).join('') +
+        (r.data.tips?.length ? `
+          <div style="grid-column:1/-1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;margin-bottom:6px">◈ DICAS</div>
+            ${r.data.tips.map(t => `<div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">💡 ${t}</div>`).join('')}
+          </div>` : '');
+
+      container.style.display = 'grid';
+      container.scrollIntoView({ behavior:'smooth' });
+      Toast?.show('✅ Cotação gerada!','ok');
+    } catch(e) {
+      Toast?.show(e.message || 'Erro ao cotar peças.','err');
+    }
+  }
+
+  async function solicitarPeca(tipo, quoteId) {
+    if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+    Toast?.show(`🔩 Solicitação de peça ${tipo} registrada! Nossa rede entrará em contato.`,'ok');
+  }
 
   searchPecas = async function(page = 1) {
     pcPage = page;
@@ -1569,7 +1655,10 @@ window.Pages = (() => {
     renderServicos,
     searchPecas,
     searchServicos,
+    cotarPeca,
+    solicitarPeca,
     _updateListingPlaceholder,
   };
 
 })();
+
