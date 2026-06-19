@@ -924,16 +924,22 @@ window.Pages = (() => {
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--green);margin-bottom:12px">💰 MINHAS COTAÇÕES</div>
             ${quotes.length
-              ? quotes.map(q=>`
-                <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;
-                  padding:12px;margin-bottom:8px;font-size:.8rem">
+              ? (() => {
+                  window.__mobyaQuoteCache = window.__mobyaQuoteCache || {};
+                  quotes.forEach(q => { window.__mobyaQuoteCache[q.id] = q; });
+                  return quotes.map(q=>`
+                <div onclick="Monetization.openClientQuoteDetail('${q.id}')" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;
+                  padding:12px;margin-bottom:8px;font-size:.8rem;cursor:pointer;transition:border-color .15s"
+                  onmouseover="this.style.borderColor='var(--border2)'"
+                  onmouseout="this.style.borderColor='var(--border)'">
                   <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                     <span style="font-weight:600">${q.vertical}</span>
                     <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;
                       color:${q.status==='COMPLETED'?'var(--green)':q.status==='ACCEPTED'?'var(--gold)':'var(--muted)'}">${q.status}</span>
                   </div>
                   <div style="color:var(--muted);font-size:.76rem">${escHtml((q.description||'').slice(0,60))}…</div>
-                </div>`).join('')
+                </div>`).join('');
+                })()
               : `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
                   Nenhuma cotação ainda. <button onclick="App.navigate('monetizacao')" style="background:none;
                     color:var(--green);border:none;cursor:pointer;font-weight:600">Solicitar agora</button></div>`}
