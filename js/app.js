@@ -252,7 +252,6 @@ window.App = (() => {
           clearTimeout(_backPressTimer);
           closeMenu();
           window.renderPage('home');
-          history.pushState({ page: 'home' }, '', '#home');
           return;
         }
         if (!_backPressedOnHome) {
@@ -279,6 +278,8 @@ window.App = (() => {
 
     const initial = (location.hash || '#home').replace('#','') || 'home';
     setLoadingProgress(100, 'Pronto.');
+    history.replaceState({ page: 'home' }, '', '#home');
+    history.pushState({ page: 'home' }, '', '#home');
     navigate(initial);
     setTimeout(hideLoadingScreen, 300);
     setInterval(() => API.ping().catch(()=>{}), 60000);
