@@ -245,36 +245,23 @@ window.App = (() => {
     window.addEventListener('popstate', (ev) => {
       const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
 
-      if (page === 'home' || !ev.state) {
-        if (currentPage !== 'home') {
-          currentPage = 'home';
-          _backPressedOnHome = false;
-          clearTimeout(_backPressTimer);
-          closeMenu();
-          window.renderPage('home');
-          return;
-        }
-        // ja em home - segurar saida
-        if (!_backPressedOnHome) {
-          _backPressedOnHome = true;
-          clearTimeout(_backPressTimer);
-          _backPressTimer = setTimeout(() => { _backPressedOnHome = false; }, 2000);
-          if (typeof Toast !== 'undefined') Toast.show('Toque voltar novamente para sair do MOBYA', 'info', 1800);
-          history.pushState({ page: 'home' }, '', '#home');
-          return;
-        }
-        _backPressedOnHome = false;
-        clearTimeout(_backPressTimer);
+      if (page !== 'home' && ev.state) {
+        const leaving = currentPage;
+        currentPage = page;
+        if (leaving === 'home' && typeof HomeChat !== 'undefined' && HomeChat.reset) HomeChat.reset();
+        closeMenu();
+        window.renderPage(page);
         return;
       }
 
-      const leaving = currentPage;
-      currentPage = page;
-      if (leaving === 'home' && page !== 'home') {
-        if (typeof HomeChat !== 'undefined' && HomeChat.reset) HomeChat.reset();
-      }
+      // voltou para home
+      currentPage = 'home';
+      _backPressedOnHome = false;
+      clearTimeout(_backPressTimer);
       closeMenu();
-      window.renderPage(page);
+      window.renderPage('home');
+      // recolocar barreira imediatamente
+      history.pushState({ page: 'home' }, '', '#home');
     });
 
     const initial = (location.hash || '#home').replace('#','') || 'home';
