@@ -102,7 +102,9 @@ const BASE_PAGES = {
   'gps-tracking': () => {
     const user = MobyaAuth.getUser();
     if (!user) { MobyaAuth.showLogin('gps-tracking'); return; }
-    if (typeof GPSTracking!=='undefined') GPSTracking.render();
+    const sid = window.__mobyaTrackingSessionId || null;
+    window.__mobyaTrackingSessionId = null;
+    if (typeof GPSTracking!=='undefined') GPSTracking.render(sid);
     else comingSoon('GPS TRACKING','📡');
   },
   'admin-aprovacao': () => {

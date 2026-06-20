@@ -179,8 +179,9 @@ window.DispatchUI = (() => {
     try {
       const r = await API.req('POST', `/emergency/${emergencyId}/accept-offer`);
       if (r?.success) {
-        if (typeof Toast !== 'undefined') Toast.show('✅ Oferta aceita! Abra o GPS Tracking para iniciar.', 'ok');
-        // Abre tracking automaticamente se possível
+        if (typeof Toast !== 'undefined') Toast.show('✅ Oferta aceita! Abrindo GPS Tracking...', 'ok');
+        window.__mobyaPendingEmergencyId = null;
+        window.__mobyaTrackingSessionId = r?.data?.sessionId || null;
         if (typeof App !== 'undefined') App.navigate('gps-tracking');
       } else {
         if (typeof Toast !== 'undefined') Toast.show(r?.error?.message || 'Oferta indisponível.', 'error');

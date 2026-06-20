@@ -654,10 +654,11 @@ window.Pages = (() => {
       btn.disabled = true;
       btn.textContent = 'Registrando…';
       try {
-        await API.emergency.create({ type, description: desc || label, ...coords });
+        const created = await API.emergency.create({ type, description: desc || label, ...coords });
         close();
         App.toast(`🚨 Emergência registrada! Buscando prestador próximo…`, 'ok');
         if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc || ''}`);
+        window.__mobyaPendingEmergencyId = created?.data?.id || null;
         App.navigate('gps-tracking');
       } catch(e) {
         btn.disabled = false;

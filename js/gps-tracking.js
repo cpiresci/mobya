@@ -90,7 +90,27 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
   async function render(sid){
     const main=document.getElementById('main');if(!main)return;
     main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px);gap:0"><div style="padding:12px 16px;background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">📡 GPS TRACKING</div><div id="gpsSessionStatus" style="font-size:.82rem;margin-top:2px"><span style="color:var(--muted)">Conectando...</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><span id="gpsConnectionStatus" style="font-size:.75rem;color:#f59e0b">◌ Conectando</span><span id="gpsWatchStatus" style="font-size:.75rem;color:var(--muted)">📡 GPS parado</span><span id="gpsETA" style="font-size:.78rem"></span></div></div><div id="gpsMap" style="flex:1;min-height:260px;width:100%"></div><div id="gpsProviderControls" style="display:none;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)"><div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">ATUALIZAR STATUS</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('A_CAMINHO')">🚗 A Caminho</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.4)" onclick="GPSTracking.promptCheckin()">📸 Check-in (foto)</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('CHEGOU')">📍 Cheguei</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('EM_SERVICO')">🔧 Em Serviço</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="GPSTracking.setStatus('CONCLUIDO')">✅ Concluído</button></div></div><div style="background:var(--card-bg);border-top:1px solid var(--border)"><div id="gpsChatMessages" style="height:110px;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column"></div><div style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border)"><input id="gpsChatInput" placeholder="Mensagem rápida..." style="flex:1;background:var(--input-bg,rgba(255,255,255,.06));border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;outline:none" onkeydown="if(event.key==='Enter'){GPSTracking.sendChatMessage(this.value);this.value='';}"><button class="ai-btn" style="padding:8px 14px;font-size:.82rem" onclick="const i=document.getElementById('gpsChatInput');GPSTracking.sendChatMessage(i.value);i.value=''">Enviar</button></div></div></div>`;
-    setTimeout(()=>{initMap('gpsMap');const token=API.getToken();if(token){connectSocket(token);if(sid){setTimeout(()=>joinSession(sid),800);}startWatchingLocation();}else{Toast.show('Faça login para usar o GPS.','warn');}},100);
+    setTimeout(()=>{initMap('gpsMap');const token=API.getToken();if(token){connectSocket(token);if(sid){setTimeout(()=>joinSession(sid),800);}else if(window.__mobyaPendingEmergencyId){_waitForProviderAccept(window.__mobyaPendingEmergencyId);}startWatchingLocation();}else{Toast.show('Faça login para usar o GPS.','warn');}},100);
+  }
+  function _setWaitingStatus(msg){const el=document.getElementById('gpsSessionStatus');if(el)el.innerHTML=`<span style="color:#f59e0b">⏳ ${msg}</span>`;}
+  async function _waitForProviderAccept(emergencyId,attempt=0){
+    const MAX_ATTEMPTS=20,DELAY_MS=3000; // ~60s de espera
+    _setWaitingStatus('Buscando prestador mais próximo...');
+    try{
+      const r=await API.req('GET',`/emergency/${emergencyId}/tracking-session`);
+      if(r?.data?.sessionId){
+        window.__mobyaPendingEmergencyId=null;
+        sessionId=r.data.sessionId;
+        Toast.show('✅ Prestador encontrado! Conectando rastreamento...','ok');
+        joinSession(sessionId);
+        return;
+      }
+    }catch(e){/* ainda não aceitou — normal, continua tentando */}
+    if(attempt>=MAX_ATTEMPTS){
+      _setWaitingStatus('Nenhum prestador aceitou ainda. Tente novamente em alguns instantes.');
+      return;
+    }
+    setTimeout(()=>_waitForProviderAccept(emergencyId,attempt+1),DELAY_MS);
   }
   async function createSession({quoteId,userId,vertical,address}){const r=await API.req('POST','/tracking/sessions',{quoteId,userId,vertical,address});return r.data;}
   async function openTracking(sid){await render(sid);if(sid)sessionId=sid;}
