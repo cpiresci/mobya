@@ -131,5 +131,16 @@ window.API = (() => {
     }
   }
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, auth, ai, listings, emergency, monetization, pollEmergency, ping };
+  // Compat: admin-approval.js e gps-tracking.js chamam API.req(method, path, body)
+  const reqCompat = (method, path, body) => {
+    const m = String(method || 'GET').toUpperCase();
+    if (m === 'GET')    return get(path);
+    if (m === 'POST')   return post(path, body);
+    if (m === 'PUT')    return put(path, body);
+    if (m === 'PATCH')  return patch(path, body);
+    if (m === 'DELETE') return del(path);
+    return req(path, { method: m, body });
+  };
+
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, pollEmergency, ping };
 })();
