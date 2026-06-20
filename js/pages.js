@@ -591,15 +591,80 @@ window.Pages = (() => {
       App.toast('Faça login para registrar emergência.','warn');
       window.MobyaAuth?.showLogin(); return;
     }
-    const desc = prompt(`🚨 ${label}\n\nDescreva brevemente a situação e sua localização:`);
-    if (!desc) return;
-    try {
-      await API.emergency.create({ type, description: desc });
-      App.toast(`🚨 Emergência ${label} registrada! Aguarde contato.`,'ok');
-      if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc}`);
-    } catch(e) {
-      App.toast(e.message||'Erro ao registrar.','err');
+
+    // Modal de confirmação com campo de descrição (sem prompt nativo)
+    const modalId = 'sos-modal-' + Date.now();
+    const overlay = document.createElement('div');
+    overlay.id = modalId;
+    overlay.style.cssText = [
+      'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7)',
+      'display:flex;align-items:center;justify-content:center;padding:20px',
+    ].join(';');
+    overlay.innerHTML = `
+      <div style="background:var(--s2,#1a1a2e);border:1px solid rgba(244,63,94,.4);
+        border-radius:16px;padding:28px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <div style="font-size:1.6rem;margin-bottom:4px">🚨</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;
+          color:#f43f5e;margin-bottom:12px">${label.toUpperCase()}</div>
+        <div style="font-size:.8rem;color:#94a3b8;margin-bottom:16px">
+          Descreva brevemente sua situação. Sua localização será capturada automaticamente.
+        </div>
+        <textarea id="sos-desc-input" placeholder="Ex: Pneu furado, estou na marginal Tietê sentido Ayrton Senna..."
+          style="width:100%;box-sizing:border-box;background:#0f0f1a;border:1px solid rgba(244,63,94,.3);
+          color:#e2e8f0;border-radius:8px;padding:12px;font-size:.85rem;resize:vertical;
+          min-height:80px;outline:none;font-family:inherit"></textarea>
+        <div id="sos-geo-status" style="font-size:.72rem;color:#64748b;margin-top:8px">
+          📍 Capturando localização GPS…
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button id="sos-cancel-btn" style="flex:1;padding:11px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:transparent;color:#94a3b8;cursor:pointer;font-size:.85rem">Cancelar</button>
+          <button id="sos-confirm-btn" style="flex:2;padding:11px;border-radius:8px;border:none;
+            background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff;
+            font-weight:700;cursor:pointer;font-size:.85rem">🚨 Acionar Agora</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    // Capturar GPS em paralelo enquanto usuário digita
+    let coords = {};
+    const geoStatus = overlay.querySelector('#sos-geo-status');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+          if (geoStatus) geoStatus.innerHTML = `✅ GPS capturado (±${Math.round(pos.coords.accuracy)}m)`;
+        },
+        () => {
+          if (geoStatus) geoStatus.innerHTML = '⚠️ GPS indisponível — emergência sem localização exata';
+        },
+        { timeout: 8000, enableHighAccuracy: true }
+      );
+    } else {
+      if (geoStatus) geoStatus.innerHTML = '⚠️ GPS não suportado neste dispositivo';
     }
+
+    const close = () => overlay.remove();
+    overlay.querySelector('#sos-cancel-btn').onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('#sos-confirm-btn').onclick = async () => {
+      const desc = overlay.querySelector('#sos-desc-input').value.trim();
+      const btn  = overlay.querySelector('#sos-confirm-btn');
+      btn.disabled = true;
+      btn.textContent = 'Registrando…';
+      try {
+        await API.emergency.create({ type, description: desc || label, ...coords });
+        close();
+        App.toast(`🚨 Emergência registrada! Buscando prestador próximo…`, 'ok');
+        if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc || ''}`);
+        App.navigate('gps-tracking');
+      } catch(e) {
+        btn.disabled = false;
+        btn.textContent = '🚨 Acionar Agora';
+        App.toast(e.message || 'Erro ao registrar emergência.', 'err');
+      }
+    };
   };
 
   // ═══════════════════════════════════════════════════════════
