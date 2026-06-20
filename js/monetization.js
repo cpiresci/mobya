@@ -1239,21 +1239,26 @@ window.Monetization = (() => {
       ${['OPEN','ACCEPTED','COMPLETED','COMMISSIONS'].map((t,i)=>`<button id="ptab-${t}" onclick="Monetization.providerSwitchTab('${t}')" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.78rem;padding:9px 18px;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .15s;background:${i===0?'var(--s2)':'transparent'};color:${i===0?'var(--neon)':'var(--muted)'};border-bottom:${i===0?'2px solid var(--neon)':'2px solid transparent'}">${t==='OPEN'?'📬 Abertos':t==='ACCEPTED'?'✅ Aceitos':t==='COMPLETED'?'💰 Histórico':'📊 Comissões'}</button>`).join('')}
     </div>
     <div id="prov-tab-content"><div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:40px">⟳ Carregando...</div></div>`;
+    let step = 'providersMine';
     try {
       // Evita estourar o pool de conexões do Prisma (DATABASE_URL sem
       // connection_limit definido = padrão baixo no Render). Disparar 5
-      // queries simultâneas no cold start causa timeout intermitente,
-      // que aparecia como "Erro interno" só na aba Abertos (primeira
-      // renderizada). Aqui sequenciamos em lotes pequenos.
+      // queries simultâneas no cold start causa timeout intermitente.
       const mineRes = await API.monetization.providersMine();
+
+      step = 'quotesProvider(OPEN/ACCEPTED)';
       const [qO,qA] = await Promise.all([
         API.monetization.quotesProvider({status:'OPEN',limit:50}),
         API.monetization.quotesProvider({status:'ACCEPTED',limit:50}),
       ]);
+
+      step = 'quotesProvider(COMPLETED)/commissionsMine';
       const [qC,cm] = await Promise.all([
         API.monetization.quotesProvider({status:'COMPLETED',limit:50}),
         API.monetization.commissionsMine({limit:50}),
       ]);
+
+      step = 'render-header';
       const myProviders = mineRes.data?.providers||mineRes.data||[];
       // Prioriza um perfil ACTIVE; se não tiver, usa o primeiro (PENDING/REJECTED)
       const myProvider = myProviders.find(p=>p.status==='ACTIVE') || myProviders[0] || null;
@@ -1269,7 +1274,7 @@ window.Monetization = (() => {
               <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,#fff,var(--neon),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">${escHtml(myProvider.name)}</div>
               <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:3px 9px">${cm2.label}</span>
               ${myProvider.emergency24h?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--red);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 9px">🚨 ATENDE 24H</span>`:''}
-              ${myProvider.ratingCount>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold)">⭐ ${myProvider.ratingAvg.toFixed(1)} (${myProvider.ratingCount})</span>`:''}
+              ${myProvider.ratingCount>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold)">⭐ ${(myProvider.ratingAvg||0).toFixed(1)} (${myProvider.ratingCount})</span>`:''}
               ${myProvider.status!=='ACTIVE'?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:6px;padding:3px 9px">${myProvider.status==='PENDING'?'⏳ Aguardando aprovação':myProvider.status}</span>`:''}
             </div>
             <div style="color:var(--muted);font-size:.84rem;margin-top:6px">${escHtml(myProvider.city)}/${escHtml(myProvider.state)} · Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div>`;
@@ -1280,6 +1285,7 @@ window.Monetization = (() => {
         }
       }
 
+      step = 'kpis';
       const open=qO.data||qO.items||[], accepted=qA.data||qA.items||[], completed=qC.data||qC.items||[], commList=cm.data||cm.items||[];
       const pendComm=commList.filter(c=>['PENDING','CHARGEABLE'].includes(c.status)).reduce((s,c)=>s+(c.commissionAmount||0),0);
       const paidComm=commList.filter(c=>c.status==='PAID').reduce((s,c)=>s+(c.commissionAmount||0),0);
@@ -1291,12 +1297,16 @@ window.Monetization = (() => {
         {label:'COMISSÃO PAGA',value:fmtBRL(paidComm),color:'var(--green)',icon:'💰'},
       ].map(k=>`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px"><div style="font-size:1.3rem;margin-bottom:8px">${k.icon}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px">${k.label}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:${k.color}">${k.value}</div></div>`).join('');
       window._mpd={open,accepted,completed,commList};
+
+      step = 'renderTab(OPEN)';
       renderTab('OPEN');
     } catch(e) {
+      console.error('[Painel do Prestador] falhou em:', step, e);
       const c=document.getElementById('prov-tab-content');
-      if(c) c.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:24px;text-align:center"><div style="font-size:1.5rem;margin-bottom:8px">⚠️</div><div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.8rem">${e.message}</div></div>`;
+      if(c) c.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:24px;text-align:center"><div style="font-size:1.5rem;margin-bottom:8px">⚠️</div><div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.8rem">${e?.message||'Erro desconhecido'}</div><div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.65rem;margin-top:8px">etapa: ${step}${e?.code?(' · '+e.code):''}${e?.status?(' · HTTP '+e.status):''}</div></div>`;
     }
   }
+
 
   async function providerSwitchTab(tab) { renderTab(tab); }
 
