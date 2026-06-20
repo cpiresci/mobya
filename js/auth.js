@@ -26,6 +26,12 @@ window.MobyaAuth = (() => {
       btn.onclick = () => showLogin();
     }
     if (typeof updateSidebarRoles === 'function') updateSidebarRoles(u);
+    // Fase 4B: auto-connect dispatch para prestadores
+    if (u && ['MECHANIC','SELLER','ADMIN','SUPER_ADMIN'].includes(u.role)) {
+      if (typeof DispatchUI !== 'undefined') setTimeout(() => DispatchUI.connect(), 800);
+    } else if (!u) {
+      if (typeof DispatchUI !== 'undefined') DispatchUI.disconnect();
+    }
   }
 
   function showLogin(redirect='') {
