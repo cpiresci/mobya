@@ -157,7 +157,14 @@ window.App = (() => {
     currentPage = page;
     if (param !== undefined) window.__mobyaListingId = param;
     if (_firstNav) {
-      history.replaceState({ page }, '', `#${page}`);
+      // Planta a sentinela "home" no fundo da pilha (replace, sem disparar popstate)
+      // e em seguida empilha a página inicial real por cima.
+      // Isso garante que SEMPRE existe uma entrada 'home' abaixo de qualquer
+      // navegação, sem que o popstate handler precise re-empilhar nada.
+      history.replaceState({ page: 'home', __sentinel: true }, '', '#home');
+      if (page !== 'home') {
+        history.pushState({ page }, '', `#${page}`);
+      }
       _firstNav = false;
     } else {
       history.pushState({ page }, '', `#${page}`);
@@ -241,29 +248,20 @@ window.App = (() => {
       try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r,5000))]); } catch {}
     }
 
-    let _backPressedOnHome = false;
-    let _backPressTimer    = null;
-
     window.addEventListener('popstate', (ev) => {
-      const page = ev.state?.page || (location.hash || '#home').replace('#','') || 'home';
+      // Nunca chamar pushState/replaceState aqui dentro — re-empilhar history
+      // de dentro do handler de popstate é o que dispara a Chrome History
+      // Manipulation Intervention no Android, fazendo o botão físico de voltar
+      // "pular" estados de forma inconsistente após algumas navegações.
+      const page = ev.state?.page || (location.hash || '#home').replace('#', '') || 'home';
+      const leaving = currentPage;
 
-      if (page !== 'home' && ev.state) {
-        const leaving = currentPage;
-        currentPage = page;
-        if (leaving === 'home' && typeof HomeChat !== 'undefined' && HomeChat.reset) HomeChat.reset();
-        closeMenu();
-        window.renderPage(page);
-        return;
+      currentPage = page;
+      if (leaving === 'home' && page !== 'home' && typeof HomeChat !== 'undefined' && HomeChat.reset) {
+        HomeChat.reset();
       }
-
-      // voltou para home
-      currentPage = 'home';
-      _backPressedOnHome = false;
-      clearTimeout(_backPressTimer);
       closeMenu();
-      window.renderPage('home');
-      // recolocar barreira imediatamente
-      history.pushState({ page: 'home' }, '', '#home');
+      window.renderPage(page);
     });
 
     const initial = (location.hash || '#home').replace('#','') || 'home';
