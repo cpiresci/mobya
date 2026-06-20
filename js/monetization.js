@@ -19,6 +19,17 @@
 
 window.Monetization = (() => {
 
+  // ── SEGURANÇA: escape de texto dinâmico antes de injetar via innerHTML ──
+  // name/city/state/description/logo/category/vertical do MonetizationProvider
+  // são texto livre, sem validação no backend — qualquer usuário autenticado
+  // pode cadastrar um parceiro com esses campos contendo HTML/JS. Como esses
+  // dados são exibidos pra QUALQUER visitante da vitrine (e pro admin, no
+  // painel de receita), é obrigatório escapar tudo antes de injetar no DOM.
+  const escHtml = (t) => String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const escAttr = (t) => escHtml(t).replace(/"/g,'&quot;');
+  // Só permite logo de URL http(s) ou data:image — bloqueia javascript: e afins.
+  const safeLogoUrl = (u) => (typeof u === 'string' && /^(https?:|data:image\/)/i.test(u.trim())) ? u.trim() : '';
+
   // ── CONSTANTES ────────────────────────────────────────────
   const VERTICAL_META = {
     SERVICE: {
@@ -229,6 +240,7 @@ window.Monetization = (() => {
       }
 
       list.innerHTML = providers.map(p => providerCard(p)).join('');
+      window.__mobyaProviderCache = Object.fromEntries(providers.map(p => [p.id, p]));
     } catch (e) {
       list.innerHTML = `<div style="color:var(--red);padding:32px;text-align:center;grid-column:1/-1">
         ⚠️ ${e.message || 'Erro ao buscar parceiros.'}</div>`;
@@ -238,6 +250,7 @@ window.Monetization = (() => {
   function providerCard(p) {
     const vm = VERTICAL_META[p.vertical] || VERTICAL_META.SERVICE;
     const stars = '★'.repeat(Math.round(p.ratingAvg||0)) + '☆'.repeat(5-Math.round(p.ratingAvg||0));
+    const logo = safeLogoUrl(p.logo);
     return `
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;
         padding:20px;transition:all .18s;cursor:pointer"
@@ -246,11 +259,11 @@ window.Monetization = (() => {
         <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
           <div style="width:44px;height:44px;border-radius:10px;background:${vm.bg};border:1px solid ${vm.border};
             display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">
-            ${p.logo ? `<img src="${p.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover">` : vm.icon}
+            ${logo ? `<img src="${escAttr(logo)}" style="width:36px;height:36px;border-radius:6px;object-fit:cover">` : vm.icon}
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-            <div style="font-size:.73rem;color:var(--muted);margin-top:2px">${p.city}/${p.state}</div>
+            <div style="font-weight:600;font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.name)}</div>
+            <div style="font-size:.73rem;color:var(--muted);margin-top:2px">${escHtml(p.city)}/${escHtml(p.state)}</div>
           </div>
           ${p.emergency24h ? `<span style="font-family:'JetBrains Mono',monospace;font-size:.55rem;
             padding:3px 7px;border-radius:4px;background:rgba(244,63,94,.15);color:var(--red);
@@ -261,11 +274,11 @@ window.Monetization = (() => {
             padding:2px 8px;border-radius:4px;background:${vm.bg};color:${vm.color};border:1px solid ${vm.border}">
             ${vm.icon} ${vm.label}
           </span>
-          ${p.category ? `<span style="font-size:.68rem;color:var(--muted)">${p.category.replace(/_/g,' ')}</span>` : ''}
+          ${p.category ? `<span style="font-size:.68rem;color:var(--muted)">${escHtml(p.category.replace(/_/g,' '))}</span>` : ''}
         </div>
         ${p.description ? `<div style="font-size:.76rem;color:var(--muted);line-height:1.45;margin-bottom:12px;
           overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">
-          ${p.description}</div>` : ''}
+          ${escHtml(p.description)}</div>` : ''}
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="color:var(--gold);font-size:.85rem;letter-spacing:-1px">${stars}</span>
@@ -273,7 +286,7 @@ window.Monetization = (() => {
               ${(p.ratingAvg||0).toFixed(1)} (${fmtNum(p.ratingCount)})
             </span>
           </div>
-          <button onclick="Monetization.openQuoteModal('${p.id}','${p.name}','${p.vertical}')" style="
+          <button onclick="Monetization.openQuoteModal('${p.id}')" style="
             background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
             padding:7px 16px;border-radius:7px;font-size:.76rem;font-weight:600;
             border:none;cursor:pointer;box-shadow:0 0 12px rgba(124,58,237,.3)">
@@ -284,10 +297,17 @@ window.Monetization = (() => {
   }
 
   // ── MODAL COTAÇÃO ─────────────────────────────────────────
-  function openQuoteModal(providerId, providerName, vertical) {
+  function openQuoteModal(providerId, providerNameFallback, verticalFallback) {
     const modal   = document.getElementById('quoteModal');
     const content = document.getElementById('quoteContent');
     if (!modal || !content) return;
+
+    // Busca os dados reais do parceiro no cache pelo id, em vez de
+    // confiar em texto embutido no atributo onclick (vetor de XSS,
+    // já que name/vertical vêm de texto livre cadastrado por usuários).
+    const cached = providerId ? (window.__mobyaProviderCache || {})[providerId] : null;
+    const providerName = cached?.name || providerNameFallback || 'Parceiro MOBYA';
+    const vertical      = cached?.vertical || verticalFallback || 'SERVICE';
 
     const vm = VERTICAL_META[vertical] || VERTICAL_META.SERVICE;
 
@@ -298,7 +318,7 @@ window.Monetization = (() => {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;margin-bottom:4px">
         SOLICITAR COTAÇÃO</div>
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:20px">
-        ${vm.icon} ${providerName}</div>
+        ${vm.icon} ${escHtml(providerName)}</div>
 
       <div style="margin-bottom:14px">
         <label style="font-size:.76rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
@@ -874,8 +894,8 @@ window.Monetization = (() => {
                 padding:10px 14px;background:${i===0?'rgba(251,191,36,.07)':'var(--s3)'};
                 border-radius:8px;border:1px solid ${i===0?'rgba(251,191,36,.2)':'var(--border)'};margin-bottom:6px">
                 <div>
-                  <div style="font-weight:600;font-size:.84rem">${i===0?'⭐ ':''}${p.name}</div>
-                  <div style="font-size:.71rem;color:var(--muted)">${p.type || ''} ${p.contact ? '· '+p.contact : ''}</div>
+                  <div style="font-weight:600;font-size:.84rem">${i===0?'⭐ ':''}${escHtml(p.name)}</div>
+                  <div style="font-size:.71rem;color:var(--muted)">${escHtml(p.type || '')} ${p.contact ? '· '+escHtml(p.contact) : ''}</div>
                 </div>
                 <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:${i===0?'var(--gold)':'var(--text)'}">
                   ${fmtBRL(p.estimatedCost)}
@@ -1019,7 +1039,7 @@ window.Monetization = (() => {
                   color:${i===0?'var(--gold)':i<3?'var(--muted)':'var(--s3)'};width:20px">${i+1}</div>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:.82rem;font-weight:500;white-space:nowrap;
-                    overflow:hidden;text-overflow:ellipsis">${p.name || '—'}</div>
+                    overflow:hidden;text-overflow:ellipsis">${escHtml(p.name || '—')}</div>
                   <div style="font-size:.67rem;color:var(--muted)">${vm.icon} ${p.deals} deals</div>
                 </div>
                 <div style="font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--green)">
@@ -1169,10 +1189,10 @@ window.Monetization = (() => {
     const canA = q.status==='OPEN', canC = q.status==='ACCEPTED';
     return `<div id="qcard-${q.id}" style="background:var(--s2);border:1px solid ${showUrgent?'rgba(239,68,68,.4)':'var(--border)'};border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${showUrgent?'rgba(239,68,68,.4)':'var(--border)'}'">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.35rem">${cm?cm.icon:vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:${vm.color}">${q.providerName||'—'}</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.35rem">${cm?cm.icon:vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:${vm.color}">${escHtml(q.providerName||'—')}</span></div>
         <div style="display:flex;align-items:center;gap:6px">${showUrgent?`<span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--red);background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:4px;padding:3px 8px">🔴 URGENTE</span>`:''}${qBadge(q.status)}</div>
       </div>
-      <div style="font-size:.83rem;color:var(--text);line-height:1.5;background:var(--s3);border-radius:8px;padding:10px 12px">${q.description}</div>
+      <div style="font-size:.83rem;color:var(--text);line-height:1.5;background:var(--s3);border-radius:8px;padding:10px 12px">${escHtml(q.description||'')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
         <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">${cm?'Tipo':'Vertical'}</span><br><span style="font-family:'JetBrains Mono',monospace">${cm?cm.label:(q.providerVertical||q.vertical||'—')}</span></div>
         <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Valor estimado</span><br><span style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${q.estimatedAmount?fmtBRL(q.estimatedAmount):'A combinar'}</span></div>
@@ -1322,8 +1342,12 @@ window.Monetization = (() => {
 
   async function providerDeclineQuote(id) {
     if(!confirm('Recusar este chamado?')) return;
-    const d=window._mpd; if(d){const i=d.open.findIndex(q=>q.id===id);if(i!==-1) d.open.splice(i,1);}
-    renderTab('OPEN');
+    const btn=document.querySelector('#qcard-'+id+' button:last-child'); if(btn){btn.disabled=true;btn.textContent='⟳ Processando...';}
+    try {
+      await API.monetization.cancelQuote(id);
+      const d=window._mpd; if(d){const i=d.open.findIndex(q=>q.id===id);if(i!==-1) d.open.splice(i,1);}
+      renderTab('OPEN');
+    } catch(e){alert('Erro ao recusar: '+e.message);if(btn){btn.disabled=false;btn.textContent='✖ Recusar';}}
   }
 
   async function providerCompleteQuote(id) {
@@ -1406,7 +1430,7 @@ ${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
     overlay.onclick = (e) => { if (e.target === overlay) closeClientQuoteDetail(); };
     overlay.innerHTML = `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:440px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.5rem">${vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">${q.providerName||q.vertical||'COTAÇÃO'}</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.5rem">${vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px">${escHtml(q.providerName||q.vertical||'COTAÇÃO')}</span></div>
         ${qBadge(q.status)}
       </div>
       <div style="font-size:.84rem;color:var(--text);line-height:1.5;background:var(--s3);border-radius:8px;padding:12px;margin:14px 0">${escHtml(q.description||'')}</div>
