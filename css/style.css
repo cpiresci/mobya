@@ -340,6 +340,31 @@ body::after{
 .typing span{width:7px;height:7px;border-radius:50%;background:var(--q4);animation:td 1.2s infinite}
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
+
+/* ── Action cards (resultado real de ações do chat — chatActions.js) ── */
+.action-card{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:12px 14px;border-radius:10px;
+  background:var(--s3);border:1px solid var(--border2);
+}
+.action-card-icon{font-size:1.3rem;flex-shrink:0}
+.action-card-body{flex:1;min-width:0}
+.action-card-body strong{display:block;font-size:.82rem;color:var(--text)}
+.action-card-body p{margin:2px 0 0;font-size:.74rem;color:var(--muted);line-height:1.4}
+.action-card-btn{
+  flex-shrink:0;padding:7px 12px;border-radius:8px;border:none;
+  font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap;
+  background:var(--q3);color:#fff;transition:background .15s;
+}
+.action-card-btn:hover{background:var(--q4)}
+.action-card--ok{border-color:rgba(16,185,129,.35)}
+.action-card--ok .action-card-icon{color:var(--green)}
+.action-card--warn{border-color:rgba(251,191,36,.35)}
+.action-card--warn .action-card-icon{color:var(--gold)}
+.action-card--warn .action-card-btn{background:var(--gold);color:var(--ink)}
+.action-card--warn .action-card-btn:hover{background:#fcd34d}
+.action-card--info{border-color:rgba(0,245,255,.25)}
+.action-card--info .action-card-icon{color:var(--neon)}
 @keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
 .chat-input-area{
   padding:12px 14px;border-top:1px solid var(--border);

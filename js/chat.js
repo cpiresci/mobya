@@ -68,6 +68,18 @@ window.Chat = (() => {
 
   function key(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); send(); } }
 
+  // ── GEOLOCALIZAÇÃO (best-effort, nunca trava o envio) ──────
+  function _getCoords() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve({});
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => resolve({}),
+        { timeout: 5000 }
+      );
+    });
+  }
+
   async function send() {
     if (!API.isAuth()) { MobyaAuth.showLogin('chat'); return; }
     const inp  = document.getElementById('msgInput');
@@ -83,11 +95,13 @@ window.Chat = (() => {
     scroll();
     history.push({ role:'user', content:text });
     try {
-      const r = await API.ai.chat({ agentType:agent, message:text, ...(conversationId && { conversationId }) });
+      const coords = await _getCoords();
+      const r = await API.ai.chat({ agentType:agent, message:text, ...(conversationId && { conversationId }), ...coords });
       if (r.data.conversationId) conversationId = r.data.conversationId;
       history.push({ role:'assistant', content:r.data.reply });
       document.getElementById(tid)?.remove();
       addMsg('ai', AGENTS[agent].orb, fmt(r.data.reply));
+      if (r.data.action) renderAction(r.data.action);
       if (r.data.provider) { const pt = document.getElementById('chatProvider'); if(pt) pt.textContent = r.data.provider; }
     } catch(e) {
       document.getElementById(tid)?.remove();
@@ -97,6 +111,100 @@ window.Chat = (() => {
     busy = false;
     document.getElementById('sendBtn').disabled = false;
     document.getElementById('msgInput')?.focus();
+  }
+
+  // ── RENDERIZAÇÃO DE AÇÕES REAIS (resultado de chatActions.js no backend) ──
+  function renderAction(action) {
+    const area = document.getElementById('msgs');
+    if (!area || !action?.type) return;
+
+    let html = '';
+    if (action.type === 'EMERGENCY_CREATED') {
+      html = `
+        <div class="action-card action-card--ok">
+          <div class="action-card-icon">✅</div>
+          <div class="action-card-body">
+            <strong>Emergência registrada</strong>
+            <p>Buscando o prestador mais próximo automaticamente...</p>
+          </div>
+          <button class="action-card-btn" onclick="App.navigate('gps-tracking')">Acompanhar</button>
+        </div>`;
+    } else if (action.type === 'NEEDS_LOCATION') {
+      html = `
+        <div class="action-card action-card--warn">
+          <div class="action-card-icon">📍</div>
+          <div class="action-card-body">
+            <strong>Localização necessária</strong>
+            <p>Permita o acesso à localização para que possamos acionar um prestador de verdade.</p>
+          </div>
+          <button class="action-card-btn" onclick="Chat.retryWithLocation()">Permitir e tentar de novo</button>
+        </div>`;
+    } else if (action.type === 'PROVIDERS_FOUND') {
+      const count = action.count || 0;
+      const targetRoute = action.vertical === 'SERVICE' ? 'servicos' : 'monetizacao';
+      html = count > 0
+        ? `
+        <div class="action-card action-card--ok">
+          <div class="action-card-icon">🛠️</div>
+          <div class="action-card-body">
+            <strong>${count} prestador(es) encontrado(s)</strong>
+            <p>Parceiros cadastrados próximos da sua localização.</p>
+          </div>
+          <button class="action-card-btn" onclick="App.navigate('${targetRoute}')">Ver opções</button>
+        </div>`
+        : `
+        <div class="action-card action-card--info">
+          <div class="action-card-icon">ℹ️</div>
+          <div class="action-card-body">
+            <strong>Nenhum parceiro cadastrado nessa região ainda</strong>
+            <p>Posso te dar orientações gerais enquanto isso.</p>
+          </div>
+        </div>`;
+    } else if (action.type === 'OPEN_PARTS_QUOTE_FORM') {
+      html = `
+        <div class="action-card action-card--info">
+          <div class="action-card-icon">🔧</div>
+          <div class="action-card-body">
+            <strong>Cotação real de peça</strong>
+            <p>Preencha marca, modelo e a peça para um preço de verdade.</p>
+          </div>
+          <button class="action-card-btn" onclick="App.navigate('pecas')">Abrir formulário</button>
+        </div>`;
+    } else if (action.type === 'OPEN_LOGISTICS_QUOTE_FORM') {
+      html = `
+        <div class="action-card action-card--info">
+          <div class="action-card-icon">🚚</div>
+          <div class="action-card-body">
+            <strong>Cotação real de frete</strong>
+            <p>Preencha origem, destino e tipo de veículo para um preço de verdade.</p>
+          </div>
+          <button class="action-card-btn" onclick="App.navigate('fretes')">Abrir formulário</button>
+        </div>`;
+    } else if (action.type === 'OPEN_INSURANCE_QUOTE_FORM') {
+      html = `
+        <div class="action-card action-card--info">
+          <div class="action-card-icon">🛡️</div>
+          <div class="action-card-body">
+            <strong>Simulação real de seguro</strong>
+            <p>Preencha os dados do veículo e do condutor para uma simulação de verdade.</p>
+          </div>
+          <button class="action-card-btn" onclick="App.navigate('seguros-sim')">Abrir formulário</button>
+        </div>`;
+    }
+
+    if (html) {
+      area.innerHTML += `<div class="msg">${html}</div>`;
+      scroll();
+    }
+  }
+
+  // Reenvia a última mensagem do usuário depois que ele autorizar GPS
+  function retryWithLocation() {
+    const msgs = history.filter(m => m.role === 'user');
+    const last = msgs[msgs.length - 1]?.content;
+    if (!last) return;
+    const inp = document.getElementById('msgInput');
+    if (inp) { inp.value = last; send(); }
   }
 
   function addMsg(type, icon, html) {
@@ -124,5 +232,5 @@ window.Chat = (() => {
     return g[id] || 'Como posso ajudar?';
   }
 
-  return { render, selectAgent, inject, key, send };
+  return { render, selectAgent, inject, key, send, retryWithLocation };
 })();
