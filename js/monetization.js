@@ -1240,10 +1240,17 @@ window.Monetization = (() => {
     </div>
     <div id="prov-tab-content"><div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:40px">⟳ Carregando...</div></div>`;
     try {
-      const [mineRes, qO,qA,qC,cm] = await Promise.all([
-        API.monetization.providersMine(),
+      // Evita estourar o pool de conexões do Prisma (DATABASE_URL sem
+      // connection_limit definido = padrão baixo no Render). Disparar 5
+      // queries simultâneas no cold start causa timeout intermitente,
+      // que aparecia como "Erro interno" só na aba Abertos (primeira
+      // renderizada). Aqui sequenciamos em lotes pequenos.
+      const mineRes = await API.monetization.providersMine();
+      const [qO,qA] = await Promise.all([
         API.monetization.quotesProvider({status:'OPEN',limit:50}),
         API.monetization.quotesProvider({status:'ACCEPTED',limit:50}),
+      ]);
+      const [qC,cm] = await Promise.all([
         API.monetization.quotesProvider({status:'COMPLETED',limit:50}),
         API.monetization.commissionsMine({limit:50}),
       ]);
