@@ -1134,17 +1134,47 @@ window.Monetization = (() => {
 
   const VMETA = { SERVICE:{icon:'🔧',color:'var(--q3)'}, RENTAL:{icon:'🗝️',color:'var(--neon)'}, LOGISTICS:{icon:'🚛',color:'var(--gold)'}, INSURANCE:{icon:'🛡️',color:'var(--green)'} };
 
+  // Subtipo dentro de cada vertical — usado pra "personalizar" o header do painel do prestador
+  const CATEGORY_META = {
+    DEALERSHIP:     { icon:'🏢', label:'Concessionária',      urgent:false },
+    AUTO_CENTER:    { icon:'🔧', label:'Auto Center',          urgent:false },
+    MECHANIC_SHOP:  { icon:'🔩', label:'Oficina Mecânica',     urgent:false },
+    ELECTRICIAN:    { icon:'⚡', label:'Elétrica Automotiva',  urgent:false },
+    TIRE_SHOP:      { icon:'🛞', label:'Borracharia',          urgent:false },
+    LOCKSMITH:      { icon:'🔑', label:'Chaveiro',             urgent:true  },
+    FREIGHT:        { icon:'🚚', label:'Transportadora',       urgent:false },
+    TOW:            { icon:'🚛', label:'Guincho / Reboque',    urgent:true  },
+    PARTS_DELIVERY: { icon:'📦', label:'Entrega de Peças',     urgent:false },
+    DAILY:          { icon:'🗝️', label:'Locação Diária',       urgent:false },
+    MONTHLY:        { icon:'🗝️', label:'Locação Mensal',       urgent:false },
+    FLEET:          { icon:'🚙', label:'Locação de Frota',     urgent:false },
+    AUTO_FULL:      { icon:'🛡️', label:'Seguro Auto Completo', urgent:false },
+    AUTO_POPULAR:   { icon:'🛡️', label:'Seguro Auto Popular',  urgent:false },
+    LIFE:           { icon:'🛡️', label:'Seguro de Vida',       urgent:false },
+    CONSORTIUM_AUTO:{ icon:'🤝', label:'Consórcio Auto',       urgent:false },
+  };
+  function categoryMeta(provider) {
+    const cat = provider?.category;
+    if (cat && CATEGORY_META[cat]) return CATEGORY_META[cat];
+    const v = VMETA[provider?.vertical] || { icon:'📋', color:'var(--muted)' };
+    return { icon: v.icon, label: provider?.vertical || 'Prestador', urgent: false };
+  }
+
   function qCard(q) {
     const vm = VMETA[q.providerVertical||q.vertical]||{icon:'📋',color:'var(--muted)'};
+    const cm = q.providerCategory ? CATEGORY_META[q.providerCategory] : null;
+    const isUrgentCategory = !!(cm && cm.urgent);
+    const minsAgo = q.createdAt ? Math.floor((Date.now()-new Date(q.createdAt).getTime())/60000) : null;
+    const showUrgent = isUrgentCategory && q.status==='OPEN' && minsAgo!==null && minsAgo < 30;
     const canA = q.status==='OPEN', canC = q.status==='ACCEPTED';
-    return `<div id="qcard-${q.id}" style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='var(--border)'">
+    return `<div id="qcard-${q.id}" style="background:var(--s2);border:1px solid ${showUrgent?'rgba(239,68,68,.4)':'var(--border)'};border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${showUrgent?'rgba(239,68,68,.4)':'var(--border)'}'">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.35rem">${vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:${vm.color}">${q.providerName||'—'}</span></div>
-        ${qBadge(q.status)}
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.35rem">${cm?cm.icon:vm.icon}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:${vm.color}">${q.providerName||'—'}</span></div>
+        <div style="display:flex;align-items:center;gap:6px">${showUrgent?`<span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--red);background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:4px;padding:3px 8px">🔴 URGENTE</span>`:''}${qBadge(q.status)}</div>
       </div>
       <div style="font-size:.83rem;color:var(--text);line-height:1.5;background:var(--s3);border-radius:8px;padding:10px 12px">${q.description}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Vertical</span><br><span style="font-family:'JetBrains Mono',monospace">${q.providerVertical||q.vertical||'—'}</span></div>
+        <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">${cm?'Tipo':'Vertical'}</span><br><span style="font-family:'JetBrains Mono',monospace">${cm?cm.label:(q.providerVertical||q.vertical||'—')}</span></div>
         <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Valor estimado</span><br><span style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${q.estimatedAmount?fmtBRL(q.estimatedAmount):'A combinar'}</span></div>
         <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Comissão MOBYA</span><br><span style="font-family:'JetBrains Mono',monospace;color:var(--green)">${q.estimatedCommission?fmtBRL(q.estimatedCommission):'—'}</span></div>
         <div style="font-size:.72rem;color:var(--muted)"><span style="color:var(--text-dim)">Solicitado em</span><br><span style="font-family:'JetBrains Mono',monospace">${fmtD(q.createdAt)}</span></div>
@@ -1198,19 +1228,51 @@ window.Monetization = (() => {
 
   async function renderProviderDashboard() {
     const main=document.getElementById('main'); if(!main) return;
-    main.innerHTML=`<div style="margin-bottom:28px"><div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--neon),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">PAINEL DO PRESTADOR</div><div style="color:var(--muted);font-size:.84rem;margin-top:4px">Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div></div>
+    main.innerHTML=`<div id="prov-header" style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="height:32px;width:220px;background:var(--s3);border-radius:6px;animation:pulse 2s infinite"></div>
+        </div>
+        <div style="color:var(--muted);font-size:.84rem;margin-top:8px">Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div>
+      </div>
     <div id="prov-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px">${Array(4).fill(0).map((_,i)=>`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px;animation:pulse 2s ${i*.15}s infinite"><div style="height:9px;background:var(--s3);border-radius:4px;width:55%;margin-bottom:10px"></div><div style="height:24px;background:var(--s3);border-radius:4px;width:70%"></div></div>`).join('')}</div>
     <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border)">
       ${['OPEN','ACCEPTED','COMPLETED','COMMISSIONS'].map((t,i)=>`<button id="ptab-${t}" onclick="Monetization.providerSwitchTab('${t}')" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.78rem;padding:9px 18px;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .15s;background:${i===0?'var(--s2)':'transparent'};color:${i===0?'var(--neon)':'var(--muted)'};border-bottom:${i===0?'2px solid var(--neon)':'2px solid transparent'}">${t==='OPEN'?'📬 Abertos':t==='ACCEPTED'?'✅ Aceitos':t==='COMPLETED'?'💰 Histórico':'📊 Comissões'}</button>`).join('')}
     </div>
     <div id="prov-tab-content"><div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:40px">⟳ Carregando...</div></div>`;
     try {
-      const [qO,qA,qC,cm] = await Promise.all([
+      const [mineRes, qO,qA,qC,cm] = await Promise.all([
+        API.monetization.providersMine(),
         API.monetization.quotesProvider({status:'OPEN',limit:50}),
         API.monetization.quotesProvider({status:'ACCEPTED',limit:50}),
         API.monetization.quotesProvider({status:'COMPLETED',limit:50}),
         API.monetization.commissionsMine({limit:50}),
       ]);
+      const myProviders = mineRes.data?.providers||mineRes.data||[];
+      // Prioriza um perfil ACTIVE; se não tiver, usa o primeiro (PENDING/REJECTED)
+      const myProvider = myProviders.find(p=>p.status==='ACTIVE') || myProviders[0] || null;
+      window._myProvider = myProvider;
+
+      const hdr = document.getElementById('prov-header');
+      if (hdr) {
+        if (myProvider) {
+          const cm2 = categoryMeta(myProvider);
+          hdr.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <span style="font-size:1.8rem">${cm2.icon}</span>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;background:linear-gradient(135deg,#fff,var(--neon),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">${escHtml(myProvider.name)}</div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:3px 9px">${cm2.label}</span>
+              ${myProvider.emergency24h?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--red);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 9px">🚨 ATENDE 24H</span>`:''}
+              ${myProvider.ratingCount>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold)">⭐ ${myProvider.ratingAvg.toFixed(1)} (${myProvider.ratingCount})</span>`:''}
+              ${myProvider.status!=='ACTIVE'?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:6px;padding:3px 9px">${myProvider.status==='PENDING'?'⏳ Aguardando aprovação':myProvider.status}</span>`:''}
+            </div>
+            <div style="color:var(--muted);font-size:.84rem;margin-top:6px">${escHtml(myProvider.city)}/${escHtml(myProvider.state)} · Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div>`;
+        } else {
+          hdr.innerHTML = `
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--neon),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">PAINEL DO PRESTADOR</div>
+            <div style="color:var(--muted);font-size:.84rem;margin-top:4px">Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div>`;
+        }
+      }
+
       const open=qO.data||qO.items||[], accepted=qA.data||qA.items||[], completed=qC.data||qC.items||[], commList=cm.data||cm.items||[];
       const pendComm=commList.filter(c=>['PENDING','CHARGEABLE'].includes(c.status)).reduce((s,c)=>s+(c.commissionAmount||0),0);
       const paidComm=commList.filter(c=>c.status==='PAID').reduce((s,c)=>s+(c.commissionAmount||0),0);

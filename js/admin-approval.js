@@ -5,6 +5,8 @@ window.updateSidebarRoles = function(user) {
   if (sbP) sbP.style.display = (isMechanic || isAdmin) ? '' : 'none';
   const sbA = document.getElementById('sbAdminAprov');
   if (sbA) sbA.style.display = isAdmin ? '' : 'none';
+  const sbR = document.getElementById('sbPainelReceita');
+  if (sbR) sbR.style.display = isAdmin ? '' : 'none';
   if (isAdmin) AdminApproval.fetchPendingCount();
 };
 window.AdminApproval = (() => {

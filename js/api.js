@@ -70,6 +70,7 @@ window.API = (() => {
     rates:            ()       => get('/monetization/rates'),
     categories:       ()       => get('/monetization/categories'),
     providers:        (p={})   => get(`/monetization/providers?${new URLSearchParams(p)}`),
+    providersMine:    ()       => get('/monetization/providers/mine'),
     createProvider:   (d)      => post('/monetization/providers', d),
     rateProvider:     (id,d)   => post(`/monetization/providers/${id}/rating`, d),
     quotes:           (p={})   => get(`/monetization/quotes/mine?${new URLSearchParams(p)}`),
