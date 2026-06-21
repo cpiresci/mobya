@@ -100,6 +100,12 @@ const BASE_PAGES = {
   'meus-anuncios':    () => Pages.renderDashboard(),
   monetizacao:        () => (typeof Monetization!=='undefined'&&Monetization.renderPartnersPage   ? Monetization.renderPartnersPage()    : comingSoon('REDE DE PARCEIROS','🤝')),
   'painel-prestador': () => (typeof Monetization!=='undefined'&&Monetization.renderProviderDashboard ? Monetization.renderProviderDashboard() : comingSoon('PAINEL DO PRESTADOR','🛠️')),
+  'carteira-prestador': () => {
+    const user = MobyaAuth.getUser();
+    if (!user) { MobyaAuth.showLogin('carteira-prestador'); return; }
+    if (typeof WalletPage !== 'undefined') WalletPage.render();
+    else comingSoon('CARTEIRA','💰');
+  },
   'gps-tracking': () => {
     const user = MobyaAuth.getUser();
     if (!user) { MobyaAuth.showLogin('gps-tracking'); return; }

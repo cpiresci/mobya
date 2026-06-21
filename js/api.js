@@ -57,10 +57,14 @@ window.API = (() => {
   };
 
   const emergency = {
-    create:  (d)    => post('/emergency', d),
-    mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
-    update:  (id,d) => patch(`/emergency/${id}/status`, d),
-    myOffers:()     => get('/emergency/my-offers'),
+    create:          (d)    => post('/emergency', d),
+    mine:            (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
+    update:          (id,d) => patch(`/emergency/${id}/status`, d),
+    myOffers:        ()     => get('/emergency/my-offers'),
+    // Fase 5 — pagamento do cliente
+    initiatePayment: (id)   => post(`/emergency/${id}/initiate-payment`),
+    paymentStatus:   (id)   => get(`/emergency/${id}/payment-status`),
+    refund:          (id)   => post(`/emergency/${id}/refund`),
     nearby:  (lat, lng, opts={}) =>
       get(`/emergency/nearby?latitude=${lat}&longitude=${lng}` +
           `&radiusKm=${opts.radiusKm||50}` +
@@ -153,5 +157,14 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, pollEmergency, ping };
+  // Fase 5 — carteira do prestador
+  const wallet = {
+    balance:      ()           => get('/wallet/balance'),
+    transactions: (p={})       => get(`/wallet/transactions?${new URLSearchParams(p)}`),
+    withdraw:     (d)          => post('/wallet/withdraw', d),
+    withdrawals:  ()           => get('/wallet/withdrawals'),
+    approveSaque: (id, d)      => patch(`/wallet/withdrawals/${id}`, d),
+  };
+
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, pollEmergency, ping };
 })();
