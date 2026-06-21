@@ -1,9 +1,10 @@
 window.GPSTracking = (() => {
   const API_BASE = (window.MOBYA?.API || 'https://mobya.onrender.com') + '/api/v1';
   const WS_BASE  = API_BASE.replace('/api/v1','').replace('https://','wss://').replace('http://','ws://');
+  const MBX_TOKEN_KEY = 'mbx_token';
   let socket=null,map=null,markers={},routeLine=null,watchId=null,sessionId=null,myRole=null,chatMsgs=[];
   // Pulso de sinal + trilha-cometa + barra de proximidade (visual quantum premium)
-  let trailPts=[],trailLayer=null,_initialDistanceKm=null;
+  let trailPts=[],_trailIds=[],_initialDistanceKm=null;
   // Fase 4A — resiliência
   let offlineBuffer=[];           // pings não enviados enquanto WS offline
   let pollingTimer=null;          // setInterval do fallback REST
@@ -11,32 +12,67 @@ window.GPSTracking = (() => {
   const OFFLINE_POLL_MS=5000;     // intervalo de polling REST
   const OFFLINE_POLL_DELAY=10000; // só ativa polling após 10s offline
   const BUFFER_KEY='mobya_gps_buf'; // chave localStorage
+  const TRAIL_MAX=12;
+  let _mapReady=null; // promise resolvida quando o estilo do mapa carrega
 
   const STATUS_LABEL={AGUARDANDO:{text:'Aguardando prestador',color:'#f59e0b',icon:'⏳'},A_CAMINHO:{text:'Prestador a caminho',color:'#3b82f6',icon:'🚗'},CHEGOU:{text:'Prestador chegou!',color:'#8b5cf6',icon:'📍'},EM_SERVICO:{text:'Em atendimento',color:'#f97316',icon:'🔧'},CONCLUIDO:{text:'Serviço concluído',color:'#10b981',icon:'✅'},CANCELADO:{text:'Cancelado',color:'#ef4444',icon:'❌'}};
-  function makeIcon(e,role){
-    const isP=role==='PROVIDER';
-    return L.divIcon({
-      html:`<div class="gps-marker ${isP?'is-provider':'is-user'}">
-              <div class="gps-marker-ring"></div>
-              <div class="gps-marker-core">${e}</div>
-            </div>`,
-      iconSize:[42,42],iconAnchor:[21,21],className:''
-    });
+
+  function getMapboxToken(){
+    return window.MOBYA?.MAPBOX_TOKEN || localStorage.getItem(MBX_TOKEN_KEY) || null;
   }
-  function initMap(id){if(map){map.remove();map=null;}map=L.map(id,{zoomControl:true,attributionControl:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);map.setView([-15.788,-47.879],15);return map;}
+
+  function _markerEl(e,role){
+    const isP=role==='PROVIDER';
+    const div=document.createElement('div');
+    div.className=`gps-marker ${isP?'is-provider':'is-user'}`;
+    div.innerHTML=`<div class="gps-marker-ring"></div><div class="gps-marker-core">${e}</div>`;
+    return div;
+  }
+
+  // initMap agora retorna uma Promise que resolve quando o estilo carregou
+  // (necessário porque addLayer/addSource do Mapbox exigem 'load' disparado).
+  function initMap(id){
+    if(map){try{map.remove();}catch{}map=null;}
+    markers={};routeLine=null;trailPts=[];_trailIds=[];
+    _mapReady=new Promise((resolve)=>{
+      map=new mapboxgl.Map({
+        container:id,
+        style:'mapbox://styles/mapbox/dark-v11',
+        center:[-47.879,-15.788],
+        zoom:15,
+        pitch:0,
+        attributionControl:false,
+      });
+      map.addControl(new mapboxgl.NavigationControl({showCompass:false}),'bottom-right');
+      map.on('load',()=>resolve(map));
+      map.on('error',(e)=>console.warn('[GPS][Mapbox]',e?.error?.message||e));
+    });
+    return _mapReady;
+  }
+
   // Trilha-cometa: desenha o caminho percorrido pelo prestador com opacidade
   // decrescente por idade — cada segmento "apaga" conforme fica mais antigo.
+  function _clearTrail(){
+    if(!map)return;
+    _trailIds.forEach(id=>{
+      if(map.getLayer(id))map.removeLayer(id);
+      if(map.getSource(id))map.removeSource(id);
+    });
+    _trailIds=[];
+  }
   function _pushTrail(lat,lng){
-    trailPts.push([lat,lng]);
-    if(trailPts.length>12)trailPts.shift();
-    if(trailLayer){map.removeLayer(trailLayer);trailLayer=null;}
+    if(!map)return;
+    trailPts.push([lng,lat]); // Mapbox usa [lng,lat]
+    if(trailPts.length>TRAIL_MAX)trailPts.shift();
+    _clearTrail();
     if(trailPts.length<2)return;
-    const group=L.layerGroup();
     for(let i=1;i<trailPts.length;i++){
       const t=i/(trailPts.length-1); // 0=mais antigo, 1=mais novo
-      L.polyline([trailPts[i-1],trailPts[i]],{color:'#00f5ff',weight:3,opacity:.06+t*.46}).addTo(group);
+      const id=`gps-trail-${i}`;
+      map.addSource(id,{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[trailPts[i-1],trailPts[i]]}}});
+      map.addLayer({id,type:'line',source:id,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#00f5ff','line-width':3,'line-opacity':.06+t*.46}});
+      _trailIds.push(id);
     }
-    trailLayer=group.addTo(map);
   }
   // Pulso de sinal: anel de radar que expande no instante exato em que um
   // novo ping de GPS chega — não é loop decorativo, é o dado em tempo real.
@@ -48,14 +84,48 @@ window.GPSTracking = (() => {
     void ring.offsetWidth; // reinicia a animação mesmo se já estava rodando
     ring.classList.add('ping');
   }
+  function _fitBounds(pts){
+    if(!map||!pts.length)return;
+    if(pts.length===1){map.easeTo({center:pts[0],zoom:16,duration:600});return;}
+    const b=pts.reduce((bb,p)=>bb.extend(p),new mapboxgl.LngLatBounds(pts[0],pts[0]));
+    map.fitBounds(b,{padding:60,maxZoom:16,duration:600});
+  }
   function updateMarker(role,lat,lng,label){
+    if(!map)return;
     const isP=role==='PROVIDER';const e=isP?'🔧':'📍';
     const isNew=!markers[role];
-    if(markers[role]){markers[role].setLatLng([lat,lng]);}
-    else{markers[role]=L.marker([lat,lng],{icon:makeIcon(e,role)}).addTo(map).bindPopup(`<strong>${label}</strong>`);}
+    const lngLat=[lng,lat];
+    if(markers[role]){
+      markers[role].setLngLat(lngLat);
+    }else{
+      const el=_markerEl(e,role);
+      markers[role]=new mapboxgl.Marker({element:el,anchor:'center'})
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup({offset:24,className:'gps-popup'}).setHTML(`<strong>${label}</strong>`))
+        .addTo(map);
+    }
     if(!isNew)_pingSignal(role);
     if(isP)_pushTrail(lat,lng);
-    if(markers.USER&&markers.PROVIDER){const pts=[markers.USER.getLatLng(),markers.PROVIDER.getLatLng()];if(routeLine){routeLine.setLatLngs(pts);}else{routeLine=L.polyline(pts,{color:'#7c3aed',weight:3,dashArray:'8 6',opacity:.6}).addTo(map);}map.fitBounds(L.latLngBounds(pts),{padding:[40,40],maxZoom:16});}else{map.setView([lat,lng],16);}
+    if(markers.USER&&markers.PROVIDER){
+      const pts=[markers.USER.getLngLat().toArray(),markers.PROVIDER.getLngLat().toArray()];
+      _setRouteLine(pts,{color:'#7c3aed',width:3,dash:[2,1.5],opacity:.6});
+      _fitBounds(pts);
+    }else{
+      map.easeTo({center:lngLat,zoom:16,duration:600});
+    }
+  }
+  function _setRouteLine(coords,{color,width,dash,opacity}={}){
+    if(!map)return;
+    const id='gps-route-line';
+    const data={type:'Feature',geometry:{type:'LineString',coordinates:coords}};
+    if(map.getSource(id)){
+      map.getSource(id).setData(data);
+    }else{
+      map.addSource(id,{type:'geojson',data});
+      map.addLayer({id,type:'line',source:id,layout:{'line-join':'round','line-cap':'round'},
+        paint:{'line-color':color||'#3b82f6','line-width':width||4,'line-opacity':opacity??.8,...(dash?{'line-dasharray':dash}:{})}});
+    }
+    routeLine=true;
   }
   function _loadBuffer(){try{const s=localStorage.getItem(BUFFER_KEY);return s?JSON.parse(s):[];}catch{return[];}}
   function _saveBuffer(buf){try{localStorage.setItem(BUFFER_KEY,JSON.stringify(buf.slice(-50)));}catch{}}
@@ -118,10 +188,22 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
         padding:4px 10px;border-radius:8px;border:1px solid;background:rgba(255,255,255,.04)}
       #gpsProximityWrap{height:5px;border-radius:3px;background:var(--s3,#111122);overflow:hidden;margin-top:6px}
       #gpsProximityFill{height:100%;width:0%;border-radius:3px;transition:width .6s ease,background .6s ease}
+      .mapboxgl-ctrl-logo,.mapboxgl-ctrl-attrib{display:none!important}
+      .mapboxgl-popup-content{background:var(--card-bg,#15152b);border:1px solid var(--border,#2a2a45);color:var(--text,#eee);
+        border-radius:10px;padding:10px 14px;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+      .mapboxgl-popup-tip{display:none}
+      #gpsTokenGate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+        background:var(--s2,#0b0b18);z-index:30;padding:20px}
+      #gpsTokenGate .gtg-card{background:var(--card-bg,#15152b);border:1px solid var(--border,#2a2a45);border-radius:14px;
+        padding:22px;max-width:340px;width:100%}
+      #gpsTokenGate h3{font-size:1rem;margin-bottom:8px}
+      #gpsTokenGate p{font-size:.78rem;color:var(--muted,#9090b0);margin-bottom:14px;line-height:1.5}
+      #gpsTokenInput{width:100%;padding:9px 11px;background:var(--s3,#111122);border:1px solid var(--border,#2a2a45);
+        border-radius:8px;color:var(--text,#eee);font-family:monospace;font-size:.74rem;margin-bottom:10px}
     `;
     document.head.appendChild(s);
   }
-  function joinSession(sid){sessionId=sid;trailPts=[];_initialDistanceKm=null;if(trailLayer){map?.removeLayer(trailLayer);trailLayer=null;}if(!socket?.connected)return;socket.emit('join_session',{sessionId:sid});}
+  function joinSession(sid){sessionId=sid;trailPts=[];_initialDistanceKm=null;_clearTrail();if(!socket?.connected)return;socket.emit('join_session',{sessionId:sid});}
   let _pendingPos=null;
   function _flushOwnPosition(){if(_pendingPos&&myRole){const{lat,lng}=_pendingPos;_pendingPos=null;updateMarker(myRole,lat,lng,'Você');}}
   function startWatchingLocation(){if(!navigator.geolocation){Toast.show('GPS não disponível.','warn');return;}const opts={enableHighAccuracy:true,maximumAge:3000,timeout:10000};watchId=navigator.geolocation.watchPosition((pos)=>{const{latitude:lat,longitude:lng,heading,speed,accuracy}=pos.coords;if(socket?.connected){
@@ -131,7 +213,7 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
           offlineBuffer.push(ping);
           if(offlineBuffer.length>50)offlineBuffer.shift();
           _saveBuffer(offlineBuffer);
-        }if(myRole){updateMarker(myRole,lat,lng,'Você');}else{_pendingPos={lat,lng};map&&map.setView([lat,lng],16);}},(err)=>console.warn('[GPS]',err.message),opts);updateGPSStatus('ativo');}
+        }if(myRole){updateMarker(myRole,lat,lng,'Você');}else{_pendingPos={lat,lng};map&&map.easeTo({center:[lng,lat],zoom:16,duration:400});}},(err)=>console.warn('[GPS]',err.message),opts);updateGPSStatus('ativo');}
   function stopWatchingLocation(){if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}_stopPolling();updateGPSStatus('parado');}
   function updateProviderControls(role){const el=document.getElementById('gpsProviderControls');if(!el)return;el.style.display=role!=='PROVIDER'?'none':'';}
   function setStatus(status){if(!socket?.connected||!sessionId)return;socket.emit('update_status',{status});}
@@ -150,7 +232,11 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
     const bar=document.getElementById('gpsProximityFill');
     if(bar){bar.style.width=Math.round(progress*100)+'%';bar.style.background=color;bar.style.boxShadow=`0 0 8px ${color}`;}
   }
-  function drawRealRoute(geometry){if(!map||!geometry?.length)return;const latlngs=geometry.map(([lng,lat])=>[lat,lng]);if(routeLine){map.removeLayer(routeLine);}routeLine=L.polyline(latlngs,{color:'#3b82f6',weight:4,opacity:.8}).addTo(map);}
+  function drawRealRoute(geometry){
+    if(!map||!geometry?.length)return;
+    // geometry vem como [[lng,lat],...] (GeoJSON / OSRM) — já no formato nativo do Mapbox.
+    _setRouteLine(geometry,{color:'#3b82f6',width:4,opacity:.8});
+  }
   async function doCheckin(photoFile){
     if(!sessionId)return;
     if(!navigator.geolocation){Toast.show('GPS não disponível para check-in.','warn');return;}
@@ -165,13 +251,45 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
   function promptCheckin(){doCheckin(null);}
   function addChatMessage({text,from,role,ts}){chatMsgs.push({text,from,role,ts});const el=document.getElementById('gpsChatMessages');if(!el)return;const isSystem=role==='SYSTEM';const isMe=role===myRole;const div=document.createElement('div');div.style.cssText=`display:flex;flex-direction:column;align-items:${isSystem?'center':isMe?'flex-end':'flex-start'};margin:4px 0`;div.innerHTML=isSystem?`<span style="font-size:.72rem;color:var(--muted);padding:2px 8px">${text}</span>`:`<div style="max-width:80%;background:${isMe?'var(--q4)':'var(--card-bg)'};color:${isMe?'#000':'var(--text)'};padding:7px 12px;border-radius:${isMe?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:.83rem"><div style="font-size:.7rem;color:${isMe?'rgba(0,0,0,.5)':'var(--muted)'};margin-bottom:2px">${from}</div>${text}</div>`;el.appendChild(div);el.scrollTop=el.scrollHeight;}
   function sendChatMessage(text){if(!socket?.connected||!text?.trim())return;socket.emit('send_message',{text});}
+  function _renderTokenGate(container){
+    container.innerHTML=`<div id="gpsTokenGate"><div class="gtg-card">
+      <h3>🗺️ Token Mapbox necessário</h3>
+      <p>O GPS Tracking agora usa Mapbox GL JS. Cole seu token público (pk.eyJ...) para ativar o mapa. Crie grátis em <strong>mapbox.com</strong>. Fica salvo só neste navegador.</p>
+      <input id="gpsTokenInput" placeholder="pk.eyJ1IjoiYWJj...">
+      <button class="ai-btn" style="width:100%" id="gpsTokenBtn">Ativar mapa</button>
+    </div></div>`;
+    document.getElementById('gpsTokenBtn').onclick=()=>{
+      const v=document.getElementById('gpsTokenInput').value.trim();
+      if(!v.startsWith('pk.')){Toast.show('Token inválido — deve começar com pk.','warn');return;}
+      try{localStorage.setItem(MBX_TOKEN_KEY,v);}catch{}
+      _bootMap();
+    };
+  }
+  let _pendingSid=null,_pendingToken=null;
+  function _bootMap(){
+    const token=getMapboxToken();
+    if(!token){_renderTokenGate(document.getElementById('gpsMapWrap'));return;}
+    mapboxgl.accessToken=token;
+    const wrap=document.getElementById('gpsMapWrap');
+    if(wrap)wrap.innerHTML='<div id="gpsMap" style="width:100%;height:100%"></div>';
+    initMap('gpsMap').then(()=>{
+      const tk=_pendingToken;
+      if(tk){connectSocket(tk);if(_pendingSid){setTimeout(()=>joinSession(_pendingSid),800);}else if(window.__mobyaPendingEmergencyId){_waitForProviderAccept(window.__mobyaPendingEmergencyId);}startWatchingLocation();}
+    });
+  }
   async function render(sid){
     const main=document.getElementById('main');if(!main)return;
-    main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px);gap:0"><div style="padding:14px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div id="gpsHeader">📡 GPS TRACKING</div><div id="gpsSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.76rem">Conectando...</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:150px"><span id="gpsConnectionStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><span id="gpsWatchStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><div style="width:100%"><span id="gpsETA" style="font-family:'JetBrains Mono',monospace;font-size:.78rem"></span><div id="gpsProximityWrap"><div id="gpsProximityFill"></div></div></div></div></div><div id="gpsMap" style="flex:1;min-height:260px;width:100%"></div><div id="gpsProviderControls" style="display:none;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)"><div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">ATUALIZAR STATUS</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('A_CAMINHO')">🚗 A Caminho</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.4)" onclick="GPSTracking.promptCheckin()">📸 Check-in (foto)</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('CHEGOU')">📍 Cheguei</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('EM_SERVICO')">🔧 Em Serviço</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="GPSTracking.setStatus('CONCLUIDO')">✅ Concluído</button></div></div><div style="background:var(--card-bg);border-top:1px solid var(--border)"><div id="gpsChatMessages" style="height:110px;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column"></div><div style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border)"><input id="gpsChatInput" placeholder="Mensagem rápida..." style="flex:1;background:var(--input-bg,rgba(255,255,255,.06));border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;outline:none" onkeydown="if(event.key==='Enter'){GPSTracking.sendChatMessage(this.value);this.value='';}"><button class="ai-btn" style="padding:8px 14px;font-size:.82rem" onclick="const i=document.getElementById('gpsChatInput');GPSTracking.sendChatMessage(i.value);i.value=''">Enviar</button></div></div></div>`;
+    main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px);gap:0"><div style="padding:14px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div id="gpsHeader">📡 GPS TRACKING</div><div id="gpsSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.76rem">Conectando...</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:150px"><span id="gpsConnectionStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><span id="gpsWatchStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><div style="width:100%"><span id="gpsETA" style="font-family:'JetBrains Mono',monospace;font-size:.78rem"></span><div id="gpsProximityWrap"><div id="gpsProximityFill"></div></div></div></div></div><div id="gpsMapWrap" style="flex:1;min-height:260px;width:100%;position:relative"><div id="gpsMap" style="width:100%;height:100%"></div></div><div id="gpsProviderControls" style="display:none;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)"><div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">ATUALIZAR STATUS</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('A_CAMINHO')">🚗 A Caminho</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.4)" onclick="GPSTracking.promptCheckin()">📸 Check-in (foto)</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('CHEGOU')">📍 Cheguei</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('EM_SERVICO')">🔧 Em Serviço</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="GPSTracking.setStatus('CONCLUIDO')">✅ Concluído</button></div></div><div style="background:var(--card-bg);border-top:1px solid var(--border)"><div id="gpsChatMessages" style="height:110px;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column"></div><div style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border)"><input id="gpsChatInput" placeholder="Mensagem rápida..." style="flex:1;background:var(--input-bg,rgba(255,255,255,.06));border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;outline:none" onkeydown="if(event.key==='Enter'){GPSTracking.sendChatMessage(this.value);this.value='';}"><button class="ai-btn" style="padding:8px 14px;font-size:.82rem" onclick="const i=document.getElementById('gpsChatInput');GPSTracking.sendChatMessage(i.value);i.value=''">Enviar</button></div></div></div>`;
     _injectStyles();
     updateConnectionStatus('reconectando');
     updateGPSStatus('parado');
-    setTimeout(()=>{initMap('gpsMap');const token=API.getToken();if(token){connectSocket(token);if(sid){setTimeout(()=>joinSession(sid),800);}else if(window.__mobyaPendingEmergencyId){_waitForProviderAccept(window.__mobyaPendingEmergencyId);}startWatchingLocation();}else{Toast.show('Faça login para usar o GPS.','warn');}},100);
+    setTimeout(()=>{
+      const token=API.getToken();
+      if(!token){Toast.show('Faça login para usar o GPS.','warn');return;}
+      _pendingToken=token;_pendingSid=sid||null;
+      if(typeof mapboxgl==='undefined'){Toast.show('⚠️ Mapbox GL JS não carregado.','error');return;}
+      _bootMap();
+    },100);
   }
   function _setWaitingStatus(msg){const el=document.getElementById('gpsSessionStatus');if(el)el.innerHTML=`<span style="color:#f59e0b">⏳ ${msg}</span>`;}
   async function _waitForProviderAccept(emergencyId,attempt=0){
