@@ -91,6 +91,7 @@ window.API = (() => {
     dashboard:        ()       => get('/monetization/dashboard'),
     simulateInsurance:(d)      => post('/monetization/insurance/simulate', d),
     quoteLogistics:   (d)      => post('/monetization/logistics/quote', d),
+    quoteParts:       (d)      => post('/monetization/parts/quote', d),
     chargeCommission: (id)     => post(`/monetization/commissions/${id}/charge`, {}),
     getPayment:       (id)     => get(`/monetization/commissions/${id}/payment`),
     pendingPayments:  ()       => get('/monetization/commissions/pending-payment'),
