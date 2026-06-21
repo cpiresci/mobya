@@ -625,8 +625,10 @@ const ROUTE_WAYPOINTS = [
 ];
 
 // ── INIT ──
+const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw';
+
 function tryAutoInit() {
-  const stored = sessionStorage.getItem('mbx_token');
+  const stored = sessionStorage.getItem('mbx_token') || DEFAULT_MAPBOX_TOKEN;
   if (stored) {
     initMap(stored);
   } else {
