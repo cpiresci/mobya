@@ -95,6 +95,18 @@ window.Monetization = (() => {
     el.style.opacity = on ? '.5' : '1';
   }
 
+  // Captura geolocalização do navegador, sem travar o fluxo se o usuário negar.
+  function _getCoords() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve({});
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        () => resolve({}),
+        { timeout: 6000, enableHighAccuracy: true }
+      );
+    });
+  }
+
   // ── API CALLS ─────────────────────────────────────────────
   const api = {
     providers:         (q='')  => API.get(`/monetization/providers${q}`),
@@ -104,6 +116,7 @@ window.Monetization = (() => {
     quotesMine:        (p='')  => API.get(`/monetization/quotes/mine${p}`),
     commsMine:         ()      => API.get('/monetization/commissions/mine'),
     registerProvider:  (d)     => API.post('/monetization/providers', d),
+    updateLocation:    (id, d) => API.patch(`/monetization/providers/${id}/location`, d),
     createQuote:       (d)     => API.post('/monetization/quotes', d),
     acceptQuote:       (id, d) => API.patch(`/monetization/quotes/${id}/accept`, d),
     completeQuote:     (id, d) => API.patch(`/monetization/quotes/${id}/complete`, d),
@@ -502,6 +515,11 @@ window.Monetization = (() => {
         🚨 Atendimento 24h / Emergência
       </label>
 
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:14px">
+        📍 Vamos pedir sua localização ao enviar — é assim que o app encontra você
+        quando um motorista abre uma emergência por perto. Sem ela, você não recebe ofertas.
+      </div>
+
       <div id="rp_commPreview" style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
         border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:.76rem;
         font-family:'JetBrains Mono',monospace;color:var(--q4)">
@@ -540,15 +558,23 @@ window.Monetization = (() => {
 
     loading(btn, true);
     try {
+      // Essencial: sem latitude/longitude o prestador nunca aparece na busca
+      // de proximidade do dispatch de emergências (mesmo aprovado).
+      const coords = await _getCoords();
       await api.registerProvider({
         name, vertical: vert, city, state,
+        ...coords,
         cnpj:        document.getElementById('rp_cnpj')?.value?.trim()  || undefined,
         phone:       document.getElementById('rp_phone')?.value?.trim() || undefined,
         description: document.getElementById('rp_desc')?.value?.trim()  || undefined,
         emergency24h: document.getElementById('rp_emergency')?.checked  || false,
       });
       window.Monetization.closeQuoteModal();
-      toast('✅ Cadastro enviado! Nossa equipe analisará em até 48h.', 'ok');
+      if (coords.latitude == null) {
+        toast('✅ Cadastro enviado! ⚠️ Não conseguimos captar sua localização — atualize-a no Painel do Prestador após a aprovação, ou você não receberá emergências.', 'warn');
+      } else {
+        toast('✅ Cadastro enviado! Nossa equipe analisará em até 48h.', 'ok');
+      }
     } catch (e) {
       toast(e.message || 'Erro ao enviar cadastro.', 'err');
     } finally {
@@ -1296,6 +1322,8 @@ window.Monetization = (() => {
               ${myProvider.emergency24h?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--red);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 9px">🚨 ATENDE 24H</span>`:''}
               ${myProvider.ratingCount>0?`<span style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--gold)">⭐ ${(myProvider.ratingAvg||0).toFixed(1)} (${myProvider.ratingCount})</span>`:''}
               ${myProvider.status!=='ACTIVE'?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:6px;padding:3px 9px">${myProvider.status==='PENDING'?'⏳ Aguardando aprovação':myProvider.status}</span>`:''}
+              ${myProvider.latitude==null||myProvider.longitude==null?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--red);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 9px">📍 SEM LOCALIZAÇÃO — você não recebe emergências assim</span>`:''}
+              <button id="provLocationBtn" onclick="Monetization.updateMyLocation('${myProvider.id}')" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;background:var(--s2);border:1px solid var(--border);color:var(--neon);border-radius:6px;padding:4px 10px;cursor:pointer">📍 ${myProvider.latitude==null?'Definir':'Atualizar'} localização</button>
             </div>
             <div style="color:var(--muted);font-size:.84rem;margin-top:6px">${escHtml(myProvider.city)}/${escHtml(myProvider.state)} · Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div>`;
         } else {
@@ -1471,6 +1499,29 @@ ${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
     }
   }
 
+  // ── Atualiza a localização do prestador (corrige raiz do bug de
+  // dispatch: sem isso, latitude/longitude ficam NULL pra sempre e o
+  // prestador nunca entra na busca de proximidade do dispatch) ──
+  async function updateMyLocation(providerId) {
+    const btn = document.getElementById('provLocationBtn');
+    if (!navigator.geolocation) { toast('Geolocalização não suportada neste navegador.', 'err'); return; }
+    loading(btn, true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await api.updateLocation(providerId, { latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+          toast('📍 Localização atualizada! Você já pode receber ofertas por proximidade.', 'ok');
+          renderProviderDashboard();
+        } catch (e) {
+          toast(e.message || 'Erro ao atualizar localização.', 'err');
+          loading(btn, false);
+        }
+      },
+      () => { toast('Não foi possível obter sua localização. Verifique a permissão de GPS do navegador.', 'err'); loading(btn, false); },
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  }
+
   Object.assign(window.Monetization, {
     renderProviderDashboard,
     providerSwitchTab,
@@ -1482,6 +1533,7 @@ ${p.paidAt?'Pago em: '+new Date(p.paidAt).toLocaleString('pt-BR'):''}`);
     openClientQuoteDetail,
     closeClientQuoteDetail,
     cancelMyQuote,
+    updateMyLocation,
   });
 
 })();

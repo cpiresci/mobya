@@ -10,8 +10,34 @@ window.DispatchUI = (() => {
   let dispatchSocket = null;
   let countdownTimer = null;
   let currentOffer   = null;
+  let pollTimer      = null;
 
   const OFFER_TIMEOUT_MS = 15000;
+  const POLL_INTERVAL_MS = 8000;
+
+  // ── Fallback REST: cobre os casos em que o Socket.io não entrega a
+  // oferta em tempo real (reconexão, app em background, processo do
+  // backend reiniciando). Sem isso, a única via era o socket — se ele
+  // falhasse por qualquer motivo, a oferta se perdia silenciosamente. ──
+  function _startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+      if (currentOffer) return; // já tem modal aberto, não precisa consultar
+      try {
+        const r = await API.req('GET', '/emergency/my-offers');
+        const offer = r?.data;
+        if (offer && !currentOffer) {
+          console.log('[Dispatch] Oferta encontrada via polling de fallback:', offer);
+          _showOffer(offer);
+        }
+      } catch { /* silencioso — tenta de novo no próximo ciclo */ }
+    }, POLL_INTERVAL_MS);
+  }
+
+  function _stopPolling() {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
 
   // ── Estilos do modal ──────────────────────────────────────
   function _injectStyles() {
@@ -233,6 +259,8 @@ window.DispatchUI = (() => {
       setTimeout(() => { badge.style.display = 'none'; }, 3000);
     });
 
+    _startPolling();
+
     dispatchSocket.on('disconnect', () => {
       console.log('[Dispatch] Desconectado de /dispatch');
     });
@@ -259,6 +287,7 @@ window.DispatchUI = (() => {
   function disconnect() {
     dispatchSocket?.disconnect();
     dispatchSocket = null;
+    _stopPolling();
     _clearModal();
   }
 

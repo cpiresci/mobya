@@ -60,6 +60,7 @@ window.API = (() => {
     create:  (d)    => post('/emergency', d),
     mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
     update:  (id,d) => patch(`/emergency/${id}/status`, d),
+    myOffers:()     => get('/emergency/my-offers'),
     nearby:  (lat, lng, opts={}) =>
       get(`/emergency/nearby?latitude=${lat}&longitude=${lng}` +
           `&radiusKm=${opts.radiusKm||50}` +
@@ -72,6 +73,7 @@ window.API = (() => {
     providers:        (p={})   => get(`/monetization/providers?${new URLSearchParams(p)}`),
     providersMine:    ()       => get('/monetization/providers/mine'),
     createProvider:   (d)      => post('/monetization/providers', d),
+    updateLocation:   (id,d)   => patch(`/monetization/providers/${id}/location`, d),
     rateProvider:     (id,d)   => post(`/monetization/providers/${id}/rating`, d),
     quotes:           (p={})   => get(`/monetization/quotes/mine?${new URLSearchParams(p)}`),
     createQuote:      (d)      => post('/monetization/quotes', d),
