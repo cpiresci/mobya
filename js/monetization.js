@@ -57,18 +57,18 @@ window.Monetization = (() => {
       icon: '🛡️', label: 'Seguros & Consórcios',
       color: 'var(--green)', bg: 'rgba(16,185,129,.09)',
       border: 'rgba(16,185,129,.25)',
-      rate: 'variável',
+      rate: '10%–22%',
       desc: 'Seguros auto, vida, garantia mecânica, consórcios',
     },
   };
 
   const INSURANCE_PRODUCTS = {
-    AUTO_FULL:        { label: 'Seguro Auto Completo',        rate: '8%' },
-    AUTO_POPULAR:     { label: 'Seguro Popular / Terceiros',  rate: '6%' },
-    LIFE:             { label: 'Seguro de Vida',              rate: '5%' },
-    GUARANTEED:       { label: 'Garantia Mecânica Extendida', rate: '4%' },
-    CONSORTIUM_AUTO:  { label: 'Consórcio Automotivo',        rate: '2.5%' },
-    CONSORTIUM_MOTO:  { label: 'Consórcio Moto',              rate: '2.5%' },
+    AUTO_FULL:        { label: 'Seguro Auto Completo',        rate: '15%' },
+    AUTO_POPULAR:     { label: 'Seguro Popular / Terceiros',  rate: '10%' },
+    LIFE:             { label: 'Seguro de Vida',              rate: '22%' },
+    GUARANTEED:       { label: 'Garantia Mecânica Extendida', rate: '15%' },
+    CONSORTIUM_AUTO:  { label: 'Consórcio Automotivo',        rate: '5%' },
+    CONSORTIUM_MOTO:  { label: 'Consórcio Moto',              rate: '5%' },
   };
 
   // ── UTILITÁRIOS ───────────────────────────────────────────
