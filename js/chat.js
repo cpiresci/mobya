@@ -216,8 +216,14 @@ window.Chat = (() => {
 
   function scroll() { const a = document.getElementById('msgs'); if(a) setTimeout(()=>a.scrollTop=a.scrollHeight,50); }
 
+  // SEGURANÇA: escapa ANTES de aplicar os replaces de markdown.
+  // A resposta vem de um LLM (cascata de 4 provedores, alguns modelos
+  // pequenos/gratuitos) — se o texto do usuário tiver prompt injection
+  // pedindo pro modelo "ecoar" HTML/script, isso ia direto pro innerHTML
+  // sem essa ordem. Os replaces abaixo reintroduzem só as tags seguras
+  // (strong/em/code/br) depois do texto já estar escapado.
   function fmt(t) {
-    return t
+    return escHtml(t)
       .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
       .replace(/\*(.+?)\*/g,'<em>$1</em>')
       .replace(/`([^`\n]+)`/g,'<code>$1</code>')

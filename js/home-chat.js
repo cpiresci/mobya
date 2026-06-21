@@ -257,8 +257,10 @@ window.HomeChat = (() => {
     if (a) setTimeout(() => { a.scrollTop = a.scrollHeight; }, 50);
   }
 
+  // SEGURANÇA: mesma correção do chat.js — escapa ANTES de formatar.
+  // Ver comentário equivalente em js/chat.js.
   function _fmt(t) {
-    return t
+    return _esc(t)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`([^`\n]+)`/g, '<code>$1</code>')
