@@ -1,0 +1,53 @@
+/* ============================================================
+   MOBYA — auth-extra.css
+   Estilos para: toggle de visibilidade de senha + indicador de
+   força de senha. Isolado do style.css principal de propósito —
+   fácil de revisar/reverter sem mexer no arquivo grande.
+   ============================================================ */
+
+/* ─── Campo de senha com botão de olho embutido ────────────── */
+.pwd-field-wrap{ position:relative; }
+.pwd-field-wrap input{ padding-right:42px !important; }
+
+.pwd-toggle{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer; color:var(--muted);
+  border-radius:6px; transition:color .15s, background .15s;
+  padding:0;
+}
+.pwd-toggle:hover{ color:var(--text); background:rgba(255,255,255,.04); }
+.pwd-toggle:focus-visible{ outline:1px solid var(--q3); outline-offset:1px; }
+.pwd-toggle svg{ width:18px; height:18px; pointer-events:none; }
+
+/* ─── Indicador de força de senha ──────────────────────────── */
+.pwd-strength{ margin-top:8px; }
+.pwd-strength-bar{
+  height:4px; border-radius:2px; background:var(--s3); overflow:hidden;
+  display:flex; gap:3px;
+}
+.pwd-strength-seg{
+  flex:1; height:100%; border-radius:2px; background:var(--border);
+  transition:background .2s ease;
+}
+.pwd-strength-seg.on.weak{ background:var(--red); }
+.pwd-strength-seg.on.fair{ background:var(--orange); }
+.pwd-strength-seg.on.good{ background:var(--gold); }
+.pwd-strength-seg.on.strong{ background:var(--green); }
+
+.pwd-strength-label{
+  font-family:'JetBrains Mono',monospace; font-size:.62rem; letter-spacing:.5px;
+  margin-top:5px; color:var(--muted); text-transform:uppercase;
+}
+.pwd-strength-label.weak{ color:var(--red2); }
+.pwd-strength-label.fair{ color:var(--orange); }
+.pwd-strength-label.good{ color:var(--gold); }
+.pwd-strength-label.strong{ color:var(--green); }
+
+/* ─── Link "esqueci minha senha" ───────────────────────────── */
+.auth-forgot-link{
+  display:block; text-align:right; margin:-6px 0 14px;
+  font-size:.76rem; color:var(--muted); background:none; border:none;
+  cursor:pointer; padding:2px 0; transition:color .15s;
+}
+.auth-forgot-link:hover{ color:var(--q4); }

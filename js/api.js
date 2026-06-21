@@ -34,6 +34,8 @@ window.API = (() => {
     logout:   ()     => post('/auth/logout',   {}),
     me:       ()     => get('/auth/me'),
     updateMe: (d)    => patch('/auth/me',      d),
+    forgotPassword: (d) => post('/auth/forgot-password', d),
+    resetPassword:  (d) => post('/auth/reset-password',  d),
   };
 
   const ai = {

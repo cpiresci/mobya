@@ -2,6 +2,14 @@ window.MobyaAuth = (() => {
   let user = null;
 
   async function init() {
+    // Link de "esqueci minha senha" cai em /?reset_token=XXX — abre
+    // direto a tela de nova senha, sem depender do usuário estar logado
+    // (faz sentido rodar isso ANTES do fluxo normal de sessão/refresh).
+    const resetToken = new URLSearchParams(window.location.search).get('reset_token');
+    if (resetToken) {
+      showResetPassword(resetToken);
+    }
+
     if (!API.isAuth()) {
       const refreshed = await fetch(window.MOBYA.API+'/api/v1/auth/refresh',{method:'POST',credentials:'include'}).then(r=>r.ok?r.json():null).catch(()=>null);
       if (refreshed?.data?.accessToken) API.setToken(refreshed.data.accessToken);
@@ -34,6 +42,102 @@ window.MobyaAuth = (() => {
     }
   }
 
+  // ── Campo de senha com botão de mostrar/ocultar embutido ──────
+  // id: id do <input>. Gera o wrapper + o botão de olho (SVG inline,
+  // sem dependência externa). toggle() troca type text<->password e
+  // o ícone aberto/fechado.
+  function pwdFieldHTML({ id, label, placeholder = '••••••••', autocomplete = 'current-password', onEnter = '', hint = '' }) {
+    const enterAttr = onEnter ? ` onkeydown="if(event.key==='Enter'){${onEnter}}"` : '';
+    return `
+      <div class="form-field">
+        <label>${label}</label>
+        <div class="pwd-field-wrap">
+          <input id="${id}" type="password" placeholder="${placeholder}" autocomplete="${autocomplete}"${enterAttr}>
+          <button type="button" class="pwd-toggle" aria-label="Mostrar senha" onclick="MobyaAuth.togglePwd('${id}', this)">
+            ${eyeIcon(false)}
+          </button>
+        </div>
+        ${hint ? `<div style="font-size:.7rem;color:var(--muted);margin-top:5px">${hint}</div>` : ''}
+      </div>`;
+  }
+
+  function eyeIcon(open) {
+    // open=true → olho "aberto" (senha visível, ícone de olho riscado pra indicar "ocultar")
+    return open
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  }
+
+  function togglePwd(id, btn) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const willShow = input.type === 'password';
+    input.type = willShow ? 'text' : 'password';
+    btn.innerHTML = eyeIcon(willShow);
+    btn.setAttribute('aria-label', willShow ? 'Ocultar senha' : 'Mostrar senha');
+  }
+
+  // ── Indicador de força de senha ────────────────────────────────
+  // Heurística simples (sem libs externas): pontua por comprimento +
+  // variedade de classes de caractere. 4 níveis: fraca/razoável/boa/forte.
+  function pwdStrength(pwd) {
+    if (!pwd) return { score: 0, label: '', cls: '' };
+    let score = 0;
+    if (pwd.length >= 4)  score++;
+    if (pwd.length >= 8)  score++;
+    if (pwd.length >= 12) score++;
+    const hasLower  = /[a-z]/.test(pwd);
+    const hasUpper  = /[A-Z]/.test(pwd);
+    const hasDigit  = /\d/.test(pwd);
+    const hasSymbol = /[^A-Za-z0-9]/.test(pwd);
+    const variety = [hasLower, hasUpper, hasDigit, hasSymbol].filter(Boolean).length;
+    // Pontua por VARIEDADE de classes de caractere, não só tamanho —
+    // assim "12345678901234" (14 dígitos repetidos) não pontua tão alto
+    // quanto uma senha curta mas misturada.
+    if (variety >= 2) score++;
+    if (variety >= 3) score++;
+    if (hasSymbol) score++;
+    // Piso: qualquer senha não-vazia mostra pelo menos "Fraca" — sem
+    // isso, alguém digitando os primeiros 1-3 caracteres não via
+    // nenhum feedback visual até bater o primeiro critério de tamanho.
+    score = Math.max(1, Math.min(score, 4));
+    const levels = [
+      { label: '', cls: '' },
+      { label: 'Fraca', cls: 'weak' },
+      { label: 'Razoável', cls: 'fair' },
+      { label: 'Boa', cls: 'good' },
+      { label: 'Forte', cls: 'strong' },
+    ];
+    return { score, ...levels[score] };
+  }
+
+  function pwdStrengthHTML() {
+    return `
+      <div class="pwd-strength" id="pwdStrengthBox" style="display:none">
+        <div class="pwd-strength-bar">
+          ${[0,1,2,3].map(i => `<div class="pwd-strength-seg" data-seg="${i}"></div>`).join('')}
+        </div>
+        <div class="pwd-strength-label" id="pwdStrengthLabel"></div>
+      </div>`;
+  }
+
+  function updatePwdStrength(inputId) {
+    const input = document.getElementById(inputId);
+    const box   = document.getElementById('pwdStrengthBox');
+    const label = document.getElementById('pwdStrengthLabel');
+    if (!input || !box || !label) return;
+    const pwd = input.value || '';
+    if (!pwd) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const { score, cls, label: text } = pwdStrength(pwd);
+    box.querySelectorAll('.pwd-strength-seg').forEach((seg, i) => {
+      seg.classList.toggle('on', i < score);
+      seg.className = `pwd-strength-seg${i < score ? ' on ' + cls : ''}`;
+    });
+    label.textContent = text;
+    label.className = `pwd-strength-label ${cls}`;
+  }
+
   function showLogin(redirect='') {
     const m = document.getElementById('authModal');
     const c = document.getElementById('authContent');
@@ -43,7 +147,8 @@ window.MobyaAuth = (() => {
       <p style="color:var(--muted);font-size:.82rem;margin-bottom:18px">Acesse sua conta MOBYA</p>
       <div id="authErr" class="callout error" style="display:none"></div>
       <div class="form-field"><label>Email</label><input id="liEmail" type="email" placeholder="seu@email.com" autocomplete="email"></div>
-      <div class="form-field"><label>Senha</label><input id="liPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')MobyaAuth.doLogin('${redirect}')"></div>
+      ${pwdFieldHTML({ id:'liPass', label:'Senha', autocomplete:'current-password', onEnter:`MobyaAuth.doLogin('${redirect}')` })}
+      <button type="button" class="auth-forgot-link" onclick="MobyaAuth.showForgotPassword()">Esqueci minha senha</button>
       <button class="ai-btn" style="width:100%;justify-content:center;height:42px;margin-top:4px" onclick="MobyaAuth.doLogin('${redirect}')"><div class="pdot"></div>ENTRAR</button>
       <div style="text-align:center;margin-top:14px;font-size:.81rem;color:var(--muted)">
         Não tem conta? <button onclick="MobyaAuth.showRegister()" style="background:none;color:var(--q4);cursor:pointer;font-weight:600;border:none">Cadastre-se</button>
@@ -72,6 +177,91 @@ window.MobyaAuth = (() => {
     }
   }
 
+  // ── ESQUECI MINHA SENHA — pede o email, backend manda o link ──
+  function showForgotPassword() {
+    const c = document.getElementById('authContent');
+    if (!c) return;
+    c.innerHTML = `
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;margin-bottom:6px">RECUPERAR SENHA</h3>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:18px">Informe seu email e enviaremos um link para redefinir sua senha.</p>
+      <div id="authErr" class="callout error" style="display:none"></div>
+      <div id="authOk" class="callout ok" style="display:none"></div>
+      <div class="form-field"><label>Email</label><input id="fpEmail" type="email" placeholder="seu@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')MobyaAuth.doForgotPassword()"></div>
+      <button class="ai-btn" id="fpBtn" style="width:100%;justify-content:center;height:42px;margin-top:4px" onclick="MobyaAuth.doForgotPassword()"><div class="pdot"></div>ENVIAR LINK</button>
+      <div style="text-align:center;margin-top:14px;font-size:.81rem;color:var(--muted)">
+        <button onclick="MobyaAuth.showLogin()" style="background:none;color:var(--q4);cursor:pointer;font-weight:600;border:none">← Voltar para o login</button>
+      </div>`;
+    setTimeout(() => document.getElementById('fpEmail')?.focus(), 100);
+  }
+
+  async function doForgotPassword() {
+    const email = document.getElementById('fpEmail')?.value?.trim();
+    if (!email) return showAuthErr('Informe seu email.');
+    const btn = document.getElementById('fpBtn');
+    if (btn) { btn.disabled=true; btn.innerHTML='<div class="pdot"></div>ENVIANDO...'; }
+    try {
+      const r = await API.auth.forgotPassword({ email });
+      const okEl = document.getElementById('authOk');
+      const errEl = document.getElementById('authErr');
+      if (errEl) errEl.style.display = 'none';
+      if (okEl) {
+        okEl.textContent = `✅ ${r.message || 'Se o email existir em nossa base, enviamos um link de redefinição.'}`;
+        okEl.style.display = 'block';
+      }
+      if (btn) { btn.disabled=true; btn.innerHTML='<div class="pdot"></div>LINK ENVIADO'; }
+    } catch(e) {
+      showAuthErr(e.message||'Erro ao solicitar redefinição.');
+      if (btn) { btn.disabled=false; btn.innerHTML='<div class="pdot"></div>ENVIAR LINK'; }
+    }
+  }
+
+  // ── REDEFINIR SENHA — chamado quando a página abre com ?reset_token= ──
+  function showResetPassword(token) {
+    const m = document.getElementById('authModal');
+    const c = document.getElementById('authContent');
+    if (!m||!c) return;
+    c.innerHTML = `
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;margin-bottom:6px">NOVA SENHA</h3>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:18px">Escolha uma nova senha para sua conta MOBYA.</p>
+      <div id="authErr" class="callout error" style="display:none"></div>
+      ${pwdFieldHTML({ id:'rpPass', label:'Nova senha (mín. 8 caracteres)', autocomplete:'new-password' })}
+      ${pwdStrengthHTML()}
+      ${pwdFieldHTML({ id:'rpPass2', label:'Confirme a nova senha', autocomplete:'new-password', onEnter:'MobyaAuth.doResetPassword()' })}
+      <button class="ai-btn" id="rpBtn" style="width:100%;justify-content:center;height:42px;margin-top:14px" onclick="MobyaAuth.doResetPassword()"><div class="pdot"></div>REDEFINIR SENHA</button>`;
+    m.classList.add('open');
+    m.dataset.resetToken = token;
+    document.getElementById('rpPass')?.addEventListener('input', () => updatePwdStrength('rpPass'));
+    setTimeout(() => document.getElementById('rpPass')?.focus(), 100);
+  }
+
+  async function doResetPassword() {
+    const m = document.getElementById('authModal');
+    const token = m?.dataset?.resetToken;
+    const pass  = document.getElementById('rpPass')?.value;
+    const pass2 = document.getElementById('rpPass2')?.value;
+    if (!token) return showAuthErr('Link de redefinição inválido. Solicite um novo.');
+    if (!pass || !pass2) return showAuthErr('Preencha os dois campos de senha.');
+    if (pass.length < 8) return showAuthErr('Senha deve ter mínimo 8 caracteres.');
+    if (pass !== pass2) return showAuthErr('As senhas não coincidem.');
+    const btn = document.getElementById('rpBtn');
+    if (btn) { btn.disabled=true; btn.innerHTML='<div class="pdot"></div>REDEFININDO...'; }
+    try {
+      await API.auth.resetPassword({ token, newPassword: pass });
+      closeModal();
+      // Limpa o token da URL pra não reabrir o formulário num refresh
+      if (window.history?.replaceState) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('reset_token');
+        window.history.replaceState({}, '', url);
+      }
+      Toast.show('Senha redefinida com sucesso! Faça login. 🔐', 'ok', 6000);
+      showLogin();
+    } catch(e) {
+      showAuthErr(e.message||'Link inválido ou expirado. Solicite uma nova redefinição.');
+      if (btn) { btn.disabled=false; btn.innerHTML='<div class="pdot"></div>REDEFINIR SENHA'; }
+    }
+  }
+
   function showRegister() {
     const c = document.getElementById('authContent');
     if (!c) return;
@@ -81,11 +271,13 @@ window.MobyaAuth = (() => {
       <div id="authErr" class="callout error" style="display:none"></div>
       <div class="form-field"><label>Nome completo</label><input id="rgName" type="text" placeholder="João Silva"></div>
       <div class="form-field"><label>Email</label><input id="rgEmail" type="email" placeholder="seu@email.com"></div>
-      <div class="form-field"><label>Senha (mín. 8 caracteres)</label><input id="rgPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')MobyaAuth.doRegister()"></div>
+      ${pwdFieldHTML({ id:'rgPass', label:'Senha (mín. 8 caracteres)', autocomplete:'new-password', onEnter:'MobyaAuth.doRegister()' })}
+      ${pwdStrengthHTML()}
       <button class="ai-btn" style="width:100%;justify-content:center;height:42px;margin-top:4px" onclick="MobyaAuth.doRegister()"><div class="pdot"></div>CRIAR CONTA</button>
       <div style="text-align:center;margin-top:14px;font-size:.81rem;color:var(--muted)">
         Já tem conta? <button onclick="MobyaAuth.showLogin()" style="background:none;color:var(--q4);cursor:pointer;font-weight:600;border:none">Entrar</button>
       </div>`;
+    document.getElementById('rgPass')?.addEventListener('input', () => updatePwdStrength('rgPass'));
   }
 
   async function doRegister() {
@@ -153,5 +345,9 @@ window.MobyaAuth = (() => {
 
   window.addEventListener('mobya:logout', () => { user=null; updateUI(null); Toast.show('Sessão expirada. Faça login novamente.','warn'); showLogin(); });
 
-  return { init, showLogin, doLogin, showRegister, doRegister, logout, closeModal, requireAuth, getUser };
+  return {
+    init, showLogin, doLogin, showRegister, doRegister, logout, closeModal, requireAuth, getUser,
+    showForgotPassword, doForgotPassword, showResetPassword, doResetPassword,
+    togglePwd,
+  };
 })();
