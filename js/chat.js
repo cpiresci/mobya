@@ -120,6 +120,10 @@ window.Chat = (() => {
 
     let html = '';
     if (action.type === 'EMERGENCY_CREATED') {
+      // Padroniza com o openSOS (pages.js): seta o id da emergência
+      // pendente ANTES do usuário clicar em "Acompanhar", para que o
+      // GPSTracking._waitForProviderAccept saiba qual emergência aguardar.
+      window.__mobyaPendingEmergencyId = action.emergencyId || null;
       html = `
         <div class="action-card action-card--ok">
           <div class="action-card-icon">✅</div>

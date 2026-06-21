@@ -50,18 +50,6 @@
     ${_serviceCard('🔑','Abertura de Porta','Sem danos ao veículo','R$ 100','chaveiro')}
   </div>
 
-  <!-- RASTREAMENTO SIMULADO -->
-  <div class="px-card" id="reboqueTracking" style="display:none">
-    <div class="px-card-title">◈ SEU ATENDIMENTO</div>
-    <div class="px-tracking">
-      <div class="px-track-step px-track-done">✓ Solicitação recebida</div>
-      <div class="px-track-step px-track-active" id="trStep2">⟳ Motorista a caminho</div>
-      <div class="px-track-step" id="trStep3">○ Chegada ao local</div>
-      <div class="px-track-step" id="trStep4">○ Serviço concluído</div>
-    </div>
-    <div class="px-eta" id="reboqueETA">Chegada estimada: <strong>18 min</strong></div>
-  </div>
-
   <!-- AVALIAÇÕES -->
   <div class="px-card">
     <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
@@ -197,17 +185,6 @@
     ${_serviceCard('🛻','Carga Pesada','Caminhões e implementos','R$ 450','fretes')}
   </div>
 
-  <div class="px-card" id="freteTracking" style="display:none">
-    <div class="px-card-title">◈ SEU FRETE</div>
-    <div class="px-tracking">
-      <div class="px-track-step px-track-done">✓ Solicitação recebida</div>
-      <div class="px-track-step px-track-active" id="frStep2">⟳ Transportador a caminho</div>
-      <div class="px-track-step" id="frStep3">○ Chegada ao local</div>
-      <div class="px-track-step" id="frStep4">○ Serviço concluído</div>
-    </div>
-    <div class="px-eta" id="freteETA">Chegada estimada: <strong>25 min</strong></div>
-  </div>
-
   <div class="px-card">
     <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
     ${_review('Marcelo T.','⭐⭐⭐⭐⭐','Transportou minha moto sem nenhum arranhão.','3h atrás')}
@@ -266,17 +243,6 @@
     ${_serviceCard('⭕','Pneu Furado','Troca ou reparo no local','R$ 70','servicos')}
     ${_serviceCard('⛽','Pane Seca','Entrega de combustível','R$ 40','servicos')}
     ${_serviceCard('🌡️','Superaquecimento','Verificação do sistema de arrefecimento','R$ 90','servicos')}
-  </div>
-
-  <div class="px-card" id="mecTracking" style="display:none">
-    <div class="px-card-title">◈ SEU ATENDIMENTO</div>
-    <div class="px-tracking">
-      <div class="px-track-step px-track-done">✓ Solicitação recebida</div>
-      <div class="px-track-step px-track-active" id="mcStep2">⟳ Mecânico a caminho</div>
-      <div class="px-track-step" id="mcStep3">○ Chegada ao local</div>
-      <div class="px-track-step" id="mcStep4">○ Serviço concluído</div>
-    </div>
-    <div class="px-eta" id="mecETA">Chegada estimada: <strong>20 min</strong></div>
   </div>
 
   <div class="px-card">
@@ -394,20 +360,6 @@
     });
   }
 
-  // ── MAPA DE STATUS REAL (Emergency.status) → passos da UI ───
-  const _STATUS_STEP = { PENDING:2, DISPATCHED:2, IN_PROGRESS:3, COMPLETED:4, CANCELLED:0 };
-
-  function _applyTrackingStatus(status, prefix = 'tr') {
-    const s2 = document.getElementById(`${prefix}Step2`);
-    const s3 = document.getElementById(`${prefix}Step3`);
-    const s4 = document.getElementById(`${prefix}Step4`);
-    const step = _STATUS_STEP[status] || 2;
-    [s2,s3,s4].forEach(el => el?.classList.remove('px-track-active','px-track-done'));
-    if (step >= 2) s2?.classList.add(step>2?'px-track-done':'px-track-active');
-    if (step >= 3) s3?.classList.add(step>3?'px-track-done':'px-track-active');
-    if (step >= 4) s4?.classList.add('px-track-done');
-  }
-
   // ── AÇÕES ──────────────────────────────────────────────────
   const PagesExtra = {
     async solicitarReboque() {
@@ -422,12 +374,11 @@
           description: 'Solicitação de reboque via app MOBYA',
           ...coords,
         });
-        const t = document.getElementById('reboqueTracking');
-        if (t) { t.style.display = 'block'; t.scrollIntoView({behavior:'smooth'}); }
-        Toast?.show('🚛 ' + (r.message || 'Motorista acionado! Acompanhe o rastreamento abaixo.'), 'ok');
-        _applyTrackingStatus(r.data.status);
-        // Acompanha status real via polling (10s) usando o id retornado pelo backend
-        API.pollEmergency(r.data.id, (em) => _applyTrackingStatus(em.status));
+        Toast?.show('🚛 ' + (r.message || 'Motorista acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
+        // Padroniza com o fluxo da IA/openSOS: navega para o GPS real
+        // em vez do tracking inline fake desta página.
+        window.__mobyaPendingEmergencyId = r.data.id || null;
+        App.navigate('gps-tracking');
       } catch (e) {
         Toast?.show(e.message || 'Não foi possível acionar o reboque agora.', 'err');
       }
@@ -444,11 +395,9 @@
           description: 'Solicitação de chaveiro via app MOBYA',
           ...coords,
         });
-        Toast?.show('🔑 ' + (r.message || 'Técnico acionado! Chegada em até 30 minutos.'), 'ok');
-        API.pollEmergency(r.data.id, (em) => {
-          if (em.status === 'COMPLETED') Toast?.show('🔑 Atendimento de chaveiro concluído!', 'ok');
-          if (em.status === 'CANCELLED') Toast?.show('🔑 Atendimento de chaveiro cancelado.', 'err');
-        });
+        Toast?.show('🔑 ' + (r.message || 'Técnico acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data.id || null;
+        App.navigate('gps-tracking');
       } catch (e) {
         Toast?.show(e.message || 'Não foi possível acionar o chaveiro agora.', 'err');
       }
@@ -465,11 +414,9 @@
           description: 'Solicitação de frete via app MOBYA',
           ...coords,
         });
-        const t = document.getElementById('freteTracking');
-        if (t) { t.style.display = 'block'; t.scrollIntoView({behavior:'smooth'}); }
-        Toast?.show('🚚 ' + (r.message || 'Transportador acionado! Acompanhe o rastreamento abaixo.'), 'ok');
-        _applyTrackingStatus(r.data.status, 'fr');
-        API.pollEmergency(r.data.id, (em) => _applyTrackingStatus(em.status, 'fr'));
+        Toast?.show('🚚 ' + (r.message || 'Transportador acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data.id || null;
+        App.navigate('gps-tracking');
       } catch (e) {
         Toast?.show(e.message || 'Não foi possível acionar o frete agora.', 'err');
       }
@@ -486,11 +433,9 @@
           description: 'Solicitação de mecânico de emergência via app MOBYA',
           ...coords,
         });
-        const t = document.getElementById('mecTracking');
-        if (t) { t.style.display = 'block'; t.scrollIntoView({behavior:'smooth'}); }
-        Toast?.show('🔧 ' + (r.message || 'Mecânico acionado! Acompanhe o rastreamento abaixo.'), 'ok');
-        _applyTrackingStatus(r.data.status, 'mc');
-        API.pollEmergency(r.data.id, (em) => _applyTrackingStatus(em.status, 'mc'));
+        Toast?.show('🔧 ' + (r.message || 'Mecânico acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data.id || null;
+        App.navigate('gps-tracking');
       } catch (e) {
         Toast?.show(e.message || 'Não foi possível acionar o mecânico agora.', 'err');
       }
