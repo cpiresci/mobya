@@ -85,6 +85,7 @@ const BASE_PAGES = {
   vistoria:      () => Pages.renderVistoria(),
   documentacao:  () => Pages.renderDocumentacao(),
   dashboard:     () => Pages.renderDashboard(),
+  garagem:       () => (typeof Garagem!=='undefined' ? Garagem.render() : comingSoon('GARAGEM','🚗')),
   chat:          () => renderChatPage(),
   listing:       () => Pages.renderListing(window.__mobyaListingId),
   pecas:         () => Pages.renderPecas(),

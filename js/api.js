@@ -90,6 +90,15 @@ window.API = (() => {
     pendingPayments:  ()       => get('/monetization/commissions/pending-payment'),
   };
 
+  const vehicle = {
+    list:           ()       => get('/vehicles'),
+    get:            (id)     => get(`/vehicles/${id}`),
+    create:         (d)      => post('/vehicles', d),
+    update:         (id,d)   => patch(`/vehicles/${id}`, d),
+    remove:         (id)     => del(`/vehicles/${id}`),
+    addMaintenance: (id,d)   => post(`/vehicles/${id}/maintenances`, d),
+  };
+
   function pollEmergency(emergencyId, onUpdate, intervalMs = 10000) {
     const TERMINAL = ['COMPLETED', 'CANCELLED'];
     let timer = null;
@@ -144,5 +153,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, pollEmergency, ping };
 })();
