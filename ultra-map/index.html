@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mobya · Ultra Map</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<style>
+  :root {
+    --bg:        #070b14;
+    --surface:   #0d1424;
+    --border:    #1a2540;
+    --accent:    #00d4ff;
+    --accent2:   #7c3aed;
+    --green:     #00ff9d;
+    --amber:     #f59e0b;
+    --red:       #ef4444;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --font:      'Inter', system-ui, sans-serif;
+    --radius:    12px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(7,11,20,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo span { color: var(--accent); }
+
+  .top-pills {
+    display: flex;
+    gap: 6px;
+  }
+  .pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .pill.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .pill:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  .top-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 600;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── MAP ── */
+  #map {
+    flex: 1;
+    width: 100%;
+    position: relative;
+  }
+
+  /* ── BOTTOM PANEL ── */
+  #bottom-panel {
+    background: rgba(7,11,20,0.95);
+    backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px 16px;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+
+  /* ETA bar */
+  .eta-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .eta-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 12px rgba(0,212,255,.35);
+  }
+  .eta-info { flex: 1; min-width: 0; }
+  .eta-name { font-weight: 700; font-size: 14px; }
+  .eta-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  .eta-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .eta-badge-km { font-size: 15px; font-weight: 800; color: var(--accent); }
+  .eta-badge-min { font-size: 10px; color: var(--muted); }
+
+  /* progress bar */
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+    transition: width .8s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 8px rgba(0,255,157,.5);
+  }
+
+  /* action buttons */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .btn {
+    padding: 10px 6px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn-icon { font-size: 18px; }
+  .btn.primary { background: linear-gradient(135deg, var(--accent2), var(--accent)); border-color: transparent; color: #fff; }
+
+  /* ── MAP OVERLAYS ── */
+
+  /* Layer toggles (floating) */
+  #layer-controls {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .layer-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: rgba(13,20,36,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .layer-btn.on { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,.3); }
+
+  /* Compass / zoom */
+  #map-controls {
+    position: absolute;
+    bottom: 16px;
+    right: 12px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .map-ctrl-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: rgba(13,20,36,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .map-ctrl-btn:active { background: var(--border); }
+
+  /* Info chip (top-left of map) */
+  #session-chip {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 50;
+    background: rgba(13,20,36,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 160px;
+  }
+  .chip-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .6px; }
+  .chip-value { font-weight: 700; margin-top: 2px; }
+  .chip-id { color: var(--accent); font-size: 11px; font-family: monospace; margin-top: 2px; }
+
+  /* Speed gauge (center-left) */
+  #speed-gauge {
+    position: absolute;
+    left: 12px;
+    bottom: 16px;
+    z-index: 50;
+    background: rgba(13,20,36,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-align: center;
+  }
+  .gauge-val { font-size: 22px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .gauge-unit { font-size: 10px; color: var(--muted); }
+
+  /* Custom Markers */
+  .marker-provider {
+    width: 44px; height: 44px;
+    position: relative;
+    cursor: pointer;
+  }
+  .marker-provider-inner {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a2540, #0d1424);
+    border: 2.5px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 0 0 rgba(0,212,255,.6);
+    transition: border-color .3s;
+    position: relative;
+    z-index: 2;
+  }
+  .marker-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .marker-ring.ping {
+    animation: gpsRing 1.1s ease-out forwards;
+  }
+  @keyframes gpsRing {
+    0%   { transform: scale(1); opacity: .8; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  .marker-user {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), #4f46e5);
+    border: 2.5px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 16px rgba(124,58,237,.5);
+  }
+
+  .provider-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--accent);
+  }
+
+  /* Heatmap legend */
+  #heatmap-legend {
+    display: none;
+    position: absolute;
+    bottom: 60px;
+    left: 12px;
+    z-index: 50;
+    background: rgba(13,20,36,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+  #heatmap-legend.visible { display: block; }
+  .legend-bar {
+    width: 120px; height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(0,255,157,0), rgba(0,212,255,.5), rgba(124,58,237,.8), rgba(239,68,68,1));
+    margin: 6px 0 4px;
+  }
+  .legend-labels { display: flex; justify-content: space-between; color: var(--muted); }
+
+  /* Cluster tooltip */
+  .cluster-popup {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: var(--radius) !important;
+    font-family: var(--font) !important;
+    font-size: 13px !important;
+    padding: 10px 14px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
+  }
+
+  /* Mapbox overrides */
+  .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
+  .mapboxgl-popup-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-family: var(--font);
+    box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  }
+  .mapboxgl-popup-tip { display: none; }
+
+  /* Notification toast */
+  #toast {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Skeleton for no-token state */
+  #no-token {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 32px;
+  }
+  #no-token.show { display: flex; }
+  .token-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 340px;
+    width: 100%;
+  }
+  .token-card h2 { font-size: 18px; margin-bottom: 8px; }
+  .token-card p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+  .token-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .token-input:focus { outline: none; border-color: var(--accent); }
+  .token-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .demo-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon">🛣️</div>
+    Mob<span>ya</span>
+  </div>
+
+  <div class="top-pills">
+    <div class="pill active" onclick="setMode('tracking')">📡 Tracking</div>
+    <div class="pill" onclick="setMode('discover')">🔍 Prestadores</div>
+    <div class="pill" onclick="setMode('admin')">📊 Admin</div>
+  </div>
+
+  <div class="top-status">
+    <div class="pulse-dot"></div>
+    AO VIVO
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map">
+  <!-- Session chip -->
+  <div id="session-chip">
+    <div class="chip-label">Sessão ativa</div>
+    <div class="chip-value" id="chip-status">🚗 A caminho</div>
+    <div class="chip-id" id="chip-id">#MBY-7842</div>
+  </div>
+
+  <!-- Layer toggles -->
+  <div id="layer-controls">
+    <div class="layer-btn on" id="btn-3d" onclick="toggle3D()" title="3D">🏙️</div>
+    <div class="layer-btn" id="btn-heat" onclick="toggleHeat()" title="Heatmap">🔥</div>
+    <div class="layer-btn on" id="btn-route" onclick="toggleRoute()" title="Rota">🛣️</div>
+    <div class="layer-btn on" id="btn-cluster" onclick="toggleCluster()" title="Clusters">📍</div>
+  </div>
+
+  <!-- Map controls -->
+  <div id="map-controls">
+    <div class="map-ctrl-btn" onclick="map.zoomIn()" title="Zoom +">＋</div>
+    <div class="map-ctrl-btn" onclick="map.zoomOut()" title="Zoom −">－</div>
+    <div class="map-ctrl-btn" onclick="resetBearing()" title="Norte">🧭</div>
+  </div>
+
+  <!-- Speed gauge -->
+  <div id="speed-gauge">
+    <div class="gauge-val" id="speed-val">42</div>
+    <div class="gauge-unit">km/h</div>
+  </div>
+
+  <!-- Heatmap legend -->
+  <div id="heatmap-legend">
+    <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px">Densidade de chamados</div>
+    <div class="legend-bar"></div>
+    <div class="legend-labels"><span>Baixa</span><span>Alta</span></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- No token fallback -->
+  <div id="no-token">
+    <div class="token-card">
+      <h2>🗺️ Token Mapbox</h2>
+      <p>Este componente usa Mapbox GL JS para renderização WebGL. Insira seu token público para ativar o mapa. Crie grátis em <strong>mapbox.com</strong>.</p>
+      <input class="token-input" id="token-input" placeholder="pk.eyJ1IjoiYWJj..." type="password">
+      <button class="token-btn" onclick="initWithToken()">Ativar mapa</button>
+      <div class="demo-note">Token fica só na memória da sessão — nunca salvo.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM PANEL -->
+<div id="bottom-panel">
+  <div class="eta-row">
+    <div class="eta-avatar">🔧</div>
+    <div class="eta-info">
+      <div class="eta-name" id="provider-name">Carlos Reboque</div>
+      <div class="eta-sub">⭐ 4.9 · Guincho leve · Hyundai HB20</div>
+    </div>
+    <div class="eta-badge">
+      <div class="eta-badge-km" id="eta-km">2.4km</div>
+      <div class="eta-badge-min" id="eta-min">~6 min</div>
+    </div>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:38%"></div>
+  </div>
+
+  <div class="actions">
+    <div class="btn" onclick="showToast('📞 Ligando...')">
+      <div class="btn-icon">📞</div>
+      Ligar
+    </div>
+    <div class="btn primary" onclick="showToast('💬 Chat aberto')">
+      <div class="btn-icon">💬</div>
+      Chat
+    </div>
+    <div class="btn" onclick="showToast('🚨 SOS enviado!')">
+      <div class="btn-icon">🚨</div>
+      SOS
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  MOBYA ULTRA MAP — Demo interativo completo
+// ══════════════════════════════════════════════
+
+let map = null;
+let providerMarker = null;
+let userMarker = null;
+let trailCoords = [];
+let trailLayer = false;
+let routeLayer = false;
+let heatLayer = false;
+let clusterLayer = false;
+let is3D = true;
+let showRoute = true;
+let showHeat = false;
+let showCluster = true;
+let animFrame = null;
+let currentMode = 'tracking';
+
+// Coordenadas demo (São Paulo)
+const USER_POS   = [-46.6388, -23.5489]; // Paulista
+const PROVIDER_START = [-46.6550, -23.5620];
+
+// Prestadores falsos para cluster/discover
+const FAKE_PROVIDERS = [
+  { lng: -46.630, lat: -23.540, type: '🔧', name: 'Mecânico', rating: 4.8 },
+  { lng: -46.645, lat: -23.532, type: '🚛', name: 'Guincho',  rating: 4.9 },
+  { lng: -46.620, lat: -23.555, type: '🔑', name: 'Chaveiro', rating: 4.7 },
+  { lng: -46.660, lat: -23.545, type: '⛽', name: 'Combustível', rating: 4.6 },
+  { lng: -46.615, lat: -23.535, type: '🔧', name: 'Mecânico', rating: 4.5 },
+  { lng: -46.655, lat: -23.530, type: '🚛', name: 'Guincho',  rating: 5.0 },
+  { lng: -46.635, lat: -23.560, type: '🔑', name: 'Chaveiro', rating: 4.3 },
+  { lng: -46.625, lat: -23.548, type: '🔧', name: 'Mecânico', rating: 4.9 },
+  { lng: -46.650, lat: -23.558, type: '⛽', name: 'Combustível', rating: 4.4 },
+  { lng: -46.640, lat: -23.525, type: '🚛', name: 'Guincho',  rating: 4.8 },
+];
+
+// Heatmap points (densidade de chamados históricos)
+const HEATMAP_POINTS = [
+  [-46.633, -23.548, 0.9], [-46.640, -23.545, 0.7], [-46.628, -23.552, 0.6],
+  [-46.638, -23.540, 0.8], [-46.625, -23.544, 0.5], [-46.650, -23.538, 0.7],
+  [-46.618, -23.558, 0.4], [-46.655, -23.550, 0.6], [-46.643, -23.555, 0.9],
+  [-46.630, -23.535, 0.5], [-46.660, -23.540, 0.3], [-46.622, -23.530, 0.4],
+  [-46.648, -23.530, 0.8], [-46.635, -23.560, 0.6], [-46.620, -23.545, 0.5],
+];
+
+// Rota simulada (waypoints entre provider e user)
+const ROUTE_WAYPOINTS = [
+  [-46.6550, -23.5620],
+  [-46.6500, -23.5580],
+  [-46.6450, -23.5550],
+  [-46.6400, -23.5530],
+  [-46.6388, -23.5489],
+];
+
+// ── INIT ──
+function tryAutoInit() {
+  const stored = sessionStorage.getItem('mbx_token');
+  if (stored) {
+    initMap(stored);
+  } else {
+    document.getElementById('no-token').classList.add('show');
+  }
+}
+
+function initWithToken() {
+  const t = document.getElementById('token-input').value.trim();
+  if (!t.startsWith('pk.')) {
+    showToast('⚠️ Token inválido — deve começar com pk.');
+    return;
+  }
+  sessionStorage.setItem('mbx_token', t);
+  document.getElementById('no-token').classList.remove('show');
+  initMap(t);
+}
+
+function initMap(token) {
+  mapboxgl.accessToken = token;
+
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [-46.6450, -23.5550],
+    zoom: 13.5,
+    pitch: 55,
+    bearing: -15,
+    antialias: true,
+  });
+
+  map.on('load', () => {
+    apply3DBuildings();
+    addProviderMarker();
+    addUserMarker();
+    addRouteLayer();
+    addHeatmapLayer();
+    addClusterLayer();
+    startProviderAnimation();
+    startSpeedAnimation();
+    showToast('🗺️ Mapa ultra carregado');
+  });
+
+  map.on('error', (e) => {
+    console.error('Mapbox error:', e);
+    showToast('⚠️ Erro Mapbox: verifique o token');
+  });
+}
+
+// ── 3D BUILDINGS ──
+function apply3DBuildings() {
+  if (!map.getLayer('3d-buildings')) {
+    map.addLayer({
+      id: '3d-buildings',
+      source: 'composite',
+      'source-layer': 'building',
+      filter: ['==', 'extrude', 'true'],
+      type: 'fill-extrusion',
+      minzoom: 12,
+      paint: {
+        'fill-extrusion-color': '#0d1424',
+        'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'height']],
+        'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'min_height']],
+        'fill-extrusion-opacity': 0.85,
+      },
+    });
+  }
+}
+
+// ── PROVIDER MARKER (com ring de ping) ──
+function addProviderMarker() {
+  const el = document.createElement('div');
+  el.className = 'marker-provider';
+  el.innerHTML = `
+    <div class="marker-provider-inner">🚛</div>
+    <div class="marker-ring" id="provider-ring"></div>
+    <div class="provider-label">Carlos</div>
+  `;
+
+  providerMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+    .setLngLat(PROVIDER_START)
+    .addTo(map);
+}
+
+function pingProviderMarker() {
+  const ring = document.getElementById('provider-ring');
+  if (!ring) return;
+  ring.classList.remove('ping');
+  void ring.offsetWidth;
+  ring.classList.add('ping');
+}
+
+// ── USER MARKER ──
+function addUserMarker() {
+  const el = document.createElement('div');
+  el.className = 'marker-user';
+  el.innerHTML = '👤';
+
+  userMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+    .setLngLat(USER_POS)
+    .addTo(map);
+}
+
+// ── ROUTE LAYER ──
+function addRouteLayer() {
+  if (!map.getSource('route')) {
+    map.addSource('route', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: ROUTE_WAYPOINTS } },
+    });
+  }
+
+  // Sombra da rota
+  if (!map.getLayer('route-shadow')) {
+    map.addLayer({
+      id: 'route-shadow',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#00d4ff', 'line-width': 8, 'line-opacity': 0.15, 'line-blur': 4 },
+    });
+  }
+
+  // Linha principal
+  if (!map.getLayer('route-line')) {
+    map.addLayer({
+      id: 'route-line',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#00d4ff',
+        'line-width': 3.5,
+        'line-opacity': 0.9,
+        'line-dasharray': [1, 0],
+      },
+    });
+  }
+
+  // Seta de direção animada (usando symbol layer)
+  if (!map.getLayer('route-arrows')) {
+    map.addLayer({
+      id: 'route-arrows',
+      type: 'symbol',
+      source: 'route',
+      layout: {
+        'symbol-placement': 'line',
+        'symbol-spacing': 80,
+        'icon-image': 'arrow-right',
+        'icon-size': 0.8,
+        'icon-rotate': 90,
+        'icon-rotation-alignment': 'map',
+        'icon-allow-overlap': true,
+      },
+      paint: { 'icon-color': '#00d4ff', 'icon-opacity': 0.7 },
+    });
+  }
+
+  routeLayer = true;
+}
+
+// ── HEATMAP LAYER ──
+function addHeatmapLayer() {
+  const geojson = {
+    type: 'FeatureCollection',
+    features: HEATMAP_POINTS.map(([lng, lat, w]) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+      properties: { weight: w },
+    })),
+  };
+
+  if (!map.getSource('heatmap')) {
+    map.addSource('heatmap', { type: 'geojson', data: geojson });
+  }
+
+  if (!map.getLayer('heat-layer')) {
+    map.addLayer({
+      id: 'heat-layer',
+      type: 'heatmap',
+      source: 'heatmap',
+      paint: {
+        'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 1, 1],
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 11, 1, 15, 3],
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(0,255,157,0)',
+          0.3, 'rgba(0,212,255,0.5)',
+          0.6, 'rgba(124,58,237,0.7)',
+          1, 'rgba(239,68,68,0.9)',
+        ],
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 11, 20, 15, 50],
+        'heatmap-opacity': 0,
+      },
+    });
+  }
+}
+
+// ── CLUSTER LAYER (prestadores) ──
+function addClusterLayer() {
+  const geojson = {
+    type: 'FeatureCollection',
+    features: FAKE_PROVIDERS.map(p => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+      properties: { type: p.type, name: p.name, rating: p.rating },
+    })),
+  };
+
+  if (!map.getSource('providers')) {
+    map.addSource('providers', {
+      type: 'geojson',
+      data: geojson,
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50,
+    });
+  }
+
+  if (!map.getLayer('clusters')) {
+    map.addLayer({
+      id: 'clusters',
+      type: 'circle',
+      source: 'providers',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': ['step', ['get', 'point_count'], '#7c3aed', 4, '#00d4ff', 7, '#00ff9d'],
+        'circle-radius': ['step', ['get', 'point_count'], 20, 4, 28, 7, 36],
+        'circle-opacity': 0.85,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': 'rgba(255,255,255,0.2)',
+      },
+    });
+  }
+
+  if (!map.getLayer('cluster-count')) {
+    map.addLayer({
+      id: 'cluster-count',
+      type: 'symbol',
+      source: 'providers',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': '{point_count_abbreviated}',
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+        'text-size': 13,
+      },
+      paint: { 'text-color': '#fff' },
+    });
+  }
+
+  if (!map.getLayer('unclustered-point')) {
+    map.addLayer({
+      id: 'unclustered-point',
+      type: 'circle',
+      source: 'providers',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': '#0d1424',
+        'circle-radius': 18,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#7c3aed',
+      },
+    });
+  }
+
+  if (!map.getLayer('unclustered-icon')) {
+    map.addLayer({
+      id: 'unclustered-icon',
+      type: 'symbol',
+      source: 'providers',
+      filter: ['!', ['has', 'point_count']],
+      layout: {
+        'text-field': ['get', 'type'],
+        'text-size': 16,
+        'text-allow-overlap': true,
+      },
+    });
+  }
+
+  // Click em provider individual
+  map.on('click', 'unclustered-point', (e) => {
+    const p = e.features[0].properties;
+    new mapboxgl.Popup({ offset: 25, className: 'cluster-popup' })
+      .setLngLat(e.features[0].geometry.coordinates)
+      .setHTML(`
+        <div style="font-weight:700;font-size:14px">${p.type} ${p.name}</div>
+        <div style="color:#64748b;font-size:12px;margin-top:4px">⭐ ${p.rating} · Disponível agora</div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button onclick="showToast('📞 Ligando...')" style="flex:1;padding:6px;background:#7c3aed;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">Chamar</button>
+          <button onclick="this.closest('.mapboxgl-popup').remove()" style="flex:1;padding:6px;background:#1a2540;border:none;color:#e2e8f0;border-radius:6px;cursor:pointer;font-size:11px">Fechar</button>
+        </div>
+      `)
+      .addTo(map);
+  });
+
+  map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = ''; });
+  map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
+
+  map.on('click', 'clusters', (e) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+    const clusterId = features[0].properties.cluster_id;
+    map.getSource('providers').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({ center: features[0].geometry.coordinates, zoom });
+    });
+  });
+
+  clusterLayer = true;
+}
+
+// ── TRAIL (trilha-cometa do prestador) ──
+function updateTrail(lng, lat) {
+  trailCoords.push([lng, lat]);
+  if (trailCoords.length > 15) trailCoords.shift();
+
+  if (trailCoords.length < 2) return;
+
+  // Remove camadas anteriores
+  for (let i = 0; i < 15; i++) {
+    if (map.getLayer(`trail-seg-${i}`)) map.removeLayer(`trail-seg-${i}`);
+    if (map.getSource(`trail-src-${i}`)) map.removeSource(`trail-src-${i}`);
+  }
+
+  // Redesenha com opacidade crescente
+  for (let i = 1; i < trailCoords.length; i++) {
+    const t = i / (trailCoords.length - 1);
+    const id = `trail-seg-${i}`;
+    map.addSource(id, {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [trailCoords[i-1], trailCoords[i]] } },
+    });
+    map.addLayer({
+      id,
+      type: 'line',
+      source: id,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#00f5ff', 'line-width': 3, 'line-opacity': 0.05 + t * 0.5 },
+    });
+  }
+}
+
+// ── ANIMAÇÃO DO PROVIDER (simulação tempo real) ──
+let providerPos = [...PROVIDER_START];
+let providerStep = 0;
+
+function startProviderAnimation() {
+  let t = 0;
+  let lastPing = 0;
+
+  function animate(ts) {
+    if (ts - lastPing > 2500) { // ping a cada 2.5s
+      lastPing = ts;
+      providerStep++;
+
+      // Interpola entre waypoints
+      const total = ROUTE_WAYPOINTS.length - 1;
+      const progress = Math.min(providerStep / 20, 1); // 20 steps = chegou
+      const segIdx = Math.min(Math.floor(progress * total), total - 1);
+      const segT = (progress * total) - segIdx;
+
+      const from = ROUTE_WAYPOINTS[segIdx];
+      const to = ROUTE_WAYPOINTS[Math.min(segIdx + 1, total)];
+      const lng = from[0] + (to[0] - from[0]) * segT;
+      const lat = from[1] + (to[1] - from[1]) * segT;
+
+      providerPos = [lng, lat];
+
+      if (providerMarker) providerMarker.setLngLat([lng, lat]);
+      updateTrail(lng, lat);
+      pingProviderMarker();
+      updateETADisplay(progress);
+
+      // Atualiza rota (remove a parte já percorrida)
+      if (map.getSource('route')) {
+        const remaining = ROUTE_WAYPOINTS.slice(segIdx);
+        remaining[0] = [lng, lat];
+        map.getSource('route').setData({
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: remaining },
+        });
+      }
+
+      if (progress >= 1) {
+        document.getElementById('chip-status').textContent = '✅ Chegou!';
+        document.getElementById('eta-km').textContent = '0km';
+        document.getElementById('eta-min').textContent = 'Chegou!';
+        showToast('✅ Prestador chegou!');
+        return;
+      }
+    }
+
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  animFrame = requestAnimationFrame(animate);
+}
+
+function updateETADisplay(progress) {
+  const totalKm = 2.4;
+  const remaining = +(totalKm * (1 - progress)).toFixed(1);
+  const minLeft = Math.ceil((1 - progress) * 6);
+  document.getElementById('eta-km').textContent = remaining + 'km';
+  document.getElementById('eta-min').textContent = `~${minLeft} min`;
+  document.getElementById('progress-fill').style.width = Math.round(progress * 100) + '%';
+  document.getElementById('chip-status').textContent =
+    progress < 0.5 ? '🚗 A caminho' : progress < 0.9 ? '📍 Quase lá' : '✅ Chegando';
+}
+
+// ── SPEED (simulado) ──
+function startSpeedAnimation() {
+  setInterval(() => {
+    const spd = 30 + Math.round(Math.random() * 25);
+    document.getElementById('speed-val').textContent = spd;
+  }, 3000);
+}
+
+// ── LAYER TOGGLES ──
+function toggle3D() {
+  is3D = !is3D;
+  document.getElementById('btn-3d').classList.toggle('on', is3D);
+  if (map) {
+    map.easeTo({ pitch: is3D ? 55 : 0, duration: 600 });
+    if (map.getLayer('3d-buildings')) {
+      map.setLayoutProperty('3d-buildings', 'visibility', is3D ? 'visible' : 'none');
+    }
+  }
+}
+
+function toggleHeat() {
+  showHeat = !showHeat;
+  document.getElementById('btn-heat').classList.toggle('on', showHeat);
+  document.getElementById('heatmap-legend').classList.toggle('visible', showHeat);
+  if (map && map.getLayer('heat-layer')) {
+    map.setPaintProperty('heat-layer', 'heatmap-opacity', showHeat ? 0.7 : 0);
+  }
+  showToast(showHeat ? '🔥 Heatmap ativado' : '🔥 Heatmap desativado');
+}
+
+function toggleRoute() {
+  showRoute = !showRoute;
+  document.getElementById('btn-route').classList.toggle('on', showRoute);
+  if (map) {
+    ['route-shadow', 'route-line', 'route-arrows'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', showRoute ? 'visible' : 'none');
+    });
+  }
+}
+
+function toggleCluster() {
+  showCluster = !showCluster;
+  document.getElementById('btn-cluster').classList.toggle('on', showCluster);
+  if (map) {
+    ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-icon'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', showCluster ? 'visible' : 'none');
+    });
+  }
+  showToast(showCluster ? '📍 Prestadores visíveis' : '📍 Prestadores ocultos');
+}
+
+// ── MODE SWITCH ──
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.top-pills .pill').forEach((p, i) => {
+    p.classList.toggle('active', ['tracking','discover','admin'][i] === mode);
+  });
+
+  if (!map) return;
+
+  if (mode === 'discover') {
+    // Zoom out para ver mais prestadores, desabilita tracking
+    map.easeTo({ zoom: 12.5, pitch: 20, center: [-46.640, -23.545], duration: 800 });
+    if (!showHeat) toggleHeat();
+    showToast('🔍 Modo descoberta — veja prestadores próximos');
+  } else if (mode === 'tracking') {
+    map.easeTo({ zoom: 13.5, pitch: 55, center: [-46.6450, -23.5550], duration: 800 });
+    if (showHeat) toggleHeat();
+    showToast('📡 Modo tracking ativado');
+  } else if (mode === 'admin') {
+    map.easeTo({ zoom: 11.5, pitch: 35, bearing: 0, center: [-46.640, -23.545], duration: 800 });
+    if (!showHeat) toggleHeat();
+    showToast('📊 Visão admin — densidade de chamados');
+  }
+}
+
+function resetBearing() {
+  if (map) map.easeTo({ bearing: 0, pitch: is3D ? 55 : 0, duration: 500 });
+}
+
+// ── TOAST ──
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── START ──
+tryAutoInit();
+</script>
+</body>
+</html>

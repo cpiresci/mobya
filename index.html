@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css?v=20260620b">
 <link rel="stylesheet" href="css/home-premium.css?v=20260620b">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"/>
 </head>
 <body data-env="production">
 
@@ -99,6 +99,7 @@
       <div class="sb-item" data-page="chat">💬 Chat Quântico</div>
       <div class="sb-item" data-page="dashboard">📊 Dashboard</div>
       <div class="sb-item" data-page="gps-tracking">📡 GPS Tracking</div>
+      <div class="sb-item" onclick="window.open('ultra-map/','_blank')">🛣️ Ultra Map <span class="sb-badge v">PREVIEW</span></div>
     </div>
     <div class="sb-status">
       <div class="sbs-title">◈ MOTOR QUÂNTICO</div>
@@ -154,6 +155,9 @@
       ? 'http://localhost:4000'
       : 'https://mobya.onrender.com',
     VERSION: '5.0.0',
+    // Opcional: defina um token público Mapbox (pk.eyJ...) para pular o gate de token no GPS Tracking.
+    // Sem isso, o usuário insere o próprio token uma vez e ele fica salvo no localStorage do navegador.
+    MAPBOX_TOKEN: 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw',
   };
 </script>
 <script src="js/api.js?v=20260621a"></script>
@@ -165,7 +169,7 @@
 <script src="js/pages-extra.js?v=20260619f"></script>
 <script src="js/pages-monetize.js?v=20260619f"></script>
 <script src="js/monetization.js?v=20260620a"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="js/admin-approval.js?v=20260620b"></script>
 <script src="js/gps-tracking.js?v=20260620b"></script>
