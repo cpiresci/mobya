@@ -189,5 +189,13 @@ window.API = (() => {
     cancelBooking:  (id,d)   => patch(`/rental/bookings/${id}/cancel`, d||{}),
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, pollEmergency, ping };
+
+  const notifications = {
+    list:       (p={}) => get(`/notifications?${new URLSearchParams(p)}`),
+    unread:     ()     => get('/notifications/unread-count'),
+    markRead:   (id)   => patch(`/notifications/${id}/read`, {}),
+    markAll:    ()     => patch('/notifications/read-all', {}),
+  };
+
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, notifications, pollEmergency, ping };
 })();

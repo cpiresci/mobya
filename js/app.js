@@ -1,4 +1,110 @@
 
+// ── Módulo de Notificações ───────────────────────────────────────────────────
+const Notif = (() => {
+  let _open = false;
+  let _timer = null;
+  let _panel = null;
+
+  function _badge(n) {
+    const b = document.getElementById('notifBadge');
+    const btn = document.getElementById('btnNotif');
+    if (!b || !btn) return;
+    if (n > 0) {
+      b.textContent = n > 99 ? '99+' : n;
+      b.style.display = 'inline-block';
+      btn.style.animation = 'none';
+    } else {
+      b.style.display = 'none';
+    }
+  }
+
+  async function _fetchCount() {
+    if (!API.isAuth()) return;
+    try {
+      const r = await API.notifications.unread();
+      _badge(r?.data?.count || 0);
+    } catch(_) {}
+  }
+
+  async function _fetchList() {
+    try {
+      const r = await API.notifications.list({ limit: 20 });
+      return r?.data || [];
+    } catch(_) { return []; }
+  }
+
+  function _renderPanel(items) {
+    if (_panel) _panel.remove();
+    _panel = document.createElement('div');
+    _panel.id = 'notifPanel';
+    _panel.style.cssText = 'position:fixed;top:56px;right:8px;width:320px;max-width:94vw;max-height:70vh;overflow-y:auto;background:var(--surface,#1a1a2e);border:1px solid var(--border,#333);border-radius:12px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5)';
+    const header = `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border,#333)"><span style="font-weight:700;font-size:.9rem">🔔 Notificações</span><button onclick="Notif.markAll()" style="background:none;border:none;color:var(--neon,#00ff88);font-size:.75rem;cursor:pointer">Marcar todas lidas</button></div>`;
+    const body = items.length
+      ? items.map(n => `
+        <div onclick="Notif.markRead('${n.id}')" style="padding:12px 16px;border-bottom:1px solid var(--border,#222);cursor:pointer;opacity:${n.read?'0.5':'1'};background:${n.read?'transparent':'rgba(0,255,136,.04)'}">
+          <div style="font-size:.82rem;font-weight:600">${n.title || 'Notificação'}</div>
+          <div style="font-size:.78rem;color:var(--muted,#888);margin-top:2px">${n.body || ''}</div>
+          <div style="font-size:.7rem;color:var(--muted,#666);margin-top:4px">${new Date(n.createdAt).toLocaleString('pt-BR')}</div>
+        </div>`).join('')
+      : '<div style="padding:24px;text-align:center;color:var(--muted,#888);font-size:.84rem">Nenhuma notificação ainda.</div>';
+    _panel.innerHTML = header + body;
+    document.body.appendChild(_panel);
+    // fecha ao clicar fora
+    setTimeout(() => {
+      document.addEventListener('click', _outside, { once: true });
+    }, 50);
+  }
+
+  function _outside(e) {
+    if (_panel && !_panel.contains(e.target) && e.target.id !== 'btnNotif') {
+      _panel.remove(); _panel = null; _open = false;
+    }
+  }
+
+  async function toggle() {
+    if (_open && _panel) { _panel.remove(); _panel = null; _open = false; return; }
+    _open = true;
+    const items = await _fetchList();
+    _renderPanel(items);
+    _badge(0); // zera visualmente ao abrir
+  }
+
+  async function markRead(id) {
+    try { await API.notifications.markRead(id); } catch(_) {}
+    const el = _panel?.querySelector(`[onclick*="${id}"]`);
+    if (el) { el.style.opacity = '0.5'; el.style.background = 'transparent'; }
+  }
+
+  async function markAll() {
+    try { await API.notifications.markAll(); } catch(_) {}
+    _badge(0);
+    if (_panel) {
+      _panel.querySelectorAll('[onclick*="markRead"]').forEach(el => {
+        el.style.opacity = '0.5'; el.style.background = 'transparent';
+      });
+    }
+  }
+
+  function start() {
+    const btn = document.getElementById('btnNotif');
+    if (btn) btn.style.display = 'inline-block';
+    _fetchCount();
+    _timer = setInterval(_fetchCount, 30000); // poll a cada 30s
+  }
+
+  function stop() {
+    if (_timer) clearInterval(_timer);
+    if (_panel) { _panel.remove(); _panel = null; }
+    const btn = document.getElementById('btnNotif');
+    if (btn) btn.style.display = 'none';
+    _badge(0);
+  }
+
+  return { toggle, markRead, markAll, start, stop };
+})();
+window.Notif = Notif;
+
+
 // ============================================================
 // MOBYA — app.js  Quantum Engine v5.0
 // Correções: syncNav completo (header+sidebar+bottom-nav),
@@ -276,6 +382,7 @@ window.App = (() => {
     const initial = (location.hash || '#home').replace('#','') || 'home';
     setLoadingProgress(100, 'Pronto.');
     navigate(initial);
+    if (API.isAuth()) Notif.start();
     setTimeout(hideLoadingScreen, 300);
     setInterval(() => API.ping().catch(()=>{}), 60000);
   }
