@@ -57,5 +57,12 @@ window.RentalGuest = (() => {
     }
   }
 
-  return{render,cancel};
+  async function pay(bookingId) {
+    try {
+      const r = await API.req('POST', `/rental/bookings/${bookingId}/pay`);
+      if (r.data?.init_point) window.location.href = r.data.init_point;
+      else App.toast('Erro ao iniciar pagamento', 'err');
+    } catch(e) { App.toast(e.message || 'Erro no pagamento', 'err'); }
+  }
+  return{render,cancel,pay};
 })();
