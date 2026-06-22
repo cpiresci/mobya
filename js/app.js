@@ -1,4 +1,3 @@
-
 // ── Módulo de Notificações ───────────────────────────────────────────────────
 const Notif = (() => {
   let _open = false;
@@ -206,6 +205,7 @@ const BASE_PAGES = {
   'meus-anuncios':    () => Pages.renderDashboard(),
   monetizacao:        () => (typeof Monetization!=='undefined'&&Monetization.renderPartnersPage   ? Monetization.renderPartnersPage()    : comingSoon('REDE DE PARCEIROS','🤝')),
   'painel-prestador': () => (typeof Monetization!=='undefined'&&Monetization.renderProviderDashboard ? Monetization.renderProviderDashboard() : comingSoon('PAINEL DO PRESTADOR','🛠️')),
+  wallet: () => navigate('carteira-prestador'),
   'carteira-prestador': () => {
     const user = MobyaAuth.getUser();
     if (!user) { MobyaAuth.showLogin('carteira-prestador'); return; }
