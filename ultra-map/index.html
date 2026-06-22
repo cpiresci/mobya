@@ -6,6 +6,7 @@
 <title>Mobya · Ultra Map</title>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
   :root {
     --bg:        #070b14;
@@ -553,15 +554,15 @@
   </div>
 
   <div class="actions">
-    <div class="btn" onclick="showToast('📞 Ligando...')">
+    <div class="btn" onclick="doCall()">
       <div class="btn-icon">📞</div>
       Ligar
     </div>
-    <div class="btn primary" onclick="showToast('💬 Chat aberto')">
+    <div class="btn primary" onclick="doChat()">
       <div class="btn-icon">💬</div>
       Chat
     </div>
-    <div class="btn" onclick="showToast('🚨 SOS enviado!')">
+    <div class="btn" onclick="doSOS()">
       <div class="btn-icon">🚨</div>
       SOS
     </div>
@@ -569,68 +570,59 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-//  MOBYA ULTRA MAP — Demo interativo completo
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+//  MOBYA ULTRA MAP — Modo USUÁRIO (só escuta, não emite GPS)
+//  Conecta na mesma sessão que o prestador via Socket.io /gps
+//  Substitui toda animação fake por location_update real
+// ══════════════════════════════════════════════════════════════
 
-let map = null;
+// ── Lê ?session=ID da URL ─────────────────────────────────────
+const _urlParams   = new URLSearchParams(location.search);
+const SESSION_ID    = _urlParams.get('session') || null;
+const EMERGENCY_ID  = _urlParams.get('emergency') || null;
+
+// ── Config (herda de window.MOBYA se disponível) ──────────────
+const API_BASE = (window.MOBYA?.API || 'https://mobya.onrender.com');
+const WS_BASE  = API_BASE.replace('https://', 'wss://').replace('http://', 'ws://');
+const MBX_TOKEN_KEY = 'mbx_token';
+const DEFAULT_MBX   = 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw';
+
+// ── Estado ────────────────────────────────────────────────────
+let map           = null;
+let socket        = null;
 let providerMarker = null;
-let userMarker = null;
-let trailCoords = [];
-let trailLayer = false;
-let routeLayer = false;
-let heatLayer = false;
-let clusterLayer = false;
-let is3D = true;
-let showRoute = true;
-let showHeat = false;
+let userMarker     = null;
+let trailCoords   = [];
+let _trailIds     = [];
+const TRAIL_MAX   = 12;
+
+let is3D       = true;
+let showRoute  = true;
+let showHeat   = false;
 let showCluster = true;
-let animFrame = null;
 let currentMode = 'tracking';
 
-// Coordenadas demo (São Paulo)
-const USER_POS   = [-46.6388, -23.5489]; // Paulista
-const PROVIDER_START = [-46.6550, -23.5620];
+// Posições atuais recebidas pelo socket
+let providerPos = null;
+let userPos     = null;
 
-// Prestadores falsos para cluster/discover
-const FAKE_PROVIDERS = [
-  { lng: -46.630, lat: -23.540, type: '🔧', name: 'Mecânico', rating: 4.8 },
-  { lng: -46.645, lat: -23.532, type: '🚛', name: 'Guincho',  rating: 4.9 },
-  { lng: -46.620, lat: -23.555, type: '🔑', name: 'Chaveiro', rating: 4.7 },
-  { lng: -46.660, lat: -23.545, type: '⛽', name: 'Combustível', rating: 4.6 },
-  { lng: -46.615, lat: -23.535, type: '🔧', name: 'Mecânico', rating: 4.5 },
-  { lng: -46.655, lat: -23.530, type: '🚛', name: 'Guincho',  rating: 5.0 },
-  { lng: -46.635, lat: -23.560, type: '🔑', name: 'Chaveiro', rating: 4.3 },
-  { lng: -46.625, lat: -23.548, type: '🔧', name: 'Mecânico', rating: 4.9 },
-  { lng: -46.650, lat: -23.558, type: '⛽', name: 'Combustível', rating: 4.4 },
-  { lng: -46.640, lat: -23.525, type: '🚛', name: 'Guincho',  rating: 4.8 },
-];
+// ETA
+let _initialDistanceKm = null;
 
-// Heatmap points (densidade de chamados históricos)
+// Prestadores vizinhos (para o modo discover / heatmap)
 const HEATMAP_POINTS = [
-  [-46.633, -23.548, 0.9], [-46.640, -23.545, 0.7], [-46.628, -23.552, 0.6],
-  [-46.638, -23.540, 0.8], [-46.625, -23.544, 0.5], [-46.650, -23.538, 0.7],
-  [-46.618, -23.558, 0.4], [-46.655, -23.550, 0.6], [-46.643, -23.555, 0.9],
-  [-46.630, -23.535, 0.5], [-46.660, -23.540, 0.3], [-46.622, -23.530, 0.4],
-  [-46.648, -23.530, 0.8], [-46.635, -23.560, 0.6], [-46.620, -23.545, 0.5],
+  [-46.633,-23.548,.9],[-46.640,-23.545,.7],[-46.628,-23.552,.6],
+  [-46.638,-23.540,.8],[-46.625,-23.544,.5],[-46.650,-23.538,.7],
+  [-46.618,-23.558,.4],[-46.655,-23.550,.6],[-46.643,-23.555,.9],
+  [-46.630,-23.535,.5],[-46.660,-23.540,.3],[-46.622,-23.530,.4],
+  [-46.648,-23.530,.8],[-46.635,-23.560,.6],[-46.620,-23.545,.5],
 ];
 
-// Rota simulada (waypoints entre provider e user)
-const ROUTE_WAYPOINTS = [
-  [-46.6550, -23.5620],
-  [-46.6500, -23.5580],
-  [-46.6450, -23.5550],
-  [-46.6400, -23.5530],
-  [-46.6388, -23.5489],
-];
-
-// ── INIT ──
-const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw';
-
+// ── INIT ──────────────────────────────────────────────────────
 function tryAutoInit() {
-  const stored = sessionStorage.getItem('mbx_token') || DEFAULT_MAPBOX_TOKEN;
-  if (stored) {
-    initMap(stored);
+  const token = sessionStorage.getItem(MBX_TOKEN_KEY) || DEFAULT_MBX;
+  if (token) {
+    initMap(token);
   } else {
     document.getElementById('no-token').classList.add('show');
   }
@@ -638,11 +630,8 @@ function tryAutoInit() {
 
 function initWithToken() {
   const t = document.getElementById('token-input').value.trim();
-  if (!t.startsWith('pk.')) {
-    showToast('⚠️ Token inválido — deve começar com pk.');
-    return;
-  }
-  sessionStorage.setItem('mbx_token', t);
+  if (!t.startsWith('pk.')) { showToast('⚠️ Token inválido — deve começar com pk.'); return; }
+  sessionStorage.setItem(MBX_TOKEN_KEY, t);
   document.getElementById('no-token').classList.remove('show');
   initMap(t);
 }
@@ -650,11 +639,14 @@ function initWithToken() {
 function initMap(token) {
   mapboxgl.accessToken = token;
 
+  // Centro inicial: SP (ajusta quando userPos chegar via socket)
+  const center = [-46.6450, -23.5550];
+
   map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: [-46.6450, -23.5550],
-    zoom: 13.5,
+    center,
+    zoom: 14,
     pitch: 55,
     bearing: -15,
     antialias: true,
@@ -662,55 +654,200 @@ function initMap(token) {
 
   map.on('load', () => {
     apply3DBuildings();
-    addProviderMarker();
-    addUserMarker();
-    addRouteLayer();
     addHeatmapLayer();
-    addClusterLayer();
-    startProviderAnimation();
-    startSpeedAnimation();
-    showToast('🗺️ Mapa ultra carregado');
+    addClusterLayer(); // começa invisível, ativa no modo discover
+    showToast('🗺️ Ultra Map pronto — conectando...');
+    // Só conecta socket depois do mapa estar pronto
+    connectSocket();
   });
 
   map.on('error', (e) => {
-    console.error('Mapbox error:', e);
-    showToast('⚠️ Erro Mapbox: verifique o token');
+    console.error('[UltraMap][Mapbox]', e);
+    showToast('⚠️ Erro Mapbox');
   });
 }
 
-// ── 3D BUILDINGS ──
-function apply3DBuildings() {
-  if (!map.getLayer('3d-buildings')) {
-    map.addLayer({
-      id: '3d-buildings',
-      source: 'composite',
-      'source-layer': 'building',
-      filter: ['==', 'extrude', 'true'],
-      type: 'fill-extrusion',
-      minzoom: 12,
-      paint: {
-        'fill-extrusion-color': '#0d1424',
-        'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'height']],
-        'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'min_height']],
-        'fill-extrusion-opacity': 0.85,
-      },
-    });
+// ── SOCKET ────────────────────────────────────────────────────
+function getAuthToken() {
+  // Pega o JWT do MobyaAuth se dentro do SPA, senão tenta ?token= ou localStorage
+  if (window.MobyaAuth?.getToken) return window.MobyaAuth.getToken();
+  if (window.API?.getToken) return window.API.getToken();
+  return _urlParams.get('token') || localStorage.getItem('mobya_token') || null;
+}
+
+function connectSocket() {
+  if (typeof io === 'undefined') {
+    showToast('⚠️ Socket.io não carregado');
+    return;
+  }
+
+  const authToken = getAuthToken();
+  if (!authToken) {
+    // Modo visualização sem auth — mostra overlay bonito
+    updateConnectionBadge('sem-auth');
+    showToast('ℹ️ Faça login para rastreamento ao vivo');
+    return;
+  }
+
+  if (socket) socket.disconnect();
+
+  socket = io(WS_BASE + '/gps', {
+    auth: { token: authToken },
+    transports: ['websocket', 'polling'],
+    reconnectionAttempts: 10,
+    reconnectionDelay: 2000,
+  });
+
+  socket.on('connect', () => {
+    updateConnectionBadge('online');
+    showToast('🔗 Conectado ao servidor');
+    if (SESSION_ID) {
+      socket.emit('join_session', { sessionId: SESSION_ID });
+    } else if (EMERGENCY_ID) {
+      _waitForSession(EMERGENCY_ID);
+    }
+  });
+
+  socket.on('disconnect', () => updateConnectionBadge('offline'));
+  socket.on('connect_error', (e) => {
+    console.warn('[UltraMap][Socket]', e.message);
+    updateConnectionBadge('reconectando');
+  });
+
+  // ── Entrou na sessão ───────────────────────────────────────
+  socket.on('session_joined', ({ role, session }) => {
+    document.getElementById('chip-id').textContent = '#' + (SESSION_ID || 'N/A').slice(-8).toUpperCase();
+    updateSessionStatus(session.status);
+    showToast(`📡 Sessão conectada — você é ${role === 'USER' ? 'Cliente' : 'Prestador'}`);
+  });
+
+  // ── Localização em tempo real ──────────────────────────────
+  socket.on('location_update', ({ role, lat, lng, name, eta }) => {
+    if (!map) return;
+    if (role === 'PROVIDER') {
+      updateProviderMarker(lat, lng, name || 'Prestador');
+      if (eta) updateETADisplay(eta);
+      if (eta?.geometry) drawRealRoute(eta.geometry);
+    } else if (role === 'USER') {
+      updateUserMarker(lat, lng, name || 'Você');
+    }
+    fitBounds();
+  });
+
+  // ── Status mudou ───────────────────────────────────────────
+  socket.on('status_changed', ({ status }) => {
+    updateSessionStatus(status);
+    const labels = {
+      AGUARDANDO: '⏳ Aguardando prestador…',
+      A_CAMINHO:  '🚗 Prestador a caminho',
+      CHEGOU:     '📍 Prestador chegou!',
+      EM_SERVICO: '🔧 Em atendimento',
+      CONCLUIDO:  '✅ Serviço concluído!',
+      CANCELADO:  '❌ Cancelado',
+    };
+    showToast(labels[status] || status);
+    if (['CONCLUIDO', 'CANCELADO'].includes(status)) {
+      // Volta pro SPA após 3s
+      setTimeout(() => {
+        if (window.App?.navigate) App.navigate('home');
+        else history.back();
+      }, 3000);
+    }
+  });
+
+  socket.on('participant_online',  ({ role, name }) => showToast(`🟢 ${name} entrou`));
+  socket.on('participant_offline', ({ role })       => showToast(`🔴 ${role === 'PROVIDER' ? 'Prestador' : 'Cliente'} saiu`));
+  socket.on('error', ({ code }) => showToast(`Erro: ${code}`, 'err'));
+}
+
+// ── Polling: aguarda prestador aceitar e obtém sessionId ──────
+let _pollTimer = null;
+async function _waitForSession(emergencyId, attempt = 0) {
+  const MAX = 20, DELAY = 3000;
+  updateSessionStatus('AGUARDANDO');
+  showToast('⏳ Buscando prestador…');
+  try {
+    const token = getAuthToken();
+    const headers = token ? { Authorization: 'Bearer ' + token } : {};
+    const r = await fetch(`${API_BASE}/api/v1/emergency/${emergencyId}/tracking-session`, { headers });
+    if (r.ok) {
+      const { data } = await r.json();
+      if (data?.sessionId) {
+        clearTimeout(_pollTimer);
+        showToast('✅ Prestador encontrado! Conectando…');
+        // Recarrega a URL com o sessionId (limpo)
+        const p = new URLSearchParams(location.search);
+        p.set('session', data.sessionId);
+        p.delete('emergency');
+        history.replaceState(null, '', '?' + p.toString());
+        // Entra na sessão via socket já conectado
+        if (socket?.connected) {
+          socket.emit('join_session', { sessionId: data.sessionId });
+        } else {
+          // Socket ainda conectando — tenta novamente em 1s
+          setTimeout(() => {
+            if (socket?.connected) socket.emit('join_session', { sessionId: data.sessionId });
+          }, 1000);
+        }
+        return;
+      }
+    }
+  } catch (e) { /* ainda não aceitou */ }
+  if (attempt >= MAX) {
+    showToast('⚠️ Nenhum prestador aceitou ainda. Tente novamente.');
+    updateSessionStatus('AGUARDANDO');
+    return;
+  }
+  _pollTimer = setTimeout(() => _waitForSession(emergencyId, attempt + 1), DELAY);
+}
+
+// ── MARCADORES ────────────────────────────────────────────────
+function updateProviderMarker(lat, lng, name) {
+  if (!map) return;
+  const lngLat = [lng, lat];
+
+  if (!providerMarker) {
+    const el = document.createElement('div');
+    el.className = 'marker-provider';
+    el.innerHTML = `
+      <div class="marker-provider-inner">🚛</div>
+      <div class="marker-ring" id="provider-ring"></div>
+      <div class="provider-label">${name.split(' ')[0]}</div>
+    `;
+    providerMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat(lngLat)
+      .addTo(map);
+  } else {
+    providerMarker.setLngLat(lngLat);
+  }
+
+  pingProviderMarker();
+  pushTrail(lat, lng);
+  providerPos = lngLat;
+
+  // Atualiza nome
+  document.getElementById('provider-name').textContent = name;
+
+  // Anima câmera para seguir prestador (suave, não abrupto)
+  if (currentMode === 'tracking') {
+    map.easeTo({ center: lngLat, duration: 800 });
   }
 }
 
-// ── PROVIDER MARKER (com ring de ping) ──
-function addProviderMarker() {
-  const el = document.createElement('div');
-  el.className = 'marker-provider';
-  el.innerHTML = `
-    <div class="marker-provider-inner">🚛</div>
-    <div class="marker-ring" id="provider-ring"></div>
-    <div class="provider-label">Carlos</div>
-  `;
-
-  providerMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-    .setLngLat(PROVIDER_START)
-    .addTo(map);
+function updateUserMarker(lat, lng, name) {
+  if (!map) return;
+  const lngLat = [lng, lat];
+  if (!userMarker) {
+    const el = document.createElement('div');
+    el.className = 'marker-user';
+    el.innerHTML = '👤';
+    userMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat(lngLat)
+      .addTo(map);
+  } else {
+    userMarker.setLngLat(lngLat);
+  }
+  userPos = lngLat;
 }
 
 function pingProviderMarker() {
@@ -721,76 +858,126 @@ function pingProviderMarker() {
   ring.classList.add('ping');
 }
 
-// ── USER MARKER ──
-function addUserMarker() {
-  const el = document.createElement('div');
-  el.className = 'marker-user';
-  el.innerHTML = '👤';
-
-  userMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-    .setLngLat(USER_POS)
-    .addTo(map);
+// ── TRILHA-COMETA ─────────────────────────────────────────────
+function pushTrail(lat, lng) {
+  if (!map) return;
+  trailCoords.push([lng, lat]);
+  if (trailCoords.length > TRAIL_MAX) trailCoords.shift();
+  clearTrail();
+  if (trailCoords.length < 2) return;
+  for (let i = 1; i < trailCoords.length; i++) {
+    const t = i / (trailCoords.length - 1);
+    const id = `trail-seg-${i}`;
+    map.addSource(id, {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [trailCoords[i-1], trailCoords[i]] } },
+    });
+    map.addLayer({
+      id, type: 'line', source: id,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#00f5ff', 'line-width': 3, 'line-opacity': 0.06 + t * 0.46 },
+    });
+    _trailIds.push(id);
+  }
 }
 
-// ── ROUTE LAYER ──
-function addRouteLayer() {
-  if (!map.getSource('route')) {
-    map.addSource('route', {
-      type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: ROUTE_WAYPOINTS } },
-    });
-  }
+function clearTrail() {
+  if (!map) return;
+  _trailIds.forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+    if (map.getSource(id)) map.removeSource(id);
+  });
+  _trailIds = [];
+}
 
-  // Sombra da rota
-  if (!map.getLayer('route-shadow')) {
+// ── ROTA REAL (via OSRM do backend) ──────────────────────────
+function drawRealRoute(geometry) {
+  if (!map || !geometry?.length) return;
+  const id = 'ultra-route';
+  const data = { type: 'Feature', geometry: { type: 'LineString', coordinates: geometry } };
+  if (map.getSource(id)) {
+    map.getSource(id).setData(data);
+  } else {
+    map.addSource(id, { type: 'geojson', data });
     map.addLayer({
-      id: 'route-shadow',
-      type: 'line',
-      source: 'route',
+      id, type: 'line', source: id,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#00d4ff', 'line-width': 3.5, 'line-opacity': 0.9 },
+    });
+    // Sombra
+    map.addLayer({
+      id: id + '-shadow', type: 'line', source: id,
       layout: { 'line-join': 'round', 'line-cap': 'round' },
       paint: { 'line-color': '#00d4ff', 'line-width': 8, 'line-opacity': 0.15, 'line-blur': 4 },
-    });
+    }, id);
   }
-
-  // Linha principal
-  if (!map.getLayer('route-line')) {
-    map.addLayer({
-      id: 'route-line',
-      type: 'line',
-      source: 'route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-color': '#00d4ff',
-        'line-width': 3.5,
-        'line-opacity': 0.9,
-        'line-dasharray': [1, 0],
-      },
-    });
-  }
-
-  // Seta de direção animada (usando symbol layer)
-  if (!map.getLayer('route-arrows')) {
-    map.addLayer({
-      id: 'route-arrows',
-      type: 'symbol',
-      source: 'route',
-      layout: {
-        'symbol-placement': 'line',
-        'symbol-spacing': 80,
-        'icon-image': 'arrow-right',
-        'icon-size': 0.8,
-        'icon-rotate': 90,
-        'icon-rotation-alignment': 'map',
-        'icon-allow-overlap': true,
-      },
-      paint: { 'icon-color': '#00d4ff', 'icon-opacity': 0.7 },
-    });
-  }
-
-  routeLayer = true;
 }
 
-// ── HEATMAP LAYER ──
+// ── ETA ───────────────────────────────────────────────────────
+function updateETADisplay({ distanceKm, etaMinutes, source }) {
+  if (_initialDistanceKm === null || distanceKm > _initialDistanceKm) _initialDistanceKm = distanceKm;
+  const progress = _initialDistanceKm > 0
+    ? Math.min(1, Math.max(0, 1 - (distanceKm / _initialDistanceKm)))
+    : 0;
+
+  document.getElementById('eta-km').textContent = distanceKm + 'km';
+  document.getElementById('eta-min').textContent = '~' + etaMinutes + ' min';
+  document.getElementById('progress-fill').style.width = Math.round(progress * 100) + '%';
+
+  const speedBadge = document.getElementById('speed-val');
+  if (speedBadge) speedBadge.textContent = source === 'osrm' ? '✓' : '~';
+}
+
+function updateSessionStatus(status) {
+  const labels = {
+    AGUARDANDO: '⏳ Aguardando',
+    A_CAMINHO:  '🚗 A caminho',
+    CHEGOU:     '📍 Chegou!',
+    EM_SERVICO: '🔧 Em serviço',
+    CONCLUIDO:  '✅ Concluído',
+    CANCELADO:  '❌ Cancelado',
+  };
+  document.getElementById('chip-status').textContent = labels[status] || status;
+}
+
+// ── FIT BOUNDS ────────────────────────────────────────────────
+function fitBounds() {
+  if (!map || !providerPos || !userPos) return;
+  const b = new mapboxgl.LngLatBounds(providerPos, providerPos);
+  b.extend(userPos);
+  map.fitBounds(b, { padding: 80, maxZoom: 16, duration: 600 });
+}
+
+// ── CONNECTION BADGE ──────────────────────────────────────────
+function updateConnectionBadge(state) {
+  const el = document.querySelector('.top-status');
+  if (!el) return;
+  const states = {
+    online:       ['🟢 AO VIVO',    '#00ff9d'],
+    offline:      ['🔴 OFFLINE',    '#ef4444'],
+    reconectando: ['🟡 RECONECTANDO','#f59e0b'],
+    'sem-auth':   ['⚪ DEMO',        '#64748b'],
+  };
+  const [text, color] = states[state] || states['offline'];
+  el.innerHTML = `<div class="pulse-dot" style="background:${color}"></div><span style="color:${color}">${text}</span>`;
+}
+
+// ── 3D BUILDINGS ─────────────────────────────────────────────
+function apply3DBuildings() {
+  if (map.getLayer('3d-buildings')) return;
+  map.addLayer({
+    id: '3d-buildings', source: 'composite', 'source-layer': 'building',
+    filter: ['==', 'extrude', 'true'], type: 'fill-extrusion', minzoom: 12,
+    paint: {
+      'fill-extrusion-color': '#0d1424',
+      'fill-extrusion-height':  ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'height']],
+      'fill-extrusion-base':    ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'min_height']],
+      'fill-extrusion-opacity': 0.85,
+    },
+  });
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────
 function addHeatmapLayer() {
   const geojson = {
     type: 'FeatureCollection',
@@ -800,26 +987,15 @@ function addHeatmapLayer() {
       properties: { weight: w },
     })),
   };
-
-  if (!map.getSource('heatmap')) {
-    map.addSource('heatmap', { type: 'geojson', data: geojson });
-  }
-
+  if (!map.getSource('heatmap')) map.addSource('heatmap', { type: 'geojson', data: geojson });
   if (!map.getLayer('heat-layer')) {
     map.addLayer({
-      id: 'heat-layer',
-      type: 'heatmap',
-      source: 'heatmap',
+      id: 'heat-layer', type: 'heatmap', source: 'heatmap',
       paint: {
         'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 1, 1],
         'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 11, 1, 15, 3],
-        'heatmap-color': [
-          'interpolate', ['linear'], ['heatmap-density'],
-          0, 'rgba(0,255,157,0)',
-          0.3, 'rgba(0,212,255,0.5)',
-          0.6, 'rgba(124,58,237,0.7)',
-          1, 'rgba(239,68,68,0.9)',
-        ],
+        'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(0,255,157,0)', .3, 'rgba(0,212,255,.5)', .6, 'rgba(124,58,237,.7)', 1, 'rgba(239,68,68,.9)'],
         'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 11, 20, 15, 50],
         'heatmap-opacity': 0,
       },
@@ -827,49 +1003,29 @@ function addHeatmapLayer() {
   }
 }
 
-// ── CLUSTER LAYER (prestadores) ──
+// ── CLUSTER (modo discover) ───────────────────────────────────
 function addClusterLayer() {
-  const geojson = {
-    type: 'FeatureCollection',
-    features: FAKE_PROVIDERS.map(p => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
-      properties: { type: p.type, name: p.name, rating: p.rating },
-    })),
-  };
-
+  // Fonte vazia — será populada via API quando modo discover ativar
   if (!map.getSource('providers')) {
     map.addSource('providers', {
       type: 'geojson',
-      data: geojson,
-      cluster: true,
-      clusterMaxZoom: 14,
-      clusterRadius: 50,
+      data: { type: 'FeatureCollection', features: [] },
+      cluster: true, clusterMaxZoom: 14, clusterRadius: 50,
     });
   }
-
   if (!map.getLayer('clusters')) {
     map.addLayer({
-      id: 'clusters',
-      type: 'circle',
-      source: 'providers',
-      filter: ['has', 'point_count'],
+      id: 'clusters', type: 'circle', source: 'providers', filter: ['has', 'point_count'],
       paint: {
         'circle-color': ['step', ['get', 'point_count'], '#7c3aed', 4, '#00d4ff', 7, '#00ff9d'],
         'circle-radius': ['step', ['get', 'point_count'], 20, 4, 28, 7, 36],
-        'circle-opacity': 0.85,
-        'circle-stroke-width': 2,
-        'circle-stroke-color': 'rgba(255,255,255,0.2)',
+        'circle-opacity': 0.85, 'circle-stroke-width': 2, 'circle-stroke-color': 'rgba(255,255,255,.2)',
       },
     });
   }
-
   if (!map.getLayer('cluster-count')) {
     map.addLayer({
-      id: 'cluster-count',
-      type: 'symbol',
-      source: 'providers',
-      filter: ['has', 'point_count'],
+      id: 'cluster-count', type: 'symbol', source: 'providers', filter: ['has', 'point_count'],
       layout: {
         'text-field': '{point_count_abbreviated}',
         'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
@@ -878,184 +1034,61 @@ function addClusterLayer() {
       paint: { 'text-color': '#fff' },
     });
   }
-
   if (!map.getLayer('unclustered-point')) {
     map.addLayer({
-      id: 'unclustered-point',
-      type: 'circle',
-      source: 'providers',
+      id: 'unclustered-point', type: 'circle', source: 'providers',
       filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-color': '#0d1424',
-        'circle-radius': 18,
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#7c3aed',
-      },
+      paint: { 'circle-color': '#0d1424', 'circle-radius': 18, 'circle-stroke-width': 2, 'circle-stroke-color': '#7c3aed' },
     });
   }
-
   if (!map.getLayer('unclustered-icon')) {
     map.addLayer({
-      id: 'unclustered-icon',
-      type: 'symbol',
-      source: 'providers',
+      id: 'unclustered-icon', type: 'symbol', source: 'providers',
       filter: ['!', ['has', 'point_count']],
-      layout: {
-        'text-field': ['get', 'type'],
-        'text-size': 16,
-        'text-allow-overlap': true,
-      },
+      layout: { 'text-field': ['get', 'type'], 'text-size': 16, 'text-allow-overlap': true },
     });
   }
-
-  // Click em provider individual
-  map.on('click', 'unclustered-point', (e) => {
-    const p = e.features[0].properties;
-    new mapboxgl.Popup({ offset: 25, className: 'cluster-popup' })
-      .setLngLat(e.features[0].geometry.coordinates)
-      .setHTML(`
-        <div style="font-weight:700;font-size:14px">${p.type} ${p.name}</div>
-        <div style="color:#64748b;font-size:12px;margin-top:4px">⭐ ${p.rating} · Disponível agora</div>
-        <div style="margin-top:8px;display:flex;gap:6px">
-          <button onclick="showToast('📞 Ligando...')" style="flex:1;padding:6px;background:#7c3aed;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">Chamar</button>
-          <button onclick="this.closest('.mapboxgl-popup').remove()" style="flex:1;padding:6px;background:#1a2540;border:none;color:#e2e8f0;border-radius:6px;cursor:pointer;font-size:11px">Fechar</button>
-        </div>
-      `)
-      .addTo(map);
+  // Clusters visíveis só no modo discover
+  ['clusters','cluster-count','unclustered-point','unclustered-icon'].forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
   });
-
-  map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = ''; });
-  map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
-
-  map.on('click', 'clusters', (e) => {
-    const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-    const clusterId = features[0].properties.cluster_id;
-    map.getSource('providers').getClusterExpansionZoom(clusterId, (err, zoom) => {
-      if (err) return;
-      map.easeTo({ center: features[0].geometry.coordinates, zoom });
-    });
-  });
-
-  clusterLayer = true;
 }
 
-// ── TRAIL (trilha-cometa do prestador) ──
-function updateTrail(lng, lat) {
-  trailCoords.push([lng, lat]);
-  if (trailCoords.length > 15) trailCoords.shift();
-
-  if (trailCoords.length < 2) return;
-
-  // Remove camadas anteriores
-  for (let i = 0; i < 15; i++) {
-    if (map.getLayer(`trail-seg-${i}`)) map.removeLayer(`trail-seg-${i}`);
-    if (map.getSource(`trail-src-${i}`)) map.removeSource(`trail-src-${i}`);
-  }
-
-  // Redesenha com opacidade crescente
-  for (let i = 1; i < trailCoords.length; i++) {
-    const t = i / (trailCoords.length - 1);
-    const id = `trail-seg-${i}`;
-    map.addSource(id, {
-      type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [trailCoords[i-1], trailCoords[i]] } },
-    });
-    map.addLayer({
-      id,
-      type: 'line',
-      source: id,
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': '#00f5ff', 'line-width': 3, 'line-opacity': 0.05 + t * 0.5 },
-    });
+// Carrega prestadores reais da API quando modo discover ativar
+async function loadNearbyProviders() {
+  try {
+    if (!map.getSource('providers')) return;
+    const center = map.getCenter();
+    let url = `${API_BASE}/api/v1/providers/nearby?lat=${center.lat}&lng=${center.lng}&radius=10`;
+    const token = getAuthToken();
+    const headers = token ? { Authorization: 'Bearer ' + token } : {};
+    const r = await fetch(url, { headers });
+    if (!r.ok) throw new Error(r.statusText);
+    const { data } = await r.json();
+    if (!data?.length) { showToast('ℹ️ Nenhum prestador próximo'); return; }
+    const geojson = {
+      type: 'FeatureCollection',
+      features: data.map(p => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+        properties: { type: '🔧', name: p.name, rating: p.rating || 0 },
+      })),
+    };
+    map.getSource('providers').setData(geojson);
+    showToast(`📍 ${data.length} prestadores carregados`);
+  } catch (e) {
+    console.warn('[UltraMap] Não foi possível carregar prestadores:', e.message);
+    // fallback: deixa cluster vazio, sem travar nada
   }
 }
 
-// ── ANIMAÇÃO DO PROVIDER (simulação tempo real) ──
-let providerPos = [...PROVIDER_START];
-let providerStep = 0;
-
-function startProviderAnimation() {
-  let t = 0;
-  let lastPing = 0;
-
-  function animate(ts) {
-    if (ts - lastPing > 2500) { // ping a cada 2.5s
-      lastPing = ts;
-      providerStep++;
-
-      // Interpola entre waypoints
-      const total = ROUTE_WAYPOINTS.length - 1;
-      const progress = Math.min(providerStep / 20, 1); // 20 steps = chegou
-      const segIdx = Math.min(Math.floor(progress * total), total - 1);
-      const segT = (progress * total) - segIdx;
-
-      const from = ROUTE_WAYPOINTS[segIdx];
-      const to = ROUTE_WAYPOINTS[Math.min(segIdx + 1, total)];
-      const lng = from[0] + (to[0] - from[0]) * segT;
-      const lat = from[1] + (to[1] - from[1]) * segT;
-
-      providerPos = [lng, lat];
-
-      if (providerMarker) providerMarker.setLngLat([lng, lat]);
-      updateTrail(lng, lat);
-      pingProviderMarker();
-      updateETADisplay(progress);
-
-      // Atualiza rota (remove a parte já percorrida)
-      if (map.getSource('route')) {
-        const remaining = ROUTE_WAYPOINTS.slice(segIdx);
-        remaining[0] = [lng, lat];
-        map.getSource('route').setData({
-          type: 'Feature',
-          geometry: { type: 'LineString', coordinates: remaining },
-        });
-      }
-
-      if (progress >= 1) {
-        document.getElementById('chip-status').textContent = '✅ Chegou!';
-        document.getElementById('eta-km').textContent = '0km';
-        document.getElementById('eta-min').textContent = 'Chegou!';
-        showToast('✅ Prestador chegou!');
-        return;
-      }
-    }
-
-    animFrame = requestAnimationFrame(animate);
-  }
-
-  animFrame = requestAnimationFrame(animate);
-}
-
-function updateETADisplay(progress) {
-  const totalKm = 2.4;
-  const remaining = +(totalKm * (1 - progress)).toFixed(1);
-  const minLeft = Math.ceil((1 - progress) * 6);
-  document.getElementById('eta-km').textContent = remaining + 'km';
-  document.getElementById('eta-min').textContent = `~${minLeft} min`;
-  document.getElementById('progress-fill').style.width = Math.round(progress * 100) + '%';
-  document.getElementById('chip-status').textContent =
-    progress < 0.5 ? '🚗 A caminho' : progress < 0.9 ? '📍 Quase lá' : '✅ Chegando';
-}
-
-// ── SPEED (simulado) ──
-function startSpeedAnimation() {
-  setInterval(() => {
-    const spd = 30 + Math.round(Math.random() * 25);
-    document.getElementById('speed-val').textContent = spd;
-  }, 3000);
-}
-
-// ── LAYER TOGGLES ──
+// ── TOGGLES ──────────────────────────────────────────────────
 function toggle3D() {
   is3D = !is3D;
   document.getElementById('btn-3d').classList.toggle('on', is3D);
   if (map) {
     map.easeTo({ pitch: is3D ? 55 : 0, duration: 600 });
-    if (map.getLayer('3d-buildings')) {
-      map.setLayoutProperty('3d-buildings', 'visibility', is3D ? 'visible' : 'none');
-    }
+    if (map.getLayer('3d-buildings')) map.setLayoutProperty('3d-buildings', 'visibility', is3D ? 'visible' : 'none');
   }
 }
 
@@ -1063,9 +1096,7 @@ function toggleHeat() {
   showHeat = !showHeat;
   document.getElementById('btn-heat').classList.toggle('on', showHeat);
   document.getElementById('heatmap-legend').classList.toggle('visible', showHeat);
-  if (map && map.getLayer('heat-layer')) {
-    map.setPaintProperty('heat-layer', 'heatmap-opacity', showHeat ? 0.7 : 0);
-  }
+  if (map && map.getLayer('heat-layer')) map.setPaintProperty('heat-layer', 'heatmap-opacity', showHeat ? 0.7 : 0);
   showToast(showHeat ? '🔥 Heatmap ativado' : '🔥 Heatmap desativado');
 }
 
@@ -1073,7 +1104,7 @@ function toggleRoute() {
   showRoute = !showRoute;
   document.getElementById('btn-route').classList.toggle('on', showRoute);
   if (map) {
-    ['route-shadow', 'route-line', 'route-arrows'].forEach(id => {
+    ['ultra-route', 'ultra-route-shadow'].forEach(id => {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', showRoute ? 'visible' : 'none');
     });
   }
@@ -1083,35 +1114,40 @@ function toggleCluster() {
   showCluster = !showCluster;
   document.getElementById('btn-cluster').classList.toggle('on', showCluster);
   if (map) {
-    ['clusters', 'cluster-count', 'unclustered-point', 'unclustered-icon'].forEach(id => {
+    ['clusters','cluster-count','unclustered-point','unclustered-icon'].forEach(id => {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', showCluster ? 'visible' : 'none');
     });
   }
   showToast(showCluster ? '📍 Prestadores visíveis' : '📍 Prestadores ocultos');
 }
 
-// ── MODE SWITCH ──
+// ── MODO ──────────────────────────────────────────────────────
 function setMode(mode) {
   currentMode = mode;
   document.querySelectorAll('.top-pills .pill').forEach((p, i) => {
     p.classList.toggle('active', ['tracking','discover','admin'][i] === mode);
   });
-
   if (!map) return;
-
   if (mode === 'discover') {
-    // Zoom out para ver mais prestadores, desabilita tracking
-    map.easeTo({ zoom: 12.5, pitch: 20, center: [-46.640, -23.545], duration: 800 });
+    map.easeTo({ zoom: 12.5, pitch: 20, duration: 800 });
     if (!showHeat) toggleHeat();
-    showToast('🔍 Modo descoberta — veja prestadores próximos');
+    ['clusters','cluster-count','unclustered-point','unclustered-icon'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible');
+    });
+    loadNearbyProviders();
+    showToast('🔍 Prestadores próximos');
   } else if (mode === 'tracking') {
-    map.easeTo({ zoom: 13.5, pitch: 55, center: [-46.6450, -23.5550], duration: 800 });
+    map.easeTo({ zoom: 14, pitch: 55, duration: 800 });
     if (showHeat) toggleHeat();
-    showToast('📡 Modo tracking ativado');
+    ['clusters','cluster-count','unclustered-point','unclustered-icon'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    });
+    showToast('📡 Tracking ativado');
+    if (providerPos) map.easeTo({ center: providerPos, duration: 800 });
   } else if (mode === 'admin') {
-    map.easeTo({ zoom: 11.5, pitch: 35, bearing: 0, center: [-46.640, -23.545], duration: 800 });
+    map.easeTo({ zoom: 11.5, pitch: 35, bearing: 0, duration: 800 });
     if (!showHeat) toggleHeat();
-    showToast('📊 Visão admin — densidade de chamados');
+    showToast('📊 Visão admin');
   }
 }
 
@@ -1119,7 +1155,7 @@ function resetBearing() {
   if (map) map.easeTo({ bearing: 0, pitch: is3D ? 55 : 0, duration: 500 });
 }
 
-// ── TOAST ──
+// ── TOAST ─────────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -1129,8 +1165,22 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// ── START ──
+// ── AÇÕES DO BOTTOM PANEL ─────────────────────────────────────
+function doCall() { showToast('📞 Função disponível em breve'); }
+function doChat() {
+  // Volta pro SPA e abre chat
+  if (window.App?.navigate) { App.navigate('gps-tracking'); return; }
+  showToast('💬 Abra o app para o chat');
+}
+function doSOS() {
+  showToast('🚨 SOS enviado!');
+  if (socket?.connected) socket.emit('send_message', { text: '🚨 SOS — preciso de ajuda urgente!' });
+}
+
+// ── START ─────────────────────────────────────────────────────
 tryAutoInit();
+
 </script>
+
 </body>
 </html>
