@@ -28,7 +28,18 @@ window.RentalGuest = (() => {
     </div>`;
   }
 
+  function _handleMpReturn() {
+    const params = new URLSearchParams(location.search);
+    const payment = params.get('payment');
+    if (!payment) return;
+    history.replaceState(null, '', location.pathname + location.hash.split('?')[0]);
+    if (payment === 'success') App.toast('✅ Pagamento aprovado! Reserva ativada.', 'ok', 5000);
+    else if (payment === 'pending') App.toast('⏳ Pagamento em análise. Aguarde.', 'warn', 5000);
+    else if (payment === 'failure') App.toast('❌ Pagamento não concluído. Tente novamente.', 'err', 5000);
+  }
+
   async function render(){
+    _handleMpReturn();
     if(!API.isAuth()){window.App?.toast('Faça login para ver suas reservas.','warn');window.MobyaAuth?.showLogin();return;}
     const main=document.getElementById('main');if(!main)return;
     main.innerHTML=`<div style="margin-bottom:24px"><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--neon),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">MINHAS RESERVAS</div><div style="color:var(--muted);font-size:.84rem;margin-top:4px">Histórico e status das suas locações</div></div>
