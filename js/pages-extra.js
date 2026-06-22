@@ -1,6 +1,6 @@
 // ============================================================
 // MOBYA — pages-extra.js
-// Páginas: Reboque, Chaveiro, Aluguel
+// Páginas: Reboque, Chaveiro, Aluguel, Frete, Mecânico
 // Carregar APÓS app.js no index.html
 // ============================================================
 
@@ -8,15 +8,14 @@
 
   // ── UTILITÁRIOS ────────────────────────────────────────────
   const main = () => document.getElementById('main');
-  const fmtBRL = v => `R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
+  const fmtBRL = v => `R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const esc = t => String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   // ── REBOQUE & GUINCHO ──────────────────────────────────────
   function renderReboque() {
     const el = main(); if (!el) return;
     el.innerHTML = `
 <div class="px-extra">
-
-  <!-- HERO -->
   <div class="px-hero px-hero--red">
     <div class="px-hero-icon">🚛</div>
     <div>
@@ -25,21 +24,11 @@
     </div>
     <div class="px-badge px-badge--live">● AO VIVO</div>
   </div>
-
-  <!-- BOTÃO EMERGÊNCIA -->
-  <button class="px-btn-sos" onclick="PagesExtra.solicitarReboque()">
-    🚨 SOLICITAR REBOQUE AGORA
-  </button>
-
-  <!-- STATUS EM TEMPO REAL -->
+  <button class="px-btn-sos" onclick="PagesExtra.solicitarReboque()">🚨 SOLICITAR REBOQUE AGORA</button>
   <div class="px-card">
     <div class="px-card-title">◈ MOTORISTAS DISPONÍVEIS</div>
-    <div class="px-grid3" id="reboqueDrivers">
-      ${_driverCards()}
-    </div>
+    <div class="px-grid3" id="reboqueDrivers">${_driverCards()}</div>
   </div>
-
-  <!-- SERVIÇOS -->
   <div class="px-card-title" style="margin:24px 0 12px">NOSSOS SERVIÇOS</div>
   <div class="px-grid2">
     ${_serviceCard('🚛','Guincho Plataforma','Veículos de passeio e SUVs','R$ 180','reboque')}
@@ -49,15 +38,12 @@
     ${_serviceCard('🔋','Pane Elétrica','Carga de bateria','R$ 80','reboque')}
     ${_serviceCard('🔑','Abertura de Porta','Sem danos ao veículo','R$ 100','chaveiro')}
   </div>
-
-  <!-- AVALIAÇÕES -->
   <div class="px-card">
     <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
     ${_review('Carlos M.','⭐⭐⭐⭐⭐','Atendimento rápido! Motorista chegou em 22 minutos.','2h atrás')}
     ${_review('Ana P.','⭐⭐⭐⭐⭐','Muito profissional, salvou meu dia!','5h atrás')}
     ${_review('Roberto S.','⭐⭐⭐⭐','Bom serviço, preço justo.','ontem')}
   </div>
-
 </div>`;
   }
 
@@ -101,7 +87,6 @@
     const el = main(); if (!el) return;
     el.innerHTML = `
 <div class="px-extra">
-
   <div class="px-hero px-hero--purple">
     <div class="px-hero-icon">🔑</div>
     <div>
@@ -110,11 +95,7 @@
     </div>
     <div class="px-badge px-badge--live">● AO VIVO</div>
   </div>
-
-  <button class="px-btn-sos px-btn-sos--purple" onclick="PagesExtra.solicitarChaveiro()">
-    🔑 SOLICITAR CHAVEIRO AGORA
-  </button>
-
+  <button class="px-btn-sos px-btn-sos--purple" onclick="PagesExtra.solicitarChaveiro()">🔑 SOLICITAR CHAVEIRO AGORA</button>
   <div class="px-card-title" style="margin:24px 0 12px">SERVIÇOS DISPONÍVEIS</div>
   <div class="px-grid2">
     ${_chaveiroCard('🚪','Abertura de Porta','Porta travada sem danos','R$ 100 – 180')}
@@ -124,7 +105,6 @@
     ${_chaveiroCard('📱','Key Fob','Programação de controle','R$ 150 – 350')}
     ${_chaveiroCard('🛡️','Cofre Veicular','Instalação de cofre','R$ 300 – 500')}
   </div>
-
   <div class="px-card">
     <div class="px-card-title">◈ COMO FUNCIONA</div>
     <div class="px-steps">
@@ -134,10 +114,8 @@
       <div class="px-step"><div class="px-step-n">4</div><div><strong>Pagamento</strong><br>Pix, cartão ou dinheiro</div></div>
     </div>
   </div>
-
   ${_review('Fernanda L.','⭐⭐⭐⭐⭐','Chave codificada do meu Corolla feita na hora!','1h atrás')}
   ${_review('Diego M.','⭐⭐⭐⭐⭐','Abriram meu carro em 10 minutos sem arranhar nada.','3h atrás')}
-
 </div>`;
   }
 
@@ -156,7 +134,6 @@
     const el = main(); if (!el) return;
     el.innerHTML = `
 <div class="px-extra">
-
   <div class="px-hero px-hero--red">
     <div class="px-hero-icon">🚚</div>
     <div>
@@ -165,18 +142,11 @@
     </div>
     <div class="px-badge px-badge--live">● AO VIVO</div>
   </div>
-
-  <button class="px-btn-sos" onclick="PagesExtra.solicitarFrete()">
-    🚨 SOLICITAR FRETE AGORA
-  </button>
-
+  <button class="px-btn-sos" onclick="PagesExtra.solicitarFrete()">🚨 SOLICITAR FRETE AGORA</button>
   <div class="px-card">
     <div class="px-card-title">◈ TRANSPORTADORES DISPONÍVEIS</div>
-    <div class="px-grid3" id="freteDrivers">
-      ${_freteCards()}
-    </div>
+    <div class="px-grid3" id="freteDrivers">${_freteCards()}</div>
   </div>
-
   <div class="px-card-title" style="margin:24px 0 12px">NOSSOS SERVIÇOS</div>
   <div class="px-grid2">
     ${_serviceCard('🚚','Frete de Veículo','Transporte em cegonha/plataforma','R$ 280','fretes')}
@@ -184,13 +154,11 @@
     ${_serviceCard('🏍️','Frete de Moto','Transporte de motocicletas','R$ 140','fretes')}
     ${_serviceCard('🛻','Carga Pesada','Caminhões e implementos','R$ 450','fretes')}
   </div>
-
   <div class="px-card">
     <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
     ${_review('Marcelo T.','⭐⭐⭐⭐⭐','Transportou minha moto sem nenhum arranhão.','3h atrás')}
     ${_review('Juliana K.','⭐⭐⭐⭐⭐','Chegou rápido e o preço foi justo.','ontem')}
   </div>
-
 </div>`;
   }
 
@@ -215,7 +183,6 @@
     const el = main(); if (!el) return;
     el.innerHTML = `
 <div class="px-extra">
-
   <div class="px-hero px-hero--red">
     <div class="px-hero-icon">🔧</div>
     <div>
@@ -224,18 +191,11 @@
     </div>
     <div class="px-badge px-badge--live">● AO VIVO</div>
   </div>
-
-  <button class="px-btn-sos" onclick="PagesExtra.solicitarMecanico()">
-    🚨 SOLICITAR MECÂNICO AGORA
-  </button>
-
+  <button class="px-btn-sos" onclick="PagesExtra.solicitarMecanico()">🚨 SOLICITAR MECÂNICO AGORA</button>
   <div class="px-card">
     <div class="px-card-title">◈ MECÂNICOS DISPONÍVEIS</div>
-    <div class="px-grid3" id="mecDrivers">
-      ${_mecCards()}
-    </div>
+    <div class="px-grid3" id="mecDrivers">${_mecCards()}</div>
   </div>
-
   <div class="px-card-title" style="margin:24px 0 12px">NOSSOS SERVIÇOS</div>
   <div class="px-grid2">
     ${_serviceCard('🔧','Pane Mecânica','Diagnóstico e reparo no local','R$ 150','servicos')}
@@ -244,13 +204,11 @@
     ${_serviceCard('⛽','Pane Seca','Entrega de combustível','R$ 40','servicos')}
     ${_serviceCard('🌡️','Superaquecimento','Verificação do sistema de arrefecimento','R$ 90','servicos')}
   </div>
-
   <div class="px-card">
     <div class="px-card-title">◈ AVALIAÇÕES RECENTES</div>
     ${_review('Bruno A.','⭐⭐⭐⭐⭐','Resolveu a pane elétrica em 15 minutos.','1h atrás')}
     ${_review('Sandra V.','⭐⭐⭐⭐⭐','Mecânico muito atencioso, explicou tudo.','4h atrás')}
   </div>
-
 </div>`;
   }
 
@@ -270,10 +228,16 @@
       </div>`).join('');
   }
 
-  // ── ALUGUEL DE VEÍCULOS ────────────────────────────────────
+  // ── ALUGUEL DE VEÍCULOS ─────────────────────────────────────
+  // Motor de duas pontas (Fase 6) — busca RentalVehicleConfigs reais
+  // via GET /rental/configs com filtro por datas (preview de preço),
+  // exibe card por veículo e abre modal de reserva com pricing real.
   function renderAluguel() {
     const el = main(); if (!el) return;
     const hoje = new Date().toISOString().split('T')[0];
+    const amanha = new Date(); amanha.setDate(amanha.getDate()+1);
+    const amanhaStr = amanha.toISOString().split('T')[0];
+
     el.innerHTML = `
 <div class="px-extra">
 
@@ -281,75 +245,123 @@
     <div class="px-hero-icon">🗝️</div>
     <div>
       <div class="px-hero-title">ALUGUEL DE VEÍCULOS</div>
-      <div class="px-hero-sub">Reserve ou disponibilize seu veículo na plataforma MOBYA</div>
+      <div class="px-hero-sub">Reserve diretamente com anfitriões · Motor Fase 6</div>
     </div>
   </div>
 
   <!-- ACESSO RÁPIDO -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
     <button onclick="App.navigate('minhas-reservas')" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px 10px;color:var(--neon);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(0,245,255,.35)'" onmouseout="this.style.borderColor='var(--border)'">🗝️ Minhas Reservas</button>
     <button onclick="App.navigate('painel-anfitriao')" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px 10px;color:var(--green);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(16,185,129,.35)'" onmouseout="this.style.borderColor='var(--border)'">🏠 Painel Anfitrião</button>
   </div>
 
-  <!-- BUSCA -->
+  <!-- FILTRO DE DATAS -->
   <div class="px-card">
-    <div class="px-card-title">◈ BUSCAR VEÍCULO</div>
+    <div class="px-card-title">◈ SELECIONE O PERÍODO</div>
     <div class="px-form-row">
       <div class="px-form-group">
         <label>Retirada</label>
-        <input type="date" class="px-input" id="aluguelIn" value="${hoje}">
+        <input type="date" class="px-input" id="aluguelIn" value="${hoje}" min="${hoje}">
       </div>
       <div class="px-form-group">
         <label>Devolução</label>
-        <input type="date" class="px-input" id="aluguelOut">
+        <input type="date" class="px-input" id="aluguelOut" value="${amanhaStr}" min="${amanhaStr}">
       </div>
     </div>
-    <button class="px-btn" onclick="PagesExtra.buscarVeiculos()">🔍 BUSCAR</button>
+    <button class="px-btn" onclick="PagesExtra.buscarVeiculos()">🔍 BUSCAR VEÍCULOS DISPONÍVEIS</button>
   </div>
 
   <!-- FROTA -->
-  <div class="px-card-title" style="margin:24px 0 12px">FROTA DISPONÍVEL</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px">
+    <div class="px-card-title" style="margin:0">VEÍCULOS DISPONÍVEIS</div>
+    <div id="aluguelCount" style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)"></div>
+  </div>
   <div id="aluguelFrota">
-    ${_carCard('Econômico','Hyundai HB20 ou similar','⭐ 4.8 · Manual · Ar','R$ 89/dia','🚗','cyan')}
-    ${_carCard('Intermediário','Toyota Corolla ou similar','⭐ 4.9 · Automático · Ar','R$ 149/dia','🚙','cyan')}
-    ${_carCard('SUV','Jeep Compass ou similar','⭐ 4.9 · Automático · 4x4','R$ 229/dia','🚐','cyan')}
-    ${_carCard('Pickup','Hilux ou similar','⭐ 4.7 · Automático · 4x4','R$ 299/dia','🛻','cyan')}
+    <div style="text-align:center;padding:48px;color:var(--muted)">
+      <div style="font-size:2rem;margin-bottom:12px">🗝️</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.78rem">Selecione as datas e clique em Buscar.</div>
+    </div>
+  </div>
+
+  <!-- COMO FUNCIONA -->
+  <div class="px-card" style="margin-top:24px">
+    <div class="px-card-title">◈ COMO FUNCIONA</div>
+    <div class="px-steps">
+      <div class="px-step"><div class="px-step-n">1</div><div><strong>Escolha o veículo</strong><br>Filtre por datas e veja preços reais com taxa de serviço já incluída</div></div>
+      <div class="px-step"><div class="px-step-n">2</div><div><strong>Solicite a reserva</strong><br>O anfitrião confirma (ou ative reserva instantânea)</div></div>
+      <div class="px-step"><div class="px-step-n">3</div><div><strong>Pague com segurança</strong><br>PIX via Mercado Pago, liberado ao anfitrião após a devolução</div></div>
+      <div class="px-step"><div class="px-step-n">4</div><div><strong>Aproveite</strong><br>Retire no local combinado e devolva na data acordada</div></div>
+    </div>
   </div>
 
   <!-- BENEFÍCIOS -->
   <div class="px-card">
-    <div class="px-card-title">◈ INCLUÍDO NO ALUGUEL</div>
+    <div class="px-card-title">◈ INCLUÍDO EM TODA RESERVA</div>
     <div class="px-benefits">
-      <div class="px-benefit">✅ Seguro básico</div>
-      <div class="px-benefit">✅ Assistência 24h</div>
-      <div class="px-benefit">✅ KM livre</div>
+      <div class="px-benefit">✅ Seguro via plano do anfitrião</div>
+      <div class="px-benefit">✅ Assistência 24h MOBYA</div>
+      <div class="px-benefit">✅ Pagamento protegido</div>
+      <div class="px-benefit">✅ Cancelamento gratuito</div>
+      <div class="px-benefit">✅ Suporte via app</div>
       <div class="px-benefit">✅ Sem taxa de adesão</div>
-      <div class="px-benefit">✅ Cancelamento grátis</div>
-      <div class="px-benefit">✅ Entrega no local</div>
     </div>
   </div>
 
 </div>`;
 
-    // Definir data mínima devolução
-    const outInput = document.getElementById('aluguelOut');
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-    outInput.value = tomorrow.toISOString().split('T')[0];
-    outInput.min = hoje;
+    // Ajuste dinâmico do min da data de devolução ao trocar retirada
+    document.getElementById('aluguelIn')?.addEventListener('change', function() {
+      const out = document.getElementById('aluguelOut');
+      if (!out) return;
+      const minOut = new Date(this.value);
+      minOut.setDate(minOut.getDate()+1);
+      const minStr = minOut.toISOString().split('T')[0];
+      out.min = minStr;
+      if (out.value <= this.value) out.value = minStr;
+    });
   }
 
-  function _carCard(cat, name, info, price, icon, color) {
-    return `
-    <div class="px-car">
-      <div class="px-car-icon">${icon}</div>
-      <div class="px-car-info">
-        <div class="px-car-cat">${cat}</div>
-        <div class="px-car-name">${name}</div>
-        <div class="px-car-meta">${info}</div>
-      </div>
-      <div class="px-car-right">
-        <div class="px-car-price">${price}</div>
-        <button class="px-btn px-btn--sm" onclick="PagesExtra.reservarCarro('${cat}')">Reservar</button>
+  // ── CARD DE VEÍCULO ─────────────────────────────────────────
+  function _configCard(cfg, dias) {
+    const L = cfg.listing || {};
+    const images = Array.isArray(L.images) ? L.images : (typeof L.images === 'string' ? JSON.parse(L.images||'[]') : []);
+    const thumb = images[0] || null;
+    const city = L.city ? `📍 ${esc(L.city)}${L.state?', '+esc(L.state):''}` : '';
+    const plan = {BASIC:'Básico',STANDARD:'Padrão',PREMIUM:'Premium',PREMIER:'Premier'}[cfg.protectionPlan] || cfg.protectionPlan;
+    const totalBRL = fmtBRL(cfg.dailyRate * dias);
+    const diariaBRL = fmtBRL(cfg.dailyRate);
+    const instantBadge = cfg.instantBook
+      ? `<span style="font-size:.62rem;padding:2px 8px;border-radius:4px;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);font-family:'JetBrains Mono',monospace">⚡ Instantânea</span>`
+      : `<span style="font-size:.62rem;padding:2px 8px;border-radius:4px;background:rgba(251,191,36,.12);color:var(--gold);border:1px solid rgba(251,191,36,.3);font-family:'JetBrains Mono',monospace">⏳ Aguarda confirmação</span>`;
+
+    return `<div class="px-rental-card" style="background:var(--s2);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s;margin-bottom:14px" onmouseover="this.style.borderColor='rgba(0,245,255,.3)'" onmouseout="this.style.borderColor='var(--border)'">
+      ${thumb ? `<img src="${esc(thumb)}" style="width:100%;height:160px;object-fit:cover" onerror="this.style.display='none'">` : `<div style="width:100%;height:120px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:3rem">🚗</div>`}
+      <div style="padding:16px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+          <div>
+            <div style="font-weight:700;font-size:.92rem;color:var(--text);line-height:1.3">${esc(L.title||'Veículo')}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:3px">${city}</div>
+          </div>
+          ${instantBadge}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+          <div style="background:var(--s3);border-radius:8px;padding:9px;text-align:center">
+            <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">DIÁRIA</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--neon)">${diariaBRL}</div>
+          </div>
+          <div style="background:var(--s3);border-radius:8px;padding:9px;text-align:center">
+            <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">TOTAL (${dias}d)</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--gold)">${totalBRL}</div>
+          </div>
+          <div style="background:var(--s3);border-radius:8px;padding:9px;text-align:center">
+            <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">PLANO</div>
+            <div style="font-size:.78rem;font-weight:600;color:var(--text)">${esc(plan)}</div>
+          </div>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:12px">
+          Min. ${cfg.minRentalDays||1} dia(s) · Depósito: ${cfg.deposit ? fmtBRL(cfg.deposit) : 'Sem depósito'} · ${cfg.includedKmPerDay||200} km/dia incluídos
+        </div>
+        <button onclick="PagesExtra.abrirDetalhes('${esc(cfg.id)}', document.getElementById('aluguelIn').value, document.getElementById('aluguelOut').value)" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--neon),#00b894);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;cursor:pointer;color:#000;font-weight:700">VER DETALHES E RESERVAR</button>
       </div>
     </div>`;
   }
@@ -368,219 +380,257 @@
 
   // ── AÇÕES ──────────────────────────────────────────────────
   const PagesExtra = {
-    async solicitarReboque() {
-      if (!API.isAuth()) {
-        window.MobyaAuth?.showLogin(); return;
-      }
-      try {
-        Toast?.show('📍 Localizando e acionando motorista...','info');
-        const coords = await _getCoords();
-        const r = await API.emergency.create({
-          type: 'TOW',
-          description: 'Solicitação de reboque via app MOBYA',
-          ...coords,
-        });
-        Toast?.show('🚛 ' + (r.message || 'Motorista acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
-        // Padroniza com o fluxo da IA/openSOS: navega para o GPS real
-        // em vez do tracking inline fake desta página.
-        window.__mobyaPendingEmergencyId = r.data.id || null;
-        App.navigate('gps-tracking');
-      } catch (e) {
-        Toast?.show(e.message || 'Não foi possível acionar o reboque agora.', 'err');
-      }
-    },
-    async solicitarChaveiro() {
-      if (!API.isAuth()) {
-        window.MobyaAuth?.showLogin(); return;
-      }
-      try {
-        Toast?.show('📍 Localizando técnico mais próximo...','info');
-        const coords = await _getCoords();
-        const r = await API.emergency.create({
-          type: 'LOCKSMITH',
-          description: 'Solicitação de chaveiro via app MOBYA',
-          ...coords,
-        });
-        Toast?.show('🔑 ' + (r.message || 'Técnico acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
-        window.__mobyaPendingEmergencyId = r.data.id || null;
-        App.navigate('gps-tracking');
-      } catch (e) {
-        Toast?.show(e.message || 'Não foi possível acionar o chaveiro agora.', 'err');
-      }
-    },
-    async solicitarFrete() {
-      if (!API.isAuth()) {
-        window.MobyaAuth?.showLogin(); return;
-      }
-      try {
-        Toast?.show('📍 Localizando e acionando transportador...','info');
-        const coords = await _getCoords();
-        const r = await API.emergency.create({
-          type: 'FREIGHT',
-          description: 'Solicitação de frete via app MOBYA',
-          ...coords,
-        });
-        Toast?.show('🚚 ' + (r.message || 'Transportador acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
-        window.__mobyaPendingEmergencyId = r.data.id || null;
-        App.navigate('gps-tracking');
-      } catch (e) {
-        Toast?.show(e.message || 'Não foi possível acionar o frete agora.', 'err');
-      }
-    },
-    async solicitarMecanico() {
-      if (!API.isAuth()) {
-        window.MobyaAuth?.showLogin(); return;
-      }
-      try {
-        Toast?.show('📍 Localizando mecânico mais próximo...','info');
-        const coords = await _getCoords();
-        const r = await API.emergency.create({
-          type: 'MECHANIC',
-          description: 'Solicitação de mecânico de emergência via app MOBYA',
-          ...coords,
-        });
-        Toast?.show('🔧 ' + (r.message || 'Mecânico acionado! Acompanhe o rastreamento em tempo real...'), 'ok');
-        window.__mobyaPendingEmergencyId = r.data.id || null;
-        App.navigate('gps-tracking');
-      } catch (e) {
-        Toast?.show(e.message || 'Não foi possível acionar o mecânico agora.', 'err');
-      }
-    },
+
+    // ── BUSCA REAL DE CONFIGS DE ALUGUEL ────────────────────
+    // GET /rental/configs/available?startDate=...&endDate=...&limit=20
+    // Fallback: GET /rental/configs/mine (lista geral)
     async buscarVeiculos() {
-      const i = document.getElementById('aluguelIn')?.value;
-      const o = document.getElementById('aluguelOut')?.value;
-      if (!i||!o||i>=o) { if(typeof Toast!=='undefined') Toast.show('Selecione datas válidas','err'); return; }
-      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando locadoras disponíveis...','info');
+      const startDate = document.getElementById('aluguelIn')?.value;
+      const endDate   = document.getElementById('aluguelOut')?.value;
+      if (!startDate || !endDate || startDate >= endDate) {
+        window.App?.toast('Selecione datas válidas (devolução deve ser depois da retirada).','warn');
+        return;
+      }
+      const dias = Math.max(1, Math.round((new Date(endDate) - new Date(startDate)) / 86400000));
+      const frota = document.getElementById('aluguelFrota');
+      const count = document.getElementById('aluguelCount');
+      if (!frota) return;
+
+      frota.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:1.5rem;margin-bottom:10px">⟳</div><div style="font-family:'JetBrains Mono',monospace;font-size:.75rem">Buscando veículos disponíveis...</div></div>`;
+      if (count) count.textContent = '';
+
       try {
-        const r = await API.monetization.providers({ vertical:'RENTAL', limit:10 });
-        const frota = document.getElementById('aluguelFrota');
-        if (!frota) return;
-
-        const dias = Math.max(1, Math.round((new Date(o) - new Date(i)) / 86400000));
-
-        if (r.data?.providers?.length) {
-          frota.innerHTML = r.data.providers.map(p => `
-            <div class="px-car">
-              <div class="px-car-icon">🚗</div>
-              <div class="px-car-info">
-                <div class="px-car-cat">${p.category || 'Locadora'}</div>
-                <div class="px-car-name">${p.name}</div>
-                <div class="px-car-meta">⭐ ${p.ratingAvg?.toFixed(1) || '—'} · 📍 ${p.city||''}${p.state?', '+p.state:''} · ${dias} dia(s)</div>
-              </div>
-              <div class="px-car-right">
-                <button class="px-btn px-btn--sm" onclick="PagesExtra.reservarCarro('${p.name.replace(/'/g,"\\'")}','${p.id}',${dias})">🗝️ Reservar</button>
-              </div>
-            </div>`).join('');
-          Toast?.show(`✅ ${r.data.providers.length} locadoras encontradas!`,'ok');
-        } else {
-          frota.innerHTML = `<div style="color:var(--muted,#888);font-size:.84rem;padding:20px 0">
-            Nenhuma locadora parceira nesta região ainda.
-            <button class="px-btn px-btn--sm" style="margin-top:10px" onclick="App.navigate('monetizacao')">
-              Cadastrar minha locadora
-            </button>
-          </div>`;
-          Toast?.show('Nenhuma locadora parceira por aqui ainda.','info');
+        // Endpoint principal: configs disponíveis no período
+        const params = new URLSearchParams({ startDate, endDate, limit: 20 });
+        let configs = [];
+        try {
+          const r = await API.req('GET', `/rental/configs/available?${params}`);
+          configs = r?.data?.configs || r?.data || [];
+        } catch (_) {
+          // Se o endpoint /available não existir ainda, busca geral como fallback
+          const r2 = await API.req('GET', '/rental/configs?active=true&limit=20');
+          configs = r2?.data?.configs || r2?.data || [];
         }
+
+        if (count) count.textContent = configs.length > 0 ? `${configs.length} veículo(s) encontrado(s)` : '';
+
+        if (!configs.length) {
+          frota.innerHTML = `
+            <div style="text-align:center;padding:60px;color:var(--muted)">
+              <div style="font-size:2.5rem;margin-bottom:12px">🗝️</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhum veículo disponível para este período.</div>
+              <div style="font-size:.76rem;color:var(--muted);margin-bottom:16px">Tente outras datas ou cadastre seu veículo e lucre!</div>
+              <button onclick="App.navigate('painel-anfitriao')" style="background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🏠 Cadastrar meu veículo</button>
+            </div>`;
+          return;
+        }
+
+        frota.innerHTML = configs.map(c => _configCard(c, dias)).join('');
+
       } catch(e) {
-        Toast?.show(e.message || 'Erro ao buscar locadoras.','err');
+        frota.innerHTML = `
+          <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:24px;text-align:center">
+            <div style="font-size:1.5rem;margin-bottom:8px">⚠️</div>
+            <div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.8rem">${esc(e?.message||'Erro ao buscar veículos')}</div>
+            <button onclick="PagesExtra.buscarVeiculos()" style="margin-top:16px;background:var(--s2);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:8px 18px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.72rem">↺ Tentar novamente</button>
+          </div>`;
       }
     },
+
+    // ── MODAL DE DETALHES COM PREVIEW DE PREÇO REAL ──────────
     async abrirDetalhes(configId, startDate, endDate) {
       if (!API.isAuth()) { window.MobyaAuth?.showLogin('aluguel'); return; }
       document.getElementById('rentalDetailModal')?.remove();
+
       const overlay = document.createElement('div');
       overlay.id = 'rentalDetailModal';
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
-      overlay.innerHTML = '<div style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:var(--surface,#1a1a2e);border-radius:20px 20px 0 0;padding:20px"><div style="text-align:center;padding:20px;color:var(--muted)">Carregando...</div></div>';
+      overlay.innerHTML = '<div style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:var(--surface,#1a1a2e);border-radius:20px 20px 0 0;padding:20px"><div style="text-align:center;padding:30px;color:var(--muted)">⟳ Carregando...</div></div>';
       document.body.appendChild(overlay);
       overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+
       try {
-        const r = await API.req('GET', '/rental/configs/' + configId);
-        const c = r.data;
+        const [rConfig, rPreview] = await Promise.all([
+          API.req('GET', '/rental/configs/' + configId),
+          (startDate && endDate)
+            ? API.req('GET', `/rental/preview-price?configId=${configId}&startDate=${startDate}&endDate=${endDate}`).catch(()=>null)
+            : Promise.resolve(null),
+        ]);
+
+        const c = rConfig.data;
         const L = c.listing || {};
-        const photos = L.photos || [];
-        const photoHtml = photos.length
-          ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:16px">' +
-            photos.slice(0,5).map(p=>`<img src="${p}" style="height:150px;border-radius:10px;object-fit:cover;flex-shrink:0">`).join('') + '</div>'
-          : '';
+        const preview = rPreview?.data || null;
+        const images = Array.isArray(L.images) ? L.images : (typeof L.images === 'string' ? JSON.parse(L.images||'[]') : []);
+
         const dias = (startDate && endDate)
           ? Math.max(1, Math.round((new Date(endDate)-new Date(startDate))/86400000))
           : (c.minRentalDays || 1);
-        const total = (c.dailyRate * dias).toFixed(2).replace('.',',');
+
+        const photoHtml = images.length
+          ? `<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px">${images.slice(0,5).map(p=>`<img src="${esc(p)}" style="height:140px;border-radius:10px;object-fit:cover;flex-shrink:0;max-width:220px" onerror="this.style.display='none'">`).join('')}</div>`
+          : `<div style="width:100%;height:100px;background:var(--s3,#0d0d1a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:3rem;margin-bottom:16px">🚗</div>`;
+
+        // Preços: prioriza preview real, fallback para estimativa local
+        const subtotal   = preview?.subtotal   ?? (c.dailyRate * dias);
+        const totalLoc   = preview?.renterTotalAmount ?? subtotal;
+        const svcFee     = preview?.renterServiceFeeAmount ?? 0;
+        const hostPayout = preview?.hostPayoutAmount ?? subtotal;
+        const plan = {BASIC:'Básico',STANDARD:'Padrão',PREMIUM:'Premium',PREMIER:'Premier'}[c.protectionPlan] || c.protectionPlan;
+
         const inner = overlay.querySelector('div');
         inner.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px">${L.title||'Veículo'}</div>
-            <button onclick="document.getElementById('rentalDetailModal')?.remove()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer">✕</button>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--text)">${esc(L.title||'Veículo')}</div>
+            <button onclick="document.getElementById('rentalDetailModal')?.remove()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:4px 8px">✕</button>
           </div>
           ${photoHtml}
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          ${L.description?`<div style="font-size:.84rem;color:var(--muted);line-height:1.5;margin-bottom:16px;background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">${esc(L.description.slice(0,400))}${L.description.length>400?'…':''}</div>`:''}
+
+          <!-- GRID DE PREÇO -->
+          <div style="background:var(--s2,#0d0d1a);border-radius:12px;padding:14px;margin-bottom:14px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:1px;margin-bottom:10px">RESUMO DO PREÇO</div>
+            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:6px"><span style="color:var(--muted)">Diária × ${dias} dias</span><span>${fmtBRL(subtotal)}</span></div>
+            ${svcFee>0?`<div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:6px"><span style="color:var(--muted)">Taxa de serviço</span><span>${fmtBRL(svcFee)}</span></div>`:''}
+            <div style="border-top:1px solid var(--border,rgba(255,255,255,.08));margin:10px 0 8px"></div>
+            <div style="display:flex;justify-content:space-between;font-size:.95rem;font-weight:700"><span>Total</span><span style="color:var(--gold)">${fmtBRL(totalLoc)}</span></div>
+            ${preview?'':'<div style="font-size:.68rem;color:var(--muted);margin-top:6px;font-family:\'JetBrains Mono\',monospace">* Estimativa. Taxa de serviço calculada na confirmação.</div>'}
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
             <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
-              <div style="font-size:.7rem;color:var(--muted)">DIÁRIA</div>
-              <div style="font-size:1.1rem;font-weight:700;color:var(--neon)">R$ ${c.dailyRate?.toFixed(2).replace('.',',')}</div>
+              <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">DEPÓSITO</div>
+              <div style="font-size:.88rem;font-weight:600">${c.deposit?fmtBRL(c.deposit):'Sem depósito'}</div>
             </div>
             <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
-              <div style="font-size:.7rem;color:var(--muted)">TOTAL (${dias}d)</div>
-              <div style="font-size:1.1rem;font-weight:700;color:var(--q3,#a78bfa)">R$ ${total}</div>
+              <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">RETIRADA</div>
+              <div style="font-size:.84rem">${esc(c.pickupAddress||L.city||'—')}</div>
             </div>
             <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
-              <div style="font-size:.7rem;color:var(--muted)">DEPÓSITO</div>
-              <div style="font-size:.9rem;font-weight:600">${c.deposit?'R$ '+c.deposit.toFixed(2).replace('.',','):'Sem depósito'}</div>
+              <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">PLANO PROTEÇÃO</div>
+              <div style="font-size:.84rem;font-weight:600">${esc(plan)}</div>
             </div>
             <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
-              <div style="font-size:.7rem;color:var(--muted)">RETIRADA</div>
-              <div style="font-size:.85rem">${c.pickupAddress||L.city||'—'}</div>
+              <div style="font-size:.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px">KM INCLUÍDOS</div>
+              <div style="font-size:.84rem">${c.includedKmPerDay||200} km/dia</div>
             </div>
           </div>
-          ${L.description?`<div style="font-size:.84rem;color:var(--muted);line-height:1.5;margin-bottom:16px;background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">${L.description.slice(0,400)}</div>`:''}
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Min. ${c.minRentalDays||1} dia(s) · ${c.instantBook?'✅ Aprovação imediata':'⏳ Aguarda confirmação'}</div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:16px">Anfitrião: <strong>${c.host?.name||'—'}</strong></div>
-          <button id="btnConfirmarReserva" onclick="PagesExtra.confirmarReserva('${c.id}','${startDate||''}','${endDate||''}')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--neon,#00ff88),#00b894);border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;color:#000">RESERVAR AGORA</button>
+
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:6px">
+            Min. ${c.minRentalDays||1} dia(s) · Máx. ${c.maxRentalDays||30} dia(s) · Aviso: ${c.advanceNoticeHrs||2}h de antecedência
+          </div>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:16px">
+            Anfitrião: <strong style="color:var(--text)">${esc(c.host?.name||'—')}</strong>
+            &nbsp;·&nbsp; ${c.instantBook?'⚡ Aprovação imediata':'⏳ Aguarda confirmação'}
+          </div>
+
+          <button id="btnConfirmarReserva" onclick="PagesExtra.confirmarReserva('${esc(c.id)}','${startDate||''}','${endDate||''}')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--neon,#00ff88),#00b894);border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;color:#000;font-weight:700">
+            🗝️ RESERVAR — ${fmtBRL(totalLoc)}
+          </button>
         `;
       } catch(e) {
-        overlay.querySelector('div').innerHTML = `<div style="padding:24px;color:var(--red)">Erro: ${e.message}</div>`;
+        overlay.querySelector('div').innerHTML = `
+          <div style="padding:32px;text-align:center">
+            <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+            <div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.82rem">Erro: ${esc(e?.message||'Falha ao carregar detalhes')}</div>
+            <button onclick="document.getElementById('rentalDetailModal')?.remove()" style="margin-top:16px;background:var(--s2);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:8px 18px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.72rem">Fechar</button>
+          </div>`;
       }
     },
+
+    // ── CONFIRMA RESERVA ─────────────────────────────────────
     async confirmarReserva(configId, startDate, endDate) {
       const btn = document.getElementById('btnConfirmarReserva');
       if (btn) { btn.disabled=true; btn.textContent='Enviando...'; }
+
       const i = startDate || document.getElementById('aluguelIn')?.value;
       const o = endDate   || document.getElementById('aluguelOut')?.value;
-      if (!i||!o) { App.toast('Selecione as datas','warn'); if(btn){btn.disabled=false;btn.textContent='RESERVAR AGORA';} return; }
+      if (!i||!o) { window.App?.toast('Selecione as datas','warn'); if(btn){btn.disabled=false;btn.textContent='RESERVAR AGORA';} return; }
+
       try {
         await API.req('POST', '/rental/bookings', { configId, startDate: i, endDate: o });
         document.getElementById('rentalDetailModal')?.remove();
-        App.toast('🎉 Reserva solicitada!','ok');
-        App.navigate('minhas-reservas');
+        window.App?.toast('🎉 Reserva solicitada com sucesso!','ok');
+        window.App?.navigate('minhas-reservas');
       } catch(e) {
-        App.toast(e.message||'Erro ao criar reserva','err');
-        if(btn){btn.disabled=false;btn.textContent='RESERVAR AGORA';}
+        window.App?.toast(e?.message||'Erro ao criar reserva','err');
+        if(btn){ btn.disabled=false; btn.textContent='🗝️ RESERVAR'; }
       }
     },
-    async reservarCarro(nome, providerId, dias) {
-      if (providerId) {
-        // Abre modal de detalhes/booking real do config
-        await PagesExtra.abrirDetalhes(providerId);
+
+    // ── AÇÕES DE EMERGÊNCIA ──────────────────────────────────
+    async solicitarReboque() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        window.App?.toast('📍 Localizando e acionando motorista...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({ type: 'TOW', description: 'Solicitação de reboque via app MOBYA', ...coords });
+        window.App?.toast('🚛 ' + (r.message || 'Motorista acionado! Acompanhe em tempo real.'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data?.id || null;
+        window.App?.navigate('gps-tracking');
+      } catch (e) {
+        window.App?.toast(e?.message || 'Não foi possível acionar o reboque agora.', 'err');
       }
-      // Se não tem providerId (cards estáticos mockados) — sem ação útil ainda
-    }
+    },
+    async solicitarChaveiro() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        window.App?.toast('📍 Localizando técnico mais próximo...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({ type: 'LOCKSMITH', description: 'Solicitação de chaveiro via app MOBYA', ...coords });
+        window.App?.toast('🔑 ' + (r.message || 'Técnico acionado!'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data?.id || null;
+        window.App?.navigate('gps-tracking');
+      } catch (e) {
+        window.App?.toast(e?.message || 'Não foi possível acionar o chaveiro agora.', 'err');
+      }
+    },
+    async solicitarFrete() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        window.App?.toast('📍 Localizando e acionando transportador...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({ type: 'FREIGHT', description: 'Solicitação de frete via app MOBYA', ...coords });
+        window.App?.toast('🚚 ' + (r.message || 'Transportador acionado!'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data?.id || null;
+        window.App?.navigate('gps-tracking');
+      } catch (e) {
+        window.App?.toast(e?.message || 'Não foi possível acionar o frete agora.', 'err');
+      }
+    },
+    async solicitarMecanico() {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
+      try {
+        window.App?.toast('📍 Localizando mecânico mais próximo...','info');
+        const coords = await _getCoords();
+        const r = await API.emergency.create({ type: 'MECHANIC', description: 'Solicitação de mecânico de emergência via app MOBYA', ...coords });
+        window.App?.toast('🔧 ' + (r.message || 'Mecânico acionado!'), 'ok');
+        window.__mobyaPendingEmergencyId = r.data?.id || null;
+        window.App?.navigate('gps-tracking');
+      } catch (e) {
+        window.App?.toast(e?.message || 'Não foi possível acionar o mecânico agora.', 'err');
+      }
+    },
+
+    // alias legado mantido para compatibilidade
+    reservarCarro(nome, providerId, dias) {
+      if (providerId) PagesExtra.abrirDetalhes(providerId);
+    },
   };
+
   window.PagesExtra = PagesExtra;
-  // Expõe as páginas de render (eram privadas do closure e nunca chegavam
-  // a app.js — por isso reboque/chaveiro/aluguel caíam no comingSoon).
   PagesExtra.renderReboque  = renderReboque;
   PagesExtra.renderChaveiro = renderChaveiro;
   PagesExtra.renderAluguel  = renderAluguel;
   PagesExtra.renderFrete    = renderFrete;
-  PagesExtra.renderMecanico   = renderMecanico;
-PagesExtra.abrirDetalhes    = PagesExtra.abrirDetalhes;
-PagesExtra.confirmarReserva = PagesExtra.confirmarReserva;
+  PagesExtra.renderMecanico = renderMecanico;
+  PagesExtra.abrirDetalhes    = PagesExtra.abrirDetalhes;
+  PagesExtra.confirmarReserva = PagesExtra.confirmarReserva;
 
   // ── CSS INJETADO ───────────────────────────────────────────
   if (!document.getElementById('px-style-pages-extra')) {
-  const style = document.createElement('style');
-  style.id = 'px-style-pages-extra';
-  style.textContent = `
+    const style = document.createElement('style');
+    style.id = 'px-style-pages-extra';
+    style.textContent = `
 .px-extra{padding:20px;max-width:900px;margin:0 auto}
 .px-hero{display:flex;align-items:center;gap:16px;padding:24px;border-radius:16px;margin-bottom:20px;position:relative}
 .px-hero--red{background:linear-gradient(135deg,rgba(185,28,28,.25),rgba(244,63,94,.1));border:1px solid rgba(244,63,94,.3)}
@@ -613,11 +663,6 @@ PagesExtra.confirmarReserva = PagesExtra.confirmarReserva;
 .px-svc-title{font-weight:700;font-size:.88rem;color:#fff;margin-bottom:4px}
 .px-svc-desc{font-size:.75rem;color:var(--muted,#888);margin-bottom:8px}
 .px-svc-price{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:#10b981;font-weight:600}
-.px-tracking{display:flex;flex-direction:column;gap:10px;margin:12px 0}
-.px-track-step{padding:10px 14px;border-radius:8px;font-size:.84rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--muted,#888)}
-.px-track-done{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:#10b981}
-.px-track-active{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#f59e0b}
-.px-eta{text-align:center;margin-top:12px;font-size:.88rem;color:var(--muted,#888)}
 .px-review{background:var(--s2,rgba(255,255,255,.05));border:1px solid var(--border,rgba(255,255,255,.08));border-radius:12px;padding:14px;margin-bottom:10px}
 .px-review-top{display:flex;justify-content:space-between;margin-bottom:4px}
 .px-review-name{font-weight:600;font-size:.84rem;color:#fff}
@@ -642,16 +687,10 @@ PagesExtra.confirmarReserva = PagesExtra.confirmarReserva;
 .px-car-price{font-family:'JetBrains Mono',monospace;font-size:.88rem;color:#10b981;font-weight:700;margin-bottom:8px}
 .px-benefits{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .px-benefit{font-size:.82rem;color:var(--muted,#888);padding:8px 12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:8px}
+.px-rental-card img{display:block}
 @media(max-width:480px){.px-form-row{grid-template-columns:1fr}.px-grid2{grid-template-columns:1fr 1fr}}
-  `;
-  document.head.appendChild(style);
+    `;
+    document.head.appendChild(style);
   }
-
-  // ── ROTEAMENTO ──────────────────────────────────────────────
-  // O roteamento real de reboque/chaveiro/aluguel é feito direto em
-  // BASE_PAGES (js/app.js), que chama PagesExtra.renderX(). O patch
-  // antigo sobrescrevia window.App.navigate, mas os cliques do menu
-  // (data-page) chamam a função `navigate` interna do app.js, não
-  // App.navigate — então o patch nunca era acionado. Removido.
 
 })();
