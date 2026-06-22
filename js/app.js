@@ -231,6 +231,7 @@ const BASE_PAGES = {
   fretes:           () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderFrete() : comingSoon('FRETE & TRANSPORTE','🚚')),
   'painel-anfitriao': () => { const u=MobyaAuth.getUser(); if(!u){MobyaAuth.showLogin('painel-anfitriao');return;} if(typeof RentalHost!=='undefined') RentalHost.render(); else comingSoon('PAINEL DO ANFITRIÃO','🗝️'); },
   'minhas-reservas': () => { const u=MobyaAuth.getUser(); if(!u){MobyaAuth.showLogin('minhas-reservas');return;} if(typeof RentalGuest!=='undefined') RentalGuest.render(); else comingSoon('MINHAS RESERVAS','🗝️'); },
+  'notificacoes': () => { const u=MobyaAuth.getUser(); if(!u){MobyaAuth.showLogin('notificacoes');return;} NotificacoesPage.render(); },
 };
 
 // ── Sync total de navegação ────────────────────────────────────
