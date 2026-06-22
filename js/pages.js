@@ -658,8 +658,40 @@ window.Pages = (() => {
         close();
         App.toast(`🚨 Emergência registrada! Buscando prestador próximo…`, 'ok');
         if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc || ''}`);
-        window.__mobyaPendingEmergencyId = created?.data?.id || null;
-        App.navigate('gps-tracking');
+        // Usuário (CLIENT) vai para o Ultra Map — recebe o prestador no mapa premium
+        // Prestador vai para gps-tracking (já tratado no dispatch-ui.js ao aceitar oferta)
+        const emergencyId = created?.data?.id || null;
+        window.__mobyaPendingEmergencyId = emergencyId;
+        const user = (typeof MobyaAuth !== 'undefined') ? MobyaAuth.getUser() : null;
+        const isProvider = user?.role === 'PROVIDER';
+        if (isProvider) {
+          App.navigate('gps-tracking');
+        } else {
+          // Redireciona para ultra-map com o emergencyId; o sessionId será resolvido
+          // via polling (_waitForProviderAccept) assim que um prestador aceitar
+          window.__ultraMapEmergencyId = emergencyId;
+          // Tenta obter sessionId já disponível (raro mas possível)
+          const sessionUrl = emergencyId
+            ? `${(window.MOBYA?.API||'https://mobya.onrender.com')}/api/v1/emergency/${emergencyId}/tracking-session`
+            : null;
+          let sessionId = null;
+          if (sessionUrl) {
+            try {
+              const tk = (typeof API !== 'undefined') ? API.getToken() : null;
+              const headers = tk ? { Authorization: 'Bearer ' + tk } : {};
+              const resp = await fetch(sessionUrl, { headers });
+              if (resp.ok) { const j = await resp.json(); sessionId = j?.data?.sessionId || null; }
+            } catch {}
+          }
+          const baseUrl = (location.origin + location.pathname).replace(/\/[^/]*$/, '/') + 'ultra-map/';
+          const params  = new URLSearchParams();
+          if (sessionId)    params.set('session', sessionId);
+          if (emergencyId)  params.set('emergency', emergencyId);
+          const tk = (typeof API !== 'undefined') ? API.getToken() : null;
+          if (tk) params.set('token', tk);
+          // Navega para a página ultra-map (GitHub Pages / pasta /ultra-map/)
+          window.location.href = baseUrl + '?' + params.toString();
+        }
       } catch(e) {
         btn.disabled = false;
         btn.textContent = '🚨 Acionar Agora';
