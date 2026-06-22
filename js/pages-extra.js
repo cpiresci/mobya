@@ -479,24 +479,81 @@
         Toast?.show(e.message || 'Erro ao buscar locadoras.','err');
       }
     },
-    async reservarCarro(nome, providerId, dias) {
-      if (!API.isAuth()) {
-        window.MobyaAuth?.showLogin(); return;
-      }
-      const i = document.getElementById('aluguelIn')?.value;
-      const o = document.getElementById('aluguelOut')?.value;
+    async abrirDetalhes(configId, startDate, endDate) {
+      if (!API.isAuth()) { window.MobyaAuth?.showLogin('aluguel'); return; }
+      document.getElementById('rentalDetailModal')?.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'rentalDetailModal';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
+      overlay.innerHTML = '<div style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:var(--surface,#1a1a2e);border-radius:20px 20px 0 0;padding:20px"><div style="text-align:center;padding:20px;color:var(--muted)">Carregando...</div></div>';
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
       try {
-        await API.monetization.createQuote({
-          vertical: 'RENTAL',
-          providerId: providerId || null,
-          description: `Reserva de veículo em ${nome} — ${dias||''} dia(s) (${i||''} → ${o||''})`,
-          scheduledAt: i ? new Date(i).toISOString() : null,
-        });
-        Toast?.show(`🗝️ Reserva enviada para ${nome}! A locadora entrará em contato.`,'ok');
+        const r = await API.req('GET', '/rental/configs/' + configId);
+        const c = r.data;
+        const L = c.listing || {};
+        const photos = L.photos || [];
+        const photoHtml = photos.length
+          ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:16px">' +
+            photos.slice(0,5).map(p=>`<img src="${p}" style="height:150px;border-radius:10px;object-fit:cover;flex-shrink:0">`).join('') + '</div>'
+          : '';
+        const dias = (startDate && endDate)
+          ? Math.max(1, Math.round((new Date(endDate)-new Date(startDate))/86400000))
+          : (c.minRentalDays || 1);
+        const total = (c.dailyRate * dias).toFixed(2).replace('.',',');
+        const inner = overlay.querySelector('div');
+        inner.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px">${L.title||'Veículo'}</div>
+            <button onclick="document.getElementById('rentalDetailModal')?.remove()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer">✕</button>
+          </div>
+          ${photoHtml}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+            <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
+              <div style="font-size:.7rem;color:var(--muted)">DIÁRIA</div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--neon)">R$ ${c.dailyRate?.toFixed(2).replace('.',',')}</div>
+            </div>
+            <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
+              <div style="font-size:.7rem;color:var(--muted)">TOTAL (${dias}d)</div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--q3,#a78bfa)">R$ ${total}</div>
+            </div>
+            <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
+              <div style="font-size:.7rem;color:var(--muted)">DEPÓSITO</div>
+              <div style="font-size:.9rem;font-weight:600">${c.deposit?'R$ '+c.deposit.toFixed(2).replace('.',','):'Sem depósito'}</div>
+            </div>
+            <div style="background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">
+              <div style="font-size:.7rem;color:var(--muted)">RETIRADA</div>
+              <div style="font-size:.85rem">${c.pickupAddress||L.city||'—'}</div>
+            </div>
+          </div>
+          ${L.description?`<div style="font-size:.84rem;color:var(--muted);line-height:1.5;margin-bottom:16px;background:var(--s2,#0d0d1a);border-radius:10px;padding:12px">${L.description.slice(0,400)}</div>`:''}
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Min. ${c.minRentalDays||1} dia(s) · ${c.instantBook?'✅ Aprovação imediata':'⏳ Aguarda confirmação'}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:16px">Anfitrião: <strong>${c.host?.name||'—'}</strong></div>
+          <button id="btnConfirmarReserva" onclick="PagesExtra.confirmarReserva('${c.id}','${startDate||''}','${endDate||''}')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--neon,#00ff88),#00b894);border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;color:#000">RESERVAR AGORA</button>
+        `;
       } catch(e) {
-        Toast?.show(e.message || 'Erro ao enviar reserva.','err');
+        overlay.querySelector('div').innerHTML = `<div style="padding:24px;color:var(--red)">Erro: ${e.message}</div>`;
       }
     },
+    async confirmarReserva(configId, startDate, endDate) {
+      const btn = document.getElementById('btnConfirmarReserva');
+      if (btn) { btn.disabled=true; btn.textContent='Enviando...'; }
+      const i = startDate || document.getElementById('aluguelIn')?.value;
+      const o = endDate   || document.getElementById('aluguelOut')?.value;
+      if (!i||!o) { App.toast('Selecione as datas','warn'); if(btn){btn.disabled=false;btn.textContent='RESERVAR AGORA';} return; }
+      try {
+        await API.req('POST', '/rental/bookings', { configId, startDate: i, endDate: o });
+        document.getElementById('rentalDetailModal')?.remove();
+        App.toast('🎉 Reserva solicitada!','ok');
+        App.navigate('minhas-reservas');
+      } catch(e) {
+        App.toast(e.message||'Erro ao criar reserva','err');
+        if(btn){btn.disabled=false;btn.textContent='RESERVAR AGORA';}
+      }
+    },
+    async reservarCarro(nome, providerId, dias) {
+      App.navigate('aluguel');
+    }
   };
   window.PagesExtra = PagesExtra;
   // Expõe as páginas de render (eram privadas do closure e nunca chegavam
@@ -505,7 +562,9 @@
   PagesExtra.renderChaveiro = renderChaveiro;
   PagesExtra.renderAluguel  = renderAluguel;
   PagesExtra.renderFrete    = renderFrete;
-  PagesExtra.renderMecanico = renderMecanico;
+  PagesExtra.renderMecanico   = renderMecanico;
+PagesExtra.abrirDetalhes    = PagesExtra.abrirDetalhes;
+PagesExtra.confirmarReserva = PagesExtra.confirmarReserva;
 
   // ── CSS INJETADO ───────────────────────────────────────────
   if (!document.getElementById('px-style-pages-extra')) {
