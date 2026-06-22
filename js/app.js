@@ -230,6 +230,7 @@ const BASE_PAGES = {
   'seguros-sim':    () => (typeof Monetization!=='undefined'&&Monetization.renderInsurancePage      ? Monetization.renderInsurancePage()      : comingSoon('SEGUROS IA','🛡️')),
   fretes:           () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderFrete() : comingSoon('FRETE & TRANSPORTE','🚚')),
   'painel-anfitriao': () => (typeof RentalHost!=='undefined' ? RentalHost.render() : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
+  'minhas-reservas': () => (typeof RentalGuest!=='undefined' ? RentalGuest.render() : comingSoon('MINHAS RESERVAS','🗝️')),
 };
 
 // ── Sync total de navegação ────────────────────────────────────
