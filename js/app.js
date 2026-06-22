@@ -229,8 +229,8 @@ const BASE_PAGES = {
   'painel-receita': () => (typeof Monetization!=='undefined'&&Monetization.renderRevenueDashboard  ? Monetization.renderRevenueDashboard()  : comingSoon('PAINEL DE RECEITA','📊')),
   'seguros-sim':    () => (typeof Monetization!=='undefined'&&Monetization.renderInsurancePage      ? Monetization.renderInsurancePage()      : comingSoon('SEGUROS IA','🛡️')),
   fretes:           () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderFrete() : comingSoon('FRETE & TRANSPORTE','🚚')),
-  'painel-anfitriao': () => (typeof RentalHost!=='undefined' ? RentalHost.render() : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
-  'minhas-reservas': () => (typeof RentalGuest!=='undefined' ? RentalGuest.render() : comingSoon('MINHAS RESERVAS','🗝️')),
+  'painel-anfitriao': () => { const u=MobyaAuth.getUser(); if(!u){MobyaAuth.showLogin('painel-anfitriao');return;} if(typeof RentalHost!=='undefined') RentalHost.render(); else comingSoon('PAINEL DO ANFITRIÃO','🗝️'); },
+  'minhas-reservas': () => { const u=MobyaAuth.getUser(); if(!u){MobyaAuth.showLogin('minhas-reservas');return;} if(typeof RentalGuest!=='undefined') RentalGuest.render(); else comingSoon('MINHAS RESERVAS','🗝️'); },
 };
 
 // ── Sync total de navegação ────────────────────────────────────

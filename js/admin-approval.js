@@ -8,6 +8,11 @@ window.updateSidebarRoles = function(user) {
   const sbR = document.getElementById('sbPainelReceita');
   if (sbR) sbR.style.display = isAdmin ? '' : 'none';
   if (isAdmin) AdminApproval.fetchPendingCount();
+  const isLoggedIn = !!user;
+  const sbAnf = document.getElementById('sbPainelAnfitriao');
+  if (sbAnf) sbAnf.style.display = isLoggedIn ? '' : 'none';
+  const sbRes = document.getElementById('sbMinhasReservas');
+  if (sbRes) sbRes.style.display = isLoggedIn ? '' : 'none';
 };
 window.AdminApproval = (() => {
   function esc(s){ return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
