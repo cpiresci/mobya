@@ -169,5 +169,25 @@ window.API = (() => {
     approveSaque: (id, d)      => patch(`/wallet/withdrawals/${id}`, d),
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, pollEmergency, ping };
+
+  const rental = {
+    createConfig:   (d)      => post('/rental/configs', d),
+    myConfigs:      (p={})   => get(`/rental/configs/mine?${new URLSearchParams(p)}`),
+    getConfig:      (id)     => get(`/rental/configs/${id}`),
+    getConfigByListing: (lid) => get(`/rental/configs/listing/${lid}`),
+    updateConfig:   (id,d)   => patch(`/rental/configs/${id}`, d),
+    deleteConfig:   (id)     => del(`/rental/configs/${id}`),
+    previewPrice:   (p={})   => get(`/rental/preview-price?${new URLSearchParams(p)}`),
+    createBooking:  (d)      => post('/rental/bookings', d),
+    myBookings:     (p={})   => get(`/rental/bookings/mine?${new URLSearchParams(p)}`),
+    hostBookings:   (p={})   => get(`/rental/bookings/host?${new URLSearchParams(p)}`),
+    getBooking:     (id)     => get(`/rental/bookings/${id}`),
+    confirmBooking: (id)     => patch(`/rental/bookings/${id}/confirm`, {}),
+    declineBooking: (id,d)   => patch(`/rental/bookings/${id}/decline`, d||{}),
+    checkinBooking: (id)     => patch(`/rental/bookings/${id}/checkin`, {}),
+    checkoutBooking:(id)     => patch(`/rental/bookings/${id}/checkout`, {}),
+    cancelBooking:  (id,d)   => patch(`/rental/bookings/${id}/cancel`, d||{}),
+  };
+
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, pollEmergency, ping };
 })();
