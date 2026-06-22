@@ -281,8 +281,14 @@
     <div class="px-hero-icon">🗝️</div>
     <div>
       <div class="px-hero-title">ALUGUEL DE VEÍCULOS</div>
-      <div class="px-hero-sub">12 veículos disponíveis agora · Retirada imediata</div>
+      <div class="px-hero-sub">Reserve ou disponibilize seu veículo na plataforma MOBYA</div>
     </div>
+  </div>
+
+  <!-- ACESSO RÁPIDO -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+    <button onclick="App.navigate('minhas-reservas')" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px 10px;color:var(--neon);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(0,245,255,.35)'" onmouseout="this.style.borderColor='var(--border)'">🗝️ Minhas Reservas</button>
+    <button onclick="App.navigate('painel-anfitriao')" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px 10px;color:var(--green);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(16,185,129,.35)'" onmouseout="this.style.borderColor='var(--border)'">🏠 Painel Anfitrião</button>
   </div>
 
   <!-- BUSCA -->
@@ -552,7 +558,11 @@
       }
     },
     async reservarCarro(nome, providerId, dias) {
-      App.navigate('aluguel');
+      if (providerId) {
+        // Abre modal de detalhes/booking real do config
+        await PagesExtra.abrirDetalhes(providerId);
+      }
+      // Se não tem providerId (cards estáticos mockados) — sem ação útil ainda
     }
   };
   window.PagesExtra = PagesExtra;
