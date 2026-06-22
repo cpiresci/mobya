@@ -229,6 +229,7 @@ const BASE_PAGES = {
   'painel-receita': () => (typeof Monetization!=='undefined'&&Monetization.renderRevenueDashboard  ? Monetization.renderRevenueDashboard()  : comingSoon('PAINEL DE RECEITA','📊')),
   'seguros-sim':    () => (typeof Monetization!=='undefined'&&Monetization.renderInsurancePage      ? Monetization.renderInsurancePage()      : comingSoon('SEGUROS IA','🛡️')),
   fretes:           () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderFrete() : comingSoon('FRETE & TRANSPORTE','🚚')),
+  'painel-anfitriao': () => (typeof RentalHost!=='undefined' ? RentalHost.render() : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
 };
 
 // ── Sync total de navegação ────────────────────────────────────
