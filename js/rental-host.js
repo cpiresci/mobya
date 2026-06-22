@@ -1,106 +1,566 @@
-window.RentalHost = (() => {
-  const STATUS_META = {
-    PENDING:   {label:'Pendente',  color:'var(--gold)', bg:'rgba(251,191,36,.12)',border:'rgba(251,191,36,.3)', icon:'⏳'},
-    CONFIRMED: {label:'Confirmado',color:'var(--neon)', bg:'rgba(0,245,255,.10)', border:'rgba(0,245,255,.3)',  icon:'✅'},
-    ACTIVE:    {label:'Em curso',  color:'var(--green)',bg:'rgba(16,185,129,.10)',border:'rgba(16,185,129,.3)', icon:'🚗'},
-    COMPLETED: {label:'Concluído', color:'var(--muted)',bg:'rgba(100,116,139,.1)',border:'rgba(100,116,139,.3)',icon:'🏁'},
-    CANCELLED: {label:'Cancelado', color:'var(--red)',  bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.3)',  icon:'✖️'},
-    DECLINED:  {label:'Recusado',  color:'var(--red)',  bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.3)',  icon:'🚫'},
-  };
-  const TABS=[['PENDING','⏳ Pendentes'],['CONFIRMED','✅ Confirmadas'],['ACTIVE','🚗 Em curso'],['COMPLETED','🏁 Concluídas'],['CANCELLED','✖️ Canceladas']];
-  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const fmtD=iso=>{if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
-  const fmtBRL=v=>`R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-  const badge=s=>{const m=STATUS_META[s]||{label:s,color:'var(--muted)',bg:'rgba(0,0,0,.2)',border:'rgba(255,255,255,.1)',icon:'•'};return`<span style="font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:3px 9px;border-radius:4px;background:${m.bg};color:${m.color};border:1px solid ${m.border}">${m.icon} ${m.label}</span>`;};
-  let _bookings={};
+// src/routes/rental.routes.js
+import { Router } from 'express';
+import { prisma } from '../config/database.js';
+import { ApiError, R } from '../utils/ApiError.js';
+import { authenticate } from '../middleware/auth.js';
+import { calcRentalPrice } from '../services/rental-pricing.service.js';
 
-  function bookingCard(b){
-    const sm=STATUS_META[b.status]||{};
-    const r=b.renter||{};
-    // Campos corretos do schema RentalBooking:
-    //   dias          → b.days
-    //   total locatário → b.renterTotalAmount
-    //   repasse anfitrião → b.hostPayoutAmount
-    //   taxa Mobya    → b.hostFeeAmount
-    const canC=b.status==='PENDING',canD=b.status==='PENDING',canI=b.status==='CONFIRMED',canO=b.status==='ACTIVE';
-    const listing=b.config?.listing||{};
-    const listingTitle=listing.title||'Veículo';
-    return`<div id="hbcard-${esc(b.id)}" style="background:var(--s2);border:1px solid ${sm.border||'var(--border)'};border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${sm.border||'var(--border)'}'">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:1.4rem">🗝️</span><div><div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--neon)">${esc(listingTitle).slice(0,30)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;color:var(--muted)">RESERVA #${esc(b.id.slice(-6).toUpperCase())} · ${fmtD(b.createdAt)}</div></div></div>
-        ${badge(b.status)}
-      </div>
-      <div style="background:var(--s3);border-radius:8px;padding:10px 13px;display:flex;align-items:center;gap:10px"><span style="font-size:1.1rem">👤</span><div><div style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:2px">LOCATÁRIO</div><div style="font-size:.86rem;color:var(--text);font-weight:600">${esc(r.name||'—')}</div>${r.phone?`<div style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(r.phone)}</div>`:''}</div></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">CHECK-IN</div><div style="font-family:'JetBrains Mono',monospace">${fmtD(b.startDate)}</div></div>
-        <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">CHECK-OUT</div><div style="font-family:'JetBrains Mono',monospace">${fmtD(b.endDate)}</div></div>
-        <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">DIÁRIAS</div><div style="font-family:'JetBrains Mono',monospace;color:var(--neon)">${b.days??'?'}</div></div>
-        <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">TOTAL LOCATÁRIO</div><div style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${fmtBRL(b.renterTotalAmount)}</div></div>
-        <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">SEU REPASSE</div><div style="font-family:'JetBrains Mono',monospace;color:var(--green)">${fmtBRL(b.hostPayoutAmount)}</div></div>
-        <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">TAXA MOBYA</div><div style="font-family:'JetBrains Mono',monospace">${fmtBRL(b.hostFeeAmount)}</div></div>
-      </div>
-      ${b.cancelReason?`<div style="font-size:.78rem;color:var(--muted);background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:7px;padding:9px 12px;line-height:1.5"><span style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.65rem">📝 MOTIVO</span><br>${esc(b.cancelReason)}</div>`:''}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
-        ${canC?`<button onclick="RentalHost.confirm('${esc(b.id)}')" style="flex:1;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">✅ Confirmar</button><button onclick="RentalHost.decline('${esc(b.id)}')" style="flex:1;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px;font-weight:600;font-size:.8rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">✖ Recusar</button>`:''}
-        ${canI?`<button onclick="RentalHost.checkin('${esc(b.id)}')" style="flex:1;background:linear-gradient(135deg,var(--neon),#0077b6);color:#000;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🚗 Registrar Check-in</button>`:''}
-        ${canO?`<button onclick="RentalHost.checkout('${esc(b.id)}')" style="flex:1;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.8rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🏁 Registrar Devolução</button>`:''}
-        ${!canC&&!canD&&!canI&&!canO?`<div style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;padding:6px 0">Nenhuma ação disponível.</div>`:''}
-      </div>
-    </div>`;
-  }
+const router = Router();
 
-  function renderList(tab){
-    TABS.forEach(([t])=>{const b=document.getElementById('rhtab-'+t);if(!b)return;const on=t===tab;b.style.background=on?'var(--s2)':'transparent';b.style.color=on?'var(--neon)':'var(--muted)';b.style.borderBottom=on?'2px solid var(--neon)':'2px solid transparent';});
-    const content=document.getElementById('rh-content');if(!content)return;
-    const list=_bookings[tab]||[];
-    if(!list.length){const msg={PENDING:['📭','Nenhuma aguardando confirmação.'],CONFIRMED:['✅','Nenhuma confirmada.'],ACTIVE:['🚗','Nenhuma em curso.'],COMPLETED:['🏁','Nenhuma concluída.'],CANCELLED:['✖️','Nenhuma cancelada.']}[tab]||['📋','Nenhum resultado.'];content.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">${msg[0]}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem">${msg[1]}</div></div>`;return;}
-    content.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">${list.map(bookingCard).join('')}</div>`;
-  }
+async function assertConfigOwner(configId, userId) {
+  const cfg = await prisma.rentalVehicleConfig.findUnique({ where: { id: configId } });
+  if (!cfg) throw ApiError.notFound('Configuração de aluguel');
+  if (cfg.hostId !== userId) throw ApiError.forbidden();
+  return cfg;
+}
 
-  async function render(){
-    if(!API.isAuth()){window.App?.toast('Faça login para acessar o painel.','warn');window.MobyaAuth?.showLogin();return;}
-    const mainEl=document.getElementById('main');if(!mainEl)return;
-    mainEl.innerHTML=`<div style="margin-bottom:28px"><div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--neon),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">PAINEL DO ANFITRIÃO</div><div style="color:var(--muted);font-size:.84rem;margin-top:4px">Gerencie as reservas do seu veículo · Confirme · Check-in/out</div></div>
-    <div id="rh-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px">${Array(4).fill(0).map((_,i)=>`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px;animation:pulse 2s ${i*.15}s infinite"><div style="height:9px;background:var(--s3);border-radius:4px;width:55%;margin-bottom:10px"></div><div style="height:24px;background:var(--s3);border-radius:4px;width:70%"></div></div>`).join('')}</div>
-    <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);overflow-x:auto">${TABS.map(([t,l],i)=>`<button id="rhtab-${t}" onclick="RentalHost.switchTab('${t}')" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.76rem;padding:9px 16px;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .15s;white-space:nowrap;background:${i===0?'var(--s2)':'transparent'};color:${i===0?'var(--neon)':'var(--muted)'};border-bottom:${i===0?'2px solid var(--neon)':'2px solid transparent'}">${l}</button>`).join('')}</div>
-    <div id="rh-content"><div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:40px">⟳ Carregando...</div></div>`;
-    try{
-      const [rP,rC,rA,rCo,rCa]=await Promise.all([
-        API.rental.hostBookings({status:'PENDING',limit:50}),
-        API.rental.hostBookings({status:'CONFIRMED',limit:50}),
-        API.rental.hostBookings({status:'ACTIVE',limit:50}),
-        API.rental.hostBookings({status:'COMPLETED',limit:50}),
-        API.rental.hostBookings({status:'CANCELLED',limit:50}),
-      ]);
-      const get=r=>r?.data?.data||r?.data?.bookings||r?.data||[];
-      _bookings={PENDING:get(rP),CONFIRMED:get(rC),ACTIVE:get(rA),COMPLETED:get(rCo),CANCELLED:get(rCa)};
-      // KPIs — usa campos corretos do schema
-      const totalRecv=_bookings.COMPLETED.reduce((s,b)=>s+(b.hostPayoutAmount||0),0);
-      const pendRecv=[..._bookings.CONFIRMED,..._bookings.ACTIVE].reduce((s,b)=>s+(b.hostPayoutAmount||0),0);
-      const kpiEl=document.getElementById('rh-kpis');
-      if(kpiEl)kpiEl.innerHTML=[
-        {label:'AGUARDANDO',value:String(_bookings.PENDING.length),color:'var(--gold)',icon:'⏳'},
-        {label:'EM CURSO',value:String(_bookings.ACTIVE.length),color:'var(--neon)',icon:'🚗'},
-        {label:'A RECEBER',value:fmtBRL(pendRecv),color:'var(--green)',icon:'💸'},
-        {label:'RECEBIDO',value:fmtBRL(totalRecv),color:'var(--q3)',icon:'💰'},
-      ].map(k=>`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px"><div style="font-size:1.3rem;margin-bottom:8px">${k.icon}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:1px;margin-bottom:6px">${k.label}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:${k.color}">${k.value}</div></div>`).join('');
-      renderList('PENDING');
-    }catch(e){const c=document.getElementById('rh-content');if(c)c.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:24px;text-align:center"><div style="font-size:1.5rem;margin-bottom:8px">⚠️</div><div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.8rem">${e?.message||'Erro ao carregar'}</div><button onclick="RentalHost.render()" style="margin-top:16px;background:var(--s2);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:8px 18px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.72rem">↺ Tentar novamente</button></div>`;}
-  }
+async function assertBookingParty(bookingId, userId) {
+  const b = await prisma.rentalBooking.findUnique({ where: { id: bookingId } });
+  if (!b) throw ApiError.notFound('Reserva');
+  if (b.renterId !== userId && b.hostId !== userId)
+    throw ApiError.forbidden('Você não faz parte desta reserva.');
+  return b;
+}
 
-  async function _action(id,fn,errMsg,okMsg){
-    const card=document.getElementById('hbcard-'+id);
-    const btns=card?.querySelectorAll('button');
-    btns?.forEach(b=>{b.disabled=true;b.style.opacity='.5';});
-    try{await fn();window.App?.toast(okMsg,'ok');await render();}
-    catch(e){window.App?.toast(e?.message||errMsg,'err');btns?.forEach(b=>{b.disabled=false;b.style.opacity='1';});}
-  }
+router.post('/configs', authenticate, async (req, res, next) => {
+  try {
+    const { listingId, protectionPlan, dailyRate, weeklyRate, monthlyRate,
+      includedKmPerDay, extraKmFee, deposit, minRentalDays, maxRentalDays,
+      instantBook, advanceNoticeHrs, pickupLat, pickupLng, pickupAddress } = req.body;
+    if (!listingId) throw ApiError.badRequest('listingId é obrigatório.');
+    if (!dailyRate || parseFloat(dailyRate) <= 0)
+      throw ApiError.badRequest('dailyRate deve ser maior que zero.');
+    const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+    if (!listing) throw ApiError.notFound('Anúncio');
+    if (listing.userId !== req.user.id)
+      throw ApiError.forbidden('Apenas o dono do anúncio pode configurar aluguel.');
+    const data = {
+      hostId: req.user.id,
+      protectionPlan: protectionPlan || 'STANDARD',
+      dailyRate: parseFloat(dailyRate),
+      weeklyRate: weeklyRate ? parseFloat(weeklyRate) : null,
+      monthlyRate: monthlyRate ? parseFloat(monthlyRate) : null,
+      includedKmPerDay: parseInt(includedKmPerDay ?? 200),
+      extraKmFee: parseFloat(extraKmFee ?? 1.20),
+      deposit: parseFloat(deposit ?? 0),
+      minRentalDays: parseInt(minRentalDays ?? 1),
+      maxRentalDays: parseInt(maxRentalDays ?? 30),
+      instantBook: Boolean(instantBook),
+      advanceNoticeHrs: parseInt(advanceNoticeHrs ?? 2),
+      pickupLat: pickupLat ? parseFloat(pickupLat) : null,
+      pickupLng: pickupLng ? parseFloat(pickupLng) : null,
+      pickupAddress: pickupAddress || null,
+      active: true,
+    };
+    const cfg = await prisma.rentalVehicleConfig.upsert({
+      where: { listingId },
+      create: { listingId, ...data },
+      update: data,
+    });
+    R.created(res, cfg, 'Configuração de aluguel salva!');
+  } catch (e) { next(e); }
+});
 
-  function confirm(id){if(!window.confirm('Confirmar reserva? O locatário será notificado.'))return;return _action(id,()=>API.rental.confirmBooking(id),'Erro ao confirmar.','✅ Reserva confirmada!');}
-  function decline(id){const r=window.prompt('Motivo da recusa (opcional):')?? '';return _action(id,()=>API.rental.declineBooking(id,{reason:r}),'Erro ao recusar.','✖ Reserva recusada.');}
-  function checkin(id){if(!window.confirm('Confirma que o locatário retirou o veículo?'))return;return _action(id,()=>API.rental.checkinBooking(id),'Erro no check-in.','🚗 Check-in registrado!');}
-  function checkout(id){if(!window.confirm('Confirma que o veículo foi devolvido?'))return;return _action(id,()=>API.rental.checkoutBooking(id),'Erro no check-out.','🏁 Devolução registrada!');}
-  function switchTab(tab){renderList(tab);}
+router.get('/configs/mine', authenticate, async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const where = { hostId: req.user.id };
+    const [total, configs] = await Promise.all([
+      prisma.rentalVehicleConfig.count({ where }),
+      prisma.rentalVehicleConfig.findMany({
+        where,
+        skip: (parseInt(page) - 1) * parseInt(limit),
+        take: parseInt(limit),
+        orderBy: { createdAt: 'desc' },
+        include: { listing: { select: { id: true, title: true, type: true, images: true } } },
+      }),
+    ]);
+    R.paginated(res, configs, { page: parseInt(page), limit: parseInt(limit), total });
+  } catch (e) { next(e); }
+});
 
-  return{render,switchTab,confirm,decline,checkin,checkout};
-})();
+router.get('/configs/listing/:listingId', async (req, res, next) => {
+  try {
+    const cfg = await prisma.rentalVehicleConfig.findUnique({
+      where: { listingId: req.params.listingId },
+      include: { host: { select: { id: true, name: true, avatar: true } } },
+    });
+    if (!cfg) throw ApiError.notFound('Configuração de aluguel');
+    R.ok(res, cfg);
+  } catch (e) { next(e); }
+});
+
+
+// GET /api/v1/rental/configs/available
+// Busca configs ativos sem conflito de reserva no período solicitado.
+// Usado pela página de busca do locatário (pages-extra.js renderAluguel).
+router.get('/configs/available', async (req, res, next) => {
+  try {
+    const { startDate, endDate, limit = 20, page = 1 } = req.query;
+    if (!startDate || !endDate) throw ApiError.badRequest('startDate e endDate são obrigatórios.');
+    const start = new Date(startDate);
+    const end   = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) throw ApiError.badRequest('Datas inválidas.');
+    if (end <= start) throw ApiError.badRequest('endDate deve ser depois de startDate.');
+
+    // IDs de configs que têm conflito de reserva no período
+    const conflictingBookings = await prisma.rentalBooking.findMany({
+      where: {
+        status: { in: ['PENDING', 'CONFIRMED', 'ACTIVE'] },
+        AND: [{ startDate: { lt: end } }, { endDate: { gt: start } }],
+      },
+      select: { configId: true },
+    });
+    const blockedConfigIds = [...new Set(conflictingBookings.map(b => b.configId))];
+
+    const where = {
+      active: true,
+      ...(blockedConfigIds.length ? { id: { notIn: blockedConfigIds } } : {}),
+    };
+
+    const [total, configs] = await Promise.all([
+      prisma.rentalVehicleConfig.count({ where }),
+      prisma.rentalVehicleConfig.findMany({
+        where,
+        skip:    (parseInt(page) - 1) * parseInt(limit),
+        take:    parseInt(limit),
+        orderBy: { dailyRate: 'asc' },
+        include: {
+          listing: { select: { id: true, title: true, images: true, city: true, state: true, description: true } },
+          host:    { select: { id: true, name: true, avatar: true } },
+        },
+      }),
+    ]);
+
+    R.paginated(res, configs, { page: parseInt(page), limit: parseInt(limit), total });
+  } catch (e) { next(e); }
+});
+
+router.get('/configs/:id', async (req, res, next) => {
+  try {
+    const cfg = await prisma.rentalVehicleConfig.findUnique({
+      where: { id: req.params.id },
+      include: {
+        listing: { select: { id: true, title: true, type: true, images: true, city: true, state: true, description: true } },
+        host: { select: { id: true, name: true, avatar: true, createdAt: true } },
+      },
+    });
+    if (!cfg) throw ApiError.notFound('Configuração de aluguel');
+    R.ok(res, cfg);
+  } catch (e) { next(e); }
+});
+
+router.patch('/configs/:id', authenticate, async (req, res, next) => {
+  try {
+    await assertConfigOwner(req.params.id, req.user.id);
+    const allowed = ['protectionPlan','dailyRate','weeklyRate','monthlyRate',
+      'includedKmPerDay','extraKmFee','deposit','minRentalDays','maxRentalDays',
+      'instantBook','advanceNoticeHrs','pickupLat','pickupLng','pickupAddress','active'];
+    const data = {};
+    for (const k of allowed) {
+      if (req.body[k] !== undefined) {
+        if (['dailyRate','weeklyRate','monthlyRate','extraKmFee','deposit','pickupLat','pickupLng'].includes(k))
+          data[k] = req.body[k] !== null ? parseFloat(req.body[k]) : null;
+        else if (['includedKmPerDay','minRentalDays','maxRentalDays','advanceNoticeHrs'].includes(k))
+          data[k] = parseInt(req.body[k]);
+        else if (k === 'instantBook') data[k] = Boolean(req.body[k]);
+        else data[k] = req.body[k];
+      }
+    }
+    const updated = await prisma.rentalVehicleConfig.update({ where: { id: req.params.id }, data });
+    R.ok(res, updated, 'Configuração atualizada.');
+  } catch (e) { next(e); }
+});
+
+router.delete('/configs/:id', authenticate, async (req, res, next) => {
+  try {
+    await assertConfigOwner(req.params.id, req.user.id);
+    await prisma.rentalVehicleConfig.update({ where: { id: req.params.id }, data: { active: false } });
+    R.noContent(res);
+  } catch (e) { next(e); }
+});
+
+router.get('/preview-price', async (req, res, next) => {
+  try {
+    const { configId, startDate, endDate } = req.query;
+    if (!configId || !startDate || !endDate)
+      throw ApiError.badRequest('configId, startDate e endDate são obrigatórios.');
+    const cfg = await prisma.rentalVehicleConfig.findUnique({ where: { id: configId } });
+    if (!cfg) throw ApiError.notFound('Configuração de aluguel');
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    if (days <= 0) throw ApiError.badRequest('Intervalo de datas inválido.');
+    const pricing = calcRentalPrice({ dailyRate: cfg.dailyRate, days, protectionPlan: cfg.protectionPlan });
+    R.ok(res, { days, ...pricing });
+  } catch (e) { next(e); }
+});
+
+router.post('/bookings', authenticate, async (req, res, next) => {
+  try {
+    const { configId, startDate, endDate } = req.body;
+    if (!configId || !startDate || !endDate)
+      throw ApiError.badRequest('configId, startDate e endDate são obrigatórios.');
+    const cfg = await prisma.rentalVehicleConfig.findUnique({ where: { id: configId } });
+    if (!cfg) throw ApiError.notFound('Configuração de aluguel');
+    if (!cfg.active) throw ApiError.conflict('Veículo indisponível para aluguel no momento.');
+    if (cfg.hostId === req.user.id) throw ApiError.badRequest('Você não pode reservar seu próprio veículo.');
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) throw ApiError.badRequest('Datas inválidas.');
+    if (end <= start) throw ApiError.badRequest('endDate deve ser depois de startDate.');
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    if (days < cfg.minRentalDays) throw ApiError.badRequest(`Mínimo de ${cfg.minRentalDays} dia(s).`);
+    if (days > cfg.maxRentalDays) throw ApiError.badRequest(`Máximo de ${cfg.maxRentalDays} dia(s).`);
+    const conflict = await prisma.rentalBooking.findFirst({
+      where: { configId, status: { in: ['CONFIRMED','ACTIVE','PENDING'] },
+        AND: [{ startDate: { lt: end } }, { endDate: { gt: start } }] },
+    });
+    if (conflict) throw ApiError.conflict('Veículo já reservado neste período.');
+    const pricing = calcRentalPrice({ dailyRate: cfg.dailyRate, days, protectionPlan: cfg.protectionPlan });
+    const status = cfg.instantBook ? 'CONFIRMED' : 'PENDING';
+    const booking = await prisma.rentalBooking.create({
+      data: { configId, listingId: cfg.listingId, hostId: cfg.hostId, renterId: req.user.id,
+        startDate: start, endDate: end, status,
+        renterPaymentStatus: 'PENDING', hostPayoutStatus: 'PENDING', ...pricing },
+    });
+    const msg = cfg.instantBook ? '🗝️ Reserva confirmada automaticamente!' : '📋 Solicitação enviada! Aguardando aprovação do anfitrião.';
+    prisma.notification.create({ data: {
+      userId: booking.hostId,
+      type: 'LISTING_MESSAGE',
+      title: '🗝️ Nova solicitação de reserva',
+      body: `${booking.renter?.name||'Um locatário'} quer reservar seu veículo de ${new Date(booking.startDate).toLocaleDateString('pt-BR')} a ${new Date(booking.endDate).toLocaleDateString('pt-BR')}.`,
+      data: { bookingId: booking.id, page: 'painel-anfitriao' }
+    }}).catch(()=>{});
+    R.created(res, booking, msg);
+  } catch (e) { next(e); }
+});
+
+router.get('/bookings/mine', authenticate, async (req, res, next) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const where = { renterId: req.user.id, ...(status && { status }) };
+    const [total, bookings] = await Promise.all([
+      prisma.rentalBooking.count({ where }),
+      prisma.rentalBooking.findMany({
+        where, skip: (parseInt(page) - 1) * parseInt(limit), take: parseInt(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          config: { include: { listing: { select: { id: true, title: true, images: true, city: true, state: true } } } },
+          host: { select: { id: true, name: true, avatar: true } },
+        },
+      }),
+    ]);
+    R.paginated(res, bookings, { page: parseInt(page), limit: parseInt(limit), total });
+  } catch (e) { next(e); }
+});
+
+router.get('/bookings/host', authenticate, async (req, res, next) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const where = { hostId: req.user.id, ...(status && { status }) };
+    const [total, bookings] = await Promise.all([
+      prisma.rentalBooking.count({ where }),
+      prisma.rentalBooking.findMany({
+        where, skip: (parseInt(page) - 1) * parseInt(limit), take: parseInt(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          config: { include: { listing: { select: { id: true, title: true, images: true } } } },
+          renter: { select: { id: true, name: true, avatar: true, phone: true } },
+        },
+      }),
+    ]);
+    R.paginated(res, bookings, { page: parseInt(page), limit: parseInt(limit), total });
+  } catch (e) { next(e); }
+});
+
+router.get('/bookings/:id', authenticate, async (req, res, next) => {
+  try {
+    const booking = await prisma.rentalBooking.findUnique({
+      where: { id: req.params.id },
+      include: {
+        config: { include: { listing: { select: { id: true, title: true, images: true, city: true, state: true, description: true } } } },
+        host:   { select: { id: true, name: true, avatar: true, phone: true } },
+        renter: { select: { id: true, name: true, avatar: true, phone: true } },
+      },
+    });
+    if (!booking) throw ApiError.notFound('Reserva');
+    if (booking.renterId !== req.user.id && booking.hostId !== req.user.id) throw ApiError.forbidden();
+    R.ok(res, booking);
+  } catch (e) { next(e); }
+});
+
+router.patch('/bookings/:id/confirm', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.hostId !== req.user.id) throw ApiError.forbidden('Apenas o anfitrião pode confirmar.');
+    if (b.status !== 'PENDING') throw ApiError.conflict(`Reserva não está pendente (status: ${b.status}).`);
+    const updated = await prisma.rentalBooking.update({ where: { id: req.params.id }, data: { status: 'CONFIRMED' } });
+    prisma.notification.create({ data: {
+      userId: updated.renterId,
+      type: 'SYSTEM',
+      title: '✅ Reserva confirmada!',
+      body: 'Sua reserva foi aprovada. Efetue o pagamento para garantir.',
+      data: { bookingId: updated.id, page: 'minhas-reservas' }
+    }}).catch(()=>{});
+    R.ok(res, updated, '✅ Reserva confirmada!');
+  } catch (e) { next(e); }
+});
+
+router.patch('/bookings/:id/decline', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.hostId !== req.user.id) throw ApiError.forbidden('Apenas o anfitrião pode recusar.');
+    if (b.status !== 'PENDING') throw ApiError.conflict(`Não está pendente (status: ${b.status}).`);
+    const updated = await prisma.rentalBooking.update({
+      where: { id: req.params.id },
+      data: { status: 'DECLINED', cancelledAt: new Date(), cancelReason: req.body.reason || null },
+    });
+    prisma.notification.create({ data: {
+      userId: updated.renterId,
+      type: 'SYSTEM',
+      title: '❌ Reserva recusada',
+      body: 'O anfitrião não pôde aceitar sua solicitação. Tente outro veículo.',
+      data: { bookingId: updated.id, page: 'minhas-reservas' }
+    }}).catch(()=>{});
+    R.ok(res, updated, 'Reserva recusada.');
+  } catch (e) { next(e); }
+});
+
+router.patch('/bookings/:id/checkin', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.hostId !== req.user.id) throw ApiError.forbidden('Apenas o anfitrião pode fazer check-in.');
+    if (b.status !== 'CONFIRMED') throw ApiError.conflict(`Precisa estar CONFIRMED (atual: ${b.status}).`);
+    const updated = await prisma.rentalBooking.update({ where: { id: req.params.id }, data: { status: 'ACTIVE' } });
+    R.ok(res, updated, '🚗 Check-in realizado! Locação em andamento.');
+  } catch (e) { next(e); }
+});
+
+router.patch('/bookings/:id/checkout', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.hostId !== req.user.id) throw ApiError.forbidden('Apenas o anfitrião pode fazer check-out.');
+    if (b.status !== 'ACTIVE') throw ApiError.conflict(`Precisa estar ACTIVE (atual: ${b.status}).`);
+    const retentionDays = parseInt(process.env.WALLET_RETENTION_DAYS ?? 3);
+    const releaseAt = new Date();
+    releaseAt.setDate(releaseAt.getDate() + retentionDays);
+    const updated = await prisma.rentalBooking.update({
+      where: { id: req.params.id },
+      data: { status: 'COMPLETED', hostPayoutReleaseAt: releaseAt },
+    });
+    R.ok(res, updated, `✅ Check-out concluído! Pagamento liberado em ${retentionDays} dias.`);
+  } catch (e) { next(e); }
+});
+
+router.patch('/bookings/:id/cancel', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (!['PENDING','CONFIRMED'].includes(b.status))
+      throw ApiError.conflict(`Não é possível cancelar com status "${b.status}".`);
+    const updated = await prisma.rentalBooking.update({
+      where: { id: req.params.id },
+      data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: req.body.reason || null },
+    });
+    R.ok(res, updated, 'Reserva cancelada.');
+  } catch (e) { next(e); }
+});
+
+// ── PATCH /bookings/:id/cancel-paid — cancela reserva ACTIVE (já paga) ────
+// Anfitrião: sempre reembolso integral.
+// Locatário: reembolso integral se cancelar com >= RENTAL_CANCEL_FULL_REFUND_HOURS
+// de antecedência do check-in; depois disso, sem reembolso automático —
+// vai para DISPUTED e fica pra revisão manual do admin.
+router.patch('/bookings/:id/cancel-paid', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.status !== 'ACTIVE')
+      throw ApiError.conflict(`Só é possível usar cancel-paid em reservas ACTIVE (atual: "${b.status}").`);
+
+    const isHost = b.hostId === req.user.id;
+    const cutoffHours = parseInt(process.env.RENTAL_CANCEL_FULL_REFUND_HOURS ?? 24);
+    const hoursToStart = (new Date(b.startDate).getTime() - Date.now()) / 3_600_000;
+    const eligibleForAutoRefund = isHost || hoursToStart >= cutoffHours;
+
+    if (!eligibleForAutoRefund) {
+      const updated = await prisma.rentalBooking.update({
+        where: { id: b.id },
+        data: {
+          status: 'DISPUTED',
+          cancelledAt: new Date(),
+          cancelReason: req.body.reason || 'Cancelamento tardio pelo locatário (fora da janela de reembolso automático).',
+        },
+      });
+      prisma.notification.create({ data: {
+        userId: b.hostId,
+        type: 'SYSTEM',
+        title: '⚠️ Cancelamento tardio — revisão necessária',
+        body: 'O locatário pediu cancelamento fora da janela de reembolso automático. Aguardando revisão do admin.',
+        data: { bookingId: b.id, page: 'painel-anfitriao' },
+      }}).catch(() => {});
+      return R.ok(res, updated,
+        `Cancelamento registrado como disputa — menos de ${cutoffHours}h para o check-in. Reembolso requer revisão manual.`);
+    }
+
+    const { refundRentalBooking } = await import('../services/payment.service.js');
+    const { refunded, mocked } = await refundRentalBooking(b);
+
+    const updated = await prisma.rentalBooking.update({
+      where: { id: b.id },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelReason: req.body.reason || (isHost ? 'Cancelado pelo anfitrião.' : 'Cancelado pelo locatário (dentro da janela de reembolso).'),
+        renterPaymentStatus: refunded ? 'REFUNDED' : b.renterPaymentStatus,
+      },
+    });
+
+    prisma.notification.create({ data: {
+      userId: isHost ? b.renterId : b.hostId,
+      type: 'SYSTEM',
+      title: isHost ? '❌ Anfitrião cancelou a reserva' : '❌ Locatário cancelou a reserva',
+      body: refunded
+        ? `Reserva cancelada. Reembolso ${mocked ? 'simulado' : 'processado'} integralmente.`
+        : 'Reserva cancelada.',
+      data: { bookingId: b.id },
+    }}).catch(() => {});
+
+    R.ok(res, { booking: updated, refunded, mocked },
+      refunded ? '✅ Reserva cancelada e reembolso processado.' : 'Reserva cancelada.');
+  } catch (e) { next(e); }
+});
+
+
+// MP Webhook — pagamento aprovado → notifica anfitrião (PAYMENT_RECEIVED)
+router.post('/bookings/mp-webhook', async (req, res, next) => {
+  try {
+    const { type, data } = req.body;
+    if (type !== 'payment' || !data?.id) return res.sendStatus(200);
+    const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${data.id}`, {
+      headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
+    });
+    if (!mpRes.ok) return res.sendStatus(200);
+    const payment = await mpRes.json();
+    if (payment.status !== 'approved') return res.sendStatus(200);
+    const bookingId = payment.external_reference;
+    if (!bookingId) return res.sendStatus(200);
+    const booking = await prisma.rentalBooking.findUnique({ where: { id: bookingId } });
+    if (!booking) return res.sendStatus(200);
+    await prisma.rentalBooking.update({
+      where: { id: bookingId },
+      data: { status: 'ACTIVE', renterPaymentStatus: 'COMPLETED', mpPaymentId: String(data.id) },
+    });
+    prisma.notification.create({ data: {
+      userId: booking.hostId,
+      type: 'PAYMENT_RECEIVED',
+      title: '💰 Pagamento recebido!',
+      body: 'O locatário efetuou o pagamento. A reserva está ativa.',
+      data: { bookingId: booking.id, page: 'painel-anfitriao' },
+    }}).catch(() => {});
+    res.sendStatus(200);
+  } catch (e) { next(e); }
+});
+
+// ── POST /bookings/:id/pay — cria preferência MP e retorna init_point ──────
+router.post('/bookings/:id/pay', authenticate, async (req, res, next) => {
+  try {
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.renterId !== req.user.id) throw ApiError.forbidden('Apenas o locatário pode iniciar o pagamento.');
+    if (b.status !== 'CONFIRMED') throw ApiError.conflict(`Reserva precisa estar CONFIRMED (atual: ${b.status}).`);
+    if (b.renterPaymentStatus === 'COMPLETED') throw ApiError.conflict('Pagamento já realizado.');
+
+    const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+    const APP_URL = process.env.APP_URL || 'https://mobya.onrender.com';
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://cpiresci.github.io/mobya-master';
+
+    if (!MP_ACCESS_TOKEN) throw ApiError.badRequest('Integração MP não configurada.');
+
+    const import_crypto = (await import('crypto')).default;
+    const idempotencyKey = `rental-pay-${b.id}`;
+
+    const body = {
+      items: [{
+        id: b.id,
+        title: `Aluguel de veículo — ${new Date(b.startDate).toLocaleDateString('pt-BR')} a ${new Date(b.endDate).toLocaleDateString('pt-BR')}`,
+        quantity: 1,
+        unit_price: parseFloat(b.renterTotalAmount),
+        currency_id: 'BRL',
+      }],
+      payer: { email: req.user.email },
+      external_reference: b.id,
+      back_urls: {
+        success: `${FRONTEND_URL}/rental-guest.html?payment=success`,
+        pending: `${FRONTEND_URL}/rental-guest.html?payment=pending`,
+        failure: `${FRONTEND_URL}/rental-guest.html?payment=failure`,
+      },
+      auto_return: 'approved',
+      notification_url: `${APP_URL}/api/v1/rental/bookings/mp-webhook`,
+      metadata: { booking_id: b.id, renter_id: b.renterId, mobya: true },
+    };
+
+    const mpRes = await fetch('https://api.mercadopago.com/v1/checkout/preferences', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!mpRes.ok) {
+      const err = await mpRes.json();
+      throw new Error(err.message || `MP API error ${mpRes.status}`);
+    }
+    const preference = await mpRes.json();
+
+    await prisma.rentalBooking.update({
+      where: { id: b.id },
+      data: { mpPreferenceId: preference.id },
+    });
+
+    R.ok(res, {
+      preferenceId: preference.id,
+      initPoint: preference.init_point,
+      sandboxInitPoint: preference.sandbox_init_point,
+    }, 'Preferência de pagamento criada!');
+  } catch (e) { next(e); }
+});
+
+// ── POST /bookings/:id/mock-pay — APENAS TESTE: simula webhook aprovado ────
+// ⚠️  REMOVER ANTES DE IR PARA PRODUÇÃO
+router.post('/bookings/:id/mock-pay', authenticate, async (req, res, next) => {
+  try {
+    if (!process.env.ALLOW_MOCK_PAY) {
+      throw ApiError.forbidden('Endpoint de teste não disponível em produção.');
+    }
+    const b = await assertBookingParty(req.params.id, req.user.id);
+    if (b.renterId !== req.user.id) throw ApiError.forbidden('Apenas o locatário pode usar mock-pay.');
+    if (b.status !== 'CONFIRMED') throw ApiError.conflict(`Reserva precisa estar CONFIRMED (atual: ${b.status}).`);
+    if (b.renterPaymentStatus === 'COMPLETED') throw ApiError.conflict('Pagamento já marcado como pago.');
+
+    const fakeMpPaymentId = `MOCK-${Date.now()}`;
+    const updated = await prisma.rentalBooking.update({
+      where: { id: b.id },
+      data: {
+        status: 'ACTIVE',
+        renterPaymentStatus: 'COMPLETED',
+        mpPaymentId: fakeMpPaymentId,
+        paidAt: new Date(),
+      },
+    });
+
+    // Mesma notificação do webhook real
+    prisma.notification.create({ data: {
+      userId: updated.hostId,
+      type: 'PAYMENT_RECEIVED',
+      title: '💰 Pagamento recebido! (mock)',
+      body: 'O locatário efetuou o pagamento (simulado). A reserva está ativa.',
+      data: { bookingId: updated.id, page: 'painel-anfitriao' },
+    }}).catch(() => {});
+
+    R.ok(res, { booking: updated, mockPaymentId: fakeMpPaymentId }, '✅ Pagamento simulado com sucesso!');
+  } catch (e) { next(e); }
+});
+
+export default router;
