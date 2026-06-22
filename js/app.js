@@ -231,6 +231,7 @@ const BASE_PAGES = {
   fretes:           () => (typeof PagesExtra!=='undefined' ? PagesExtra.renderFrete() : comingSoon('FRETE & TRANSPORTE','🚚')),
   'painel-anfitriao': () => (typeof RentalHost!=='undefined' ? RentalHost.render() : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
   'minhas-reservas': () => (typeof RentalGuest!=='undefined' ? RentalGuest.render() : comingSoon('MINHAS RESERVAS','🗝️')),
+  'minhas-reservas': () => (typeof RentalGuest!=='undefined' ? RentalGuest.render() : comingSoon('MINHAS RESERVAS','🗝️')),
 };
 
 // ── Sync total de navegação ────────────────────────────────────
