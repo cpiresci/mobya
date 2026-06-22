@@ -8,7 +8,8 @@ window.RentalGuest = (() => {
   function bookingCard(b){
     const sm=SM[b.status]||{};
     const host=b.host||{};
-    const canCancel=b.status==='PENDING';
+    const canCancel=b.status==='PENDING'||b.status==='CONFIRMED';
+    const canCancelPaid=b.status==='ACTIVE';
     const canPay=b.status==='CONFIRMED'&&b.renterPaymentStatus!=='COMPLETED';
     return`<div id="gbcard-${esc(b.id)}" style="background:var(--s2);border:1px solid ${sm.border||'var(--border)'};border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${sm.border||'var(--border)'}'">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -26,7 +27,8 @@ window.RentalGuest = (() => {
       </div>
       ${host.name?`<div style="background:var(--s3);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:9px"><span style="font-size:1rem">🏠</span><div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1px">ANFITRIÃO</div><div style="font-size:.82rem;color:var(--text);font-weight:600">${esc(host.name)}</div>${host.phone?`<div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(host.phone)}</div>`:''}</div></div>`:''}
       ${canPay?`<button onclick="RentalGuest.pay('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">💳 Pagar agora — ${fmtBRL(b.renterTotalAmount)}</button>`:''}
-      ${canCancel?`<button onclick="RentalGuest.cancel('${esc(b.id)}')" style="width:100%;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar Reserva</button>`:''}
+      ${canCancel?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar Reserva</button>`:''}
+      ${canCancelPaid?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.76rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar e Solicitar Reembolso</button>`:''}
     </div>`;
   }
 
@@ -55,14 +57,24 @@ window.RentalGuest = (() => {
     }catch(e){const el=document.getElementById('rg-list');if(el)el.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:24px;text-align:center"><div style="font-size:1.5rem;margin-bottom:8px">⚠️</div><div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.8rem">${e?.message||'Erro ao carregar reservas'}</div><button onclick="RentalGuest.render()" style="margin-top:16px;background:var(--s2);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:8px 18px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.72rem">↺ Tentar novamente</button></div>`;}
   }
 
-  async function cancel(id){
-    if(!window.confirm('Cancelar esta reserva?'))return;
+  async function cancel(id, status){
+    const isActive = status === 'ACTIVE';
+    const confirmMsg = isActive
+      ? 'Cancelar esta reserva em curso?\n\nSe você cancelar com 24h+ de antecedência do check-in, o reembolso é automático. Fora desse prazo, a solicitação vai para revisão do admin.'
+      : 'Cancelar esta reserva?';
+    if(!window.confirm(confirmMsg))return;
     const card=document.getElementById('gbcard-'+id);
-    const btn=card?.querySelector('button');
+    const btns=card?.querySelectorAll('button');
+    const btn=btns&&btns.length?btns[btns.length-1]:null;
     if(btn){btn.disabled=true;btn.style.opacity='.5';}
     try{
-      await API.rental.cancelBooking(id,{reason:'Cancelado pelo locatário'});
-      window.App?.toast('Reserva cancelada.','ok');
+      if(isActive){
+        await API.rental.cancelPaidBooking(id,{reason:'Cancelamento solicitado pelo locatário'});
+        window.App?.toast('Cancelamento registrado. Reembolso processado conforme a política.','ok');
+      } else {
+        await API.rental.cancelBooking(id,{reason:'Cancelado pelo locatário'});
+        window.App?.toast('Reserva cancelada.','ok');
+      }
       await render();
     }catch(e){
       window.App?.toast(e?.message||'Erro ao cancelar.','err');
@@ -84,5 +96,5 @@ window.RentalGuest = (() => {
     }
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '💳 Pagar agora'; }
   }
-  return{render,cancel,pay};
+  return{render,cancel,pay,cancelPaid:(id)=>cancel(id,'ACTIVE')};
 })();
