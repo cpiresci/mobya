@@ -187,6 +187,8 @@ window.API = (() => {
     checkinBooking: (id)     => patch(`/rental/bookings/${id}/checkin`, {}),
     checkoutBooking:(id)     => patch(`/rental/bookings/${id}/checkout`, {}),
     cancelBooking:  (id,d)   => patch(`/rental/bookings/${id}/cancel`, d||{}),
+    payBooking:     (id)     => post(`/rental/bookings/${id}/pay`),
+    mockPayBooking: (id)     => post(`/rental/bookings/${id}/mock-pay`),
   };
 
 
