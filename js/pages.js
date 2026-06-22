@@ -139,7 +139,7 @@ window.Pages = (() => {
             ${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--green);margin-bottom:10px">💰 GANHE COM MOBYA</div>
               <div style="font-size:.82rem;color:var(--text);margin-bottom:12px;line-height:1.5">Integre sua oficina, locadora ou seguradora e receba leads qualificados.</div>
               <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-                ${[['🔧 Serviços','10%'],['🗝️ Locação','5%'],['🚛 Fretes','10%'],['🛡️ Seguros','até 8%']].map(([l,r])=>`
+                ${[['🔧 Serviços','18%'],['🗝️ Locação','5%'],['🚛 Fretes','15%'],['🛡️ Seguros','12%']].map(([l,r])=>`
                   <div style="display:flex;justify-content:space-between;font-size:.76rem">
                     <span style="color:var(--muted)">${l}</span>
                     <span style="color:var(--green);font-family:'JetBrains Mono',monospace">${r}</span>

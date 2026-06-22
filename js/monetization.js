@@ -36,7 +36,7 @@ window.Monetization = (() => {
       icon: '🔧', label: 'Serviços Auto',
       color: 'var(--q3)', bg: 'rgba(168,85,247,.12)',
       border: 'rgba(168,85,247,.3)',
-      rate: '10%',
+      rate: '18%',
       desc: 'Oficinas, concessionárias, auto centers, chaveiros, elétricos, borracheiros',
     },
     RENTAL: {
@@ -50,7 +50,7 @@ window.Monetization = (() => {
       icon: '🚛', label: 'Fretes & Reboques',
       color: 'var(--gold)', bg: 'rgba(251,191,36,.1)',
       border: 'rgba(251,191,36,.3)',
-      rate: '10%',
+      rate: '15%',
       desc: 'Fretes, guincho, reboques, entrega de auto peças novas',
     },
     INSURANCE: {
@@ -393,7 +393,7 @@ window.Monetization = (() => {
       const prev = document.getElementById('qCommPreview');
       if (!prev) return;
       if (val > 0) {
-        const rate    = vertical === 'RENTAL' ? 0.05 : 0.10;
+        const rate    = vertical === 'RENTAL' ? 0.05 : vertical === 'LOGISTICS' ? 0.15 : vertical === 'INSURANCE' ? 0.12 : 0.18;
         const comm    = (val * rate).toFixed(2);
         prev.style.display = 'block';
         prev.innerHTML = `💰 Comissão MOBYA estimada: <strong>R$ ${parseFloat(comm).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> (${(rate*100).toFixed(0)}% de R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})})`;
@@ -523,7 +523,7 @@ window.Monetization = (() => {
       <div id="rp_commPreview" style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
         border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:.76rem;
         font-family:'JetBrains Mono',monospace;color:var(--q4)">
-        💡 Vertical SERVICE: comissão de 10% sobre cada serviço fechado via MOBYA.
+        💡 Vertical SERVICE: comissão de 18% sobre cada serviço fechado via MOBYA.
       </div>
 
       <button id="rpSubmitBtn" onclick="Monetization.submitRegisterPartner()" style="
@@ -799,7 +799,7 @@ window.Monetization = (() => {
           MOBYA FRETES & REBOQUES
         </div>
         <div style="color:var(--muted);font-size:.84rem;margin-top:4px">
-          Fretes automotivos · Guincho 24h · Entrega de peças · Comissão 10% MOBYA
+          Fretes automotivos · Guincho 24h · Entrega de peças · Comissão 15% MOBYA
         </div>
       </div>
 
@@ -901,7 +901,7 @@ window.Monetization = (() => {
             ${[
               { label: 'CUSTO ESTIMADO', value: `${fmtBRL(d.estimatedCost?.min)} – ${fmtBRL(d.estimatedCost?.max)}`, color: 'var(--gold)' },
               { label: 'PRAZO ESTIMADO', value: d.estimatedTime || '—', color: 'var(--text)' },
-              { label: 'TAXA MOBYA (10%)', value: fmtBRL(d.mobyaFee?.estimated), color: 'var(--green)' },
+              { label: 'TAXA MOBYA (15%)', value: fmtBRL(d.mobyaFee?.estimated), color: 'var(--green)' },
             ].map(c => `
               <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;
                 padding:16px;text-align:center">
