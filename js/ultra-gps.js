@@ -19,9 +19,20 @@ window.UltraGPS = (() => {
   let offlineBuffer=[], pollingTimer=null;
   const OFFLINE_POLL_MS=5000, OFFLINE_POLL_DELAY=10000, BUFFER_KEY='mobya_ultra_buf', TRAIL_MAX=12;
 
-  // Modo do mapa: tracking (sessão ativa) | discover (prestadores reais perto de mim) | admin (visão ampla, só ADMIN/SUPER_ADMIN)
+  // Modo do mapa: tracking (sessão ativa) | navigate (Waze-like) | discover (prestadores) | admin
   let mode='tracking';
   let layers={ threeD:true, heat:false, route:true, cluster:true };
+
+  // ── Estado da navegação turn-by-turn (absorvido do GPS Tracking) ──
+  const HISTORY_KEY='mobya_nav_history', HISTORY_MAX=5;
+  let _navSearchTimer=null;
+  let _navState={
+    route:null,coords:[],steps:[],stepIdx:0,destMarker:null,watchId:null,voiceOn:true,offRouteHits:0,
+    destLat:null,destLng:null,destLabel:null,
+    preAlerted:new Set(),
+    trailPts:[],trailLayer:null,
+    totalDistance:0,totalDuration:0,
+  };
 
   const STATUS_LABEL={AGUARDANDO:{text:'Aguardando prestador',color:'#f59e0b',icon:'⏳'},A_CAMINHO:{text:'Prestador a caminho',color:'#3b82f6',icon:'🚗'},CHEGOU:{text:'Prestador chegou!',color:'#8b5cf6',icon:'📍'},EM_SERVICO:{text:'Em atendimento',color:'#f97316',icon:'🔧'},CONCLUIDO:{text:'Serviço concluído',color:'#10b981',icon:'✅'},CANCELADO:{text:'Cancelado',color:'#ef4444',icon:'❌'}};
 
@@ -344,6 +355,15 @@ window.UltraGPS = (() => {
     document.querySelectorAll('.ultra-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===m));
     const trackingEls=document.getElementById('ultraTrackingPanel');
     if(trackingEls)trackingEls.style.display=m==='tracking'?'':'none';
+    const navBar=document.getElementById('ultraNavBar');
+    if(navBar){navBar.style.display=m==='navigate'?'flex':'none';}
+    if(m==='navigate'){
+      const hdr=document.getElementById('ultraHeader');if(hdr)hdr.innerHTML='🧭 ULTRA GPS · NAVEGAR';
+      Toast.show('🧭 Modo navegação — busque um destino','info');
+    }else{
+      const hdr=document.getElementById('ultraHeader');if(hdr)hdr.innerHTML='🛣️ ULTRA GPS';
+      if(_navState.watchId!==null)navStop();
+    }
     if(m==='discover'){ _loadNearbyReal(50); layers.cluster=true; _addClusterLayer(); }
     if(m==='admin'){
       const u=window.MobyaAuth?.getUser?.();
@@ -421,6 +441,7 @@ window.UltraGPS = (() => {
         </div>
         <div style="display:flex;gap:6px">
           <div class="ultra-pill active" data-mode="tracking" onclick="UltraGPS.setMode('tracking')">📡 Sessão</div>
+          <div class="ultra-pill" data-mode="navigate" onclick="UltraGPS.setMode('navigate')">🧭 Navegar</div>
           <div class="ultra-pill" data-mode="discover" onclick="UltraGPS.setMode('discover')">🔍 Prestadores</div>
           <div class="ultra-pill" data-mode="admin" onclick="UltraGPS.setMode('admin')">📊 Admin</div>
         </div>
@@ -431,6 +452,14 @@ window.UltraGPS = (() => {
       </div>
       <div style="flex:1;min-height:0;width:100%;position:relative">
         <div id="ultraMap" style="width:100%;height:100%"></div>
+        <div id="ultraNavBar" style="display:none;position:absolute;top:10px;left:10px;right:56px;z-index:15;flex-direction:column;gap:6px">
+          <div style="display:flex;gap:6px"><input id="ultraNavInput" placeholder="Para onde vamos?" autocomplete="off" style="flex:1;background:rgba(10,10,20,.92);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.84rem;outline:none;box-shadow:0 4px 14px rgba(0,0,0,.4)" oninput="UltraGPS.navSearch(this.value)" onfocus="UltraGPS.navShowHistory()"><button class="ai-btn" id="ultraNavShareBtn" title="Compartilhar" style="padding:10px 12px" onclick="UltraGPS.navShare()">📤</button><button class="ai-btn" id="ultraNavStopBtn" style="display:none;padding:10px 14px;background:rgba(239,68,68,.85);color:#fff" onclick="UltraGPS.navStop()">✕</button></div>
+          <div id="ultraNavResults" style="display:none;background:rgba(10,10,20,.96);border:1px solid var(--border);border-radius:10px;max-height:240px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.5)"></div>
+        </div>
+        <div id="ultraNavBanner" style="display:none;position:absolute;bottom:12px;left:10px;right:10px;z-index:15;background:linear-gradient(135deg,#0d1424,#15152b);border:1px solid #00d4ff66;border-radius:14px;padding:12px 14px;box-shadow:0 6px 22px rgba(0,212,255,.25);flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px"><div id="ultraNavIcon" style="font-size:28px;min-width:36px;text-align:center">⬆️</div><div style="flex:1;min-width:0"><div id="ultraNavText" style="font-size:.86rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Calculando rota...</div><div style="font-size:.72rem;color:var(--muted);margin-top:2px"><span id="ultraNavDist">--</span> · <span id="ultraNavDest">Destino</span></div><div style="font-size:.7rem;color:#22d88f;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="ultraNavLookAhead"></div></div><button id="ultraNavVoiceBtn" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px" onclick="UltraGPS.navToggleVoice()">🔊</button></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:8px"><span id="ultraNavSpeed" style="font-family:monospace;font-weight:700;font-size:.78rem;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.06)">-- km/h</span><span id="ultraNavETA" style="font-family:monospace;font-size:.72rem;color:var(--muted)"></span></div><span id="ultraNavDeviation" style="font-size:.7rem;color:#fbbf24;display:none">↻ desvio detectado</span></div>
+        </div>
         <div style="position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:10">
           <div class="ultra-layer-btn on" id="ultra-btn-3d" onclick="UltraGPS.toggle3D()" title="3D">🏙️</div>
           <div class="ultra-layer-btn" id="ultra-btn-heat" onclick="UltraGPS.toggleHeat()" title="Heatmap">🔥</div>
@@ -498,6 +527,57 @@ window.UltraGPS = (() => {
 
   async function openTracking(sid){ await render(sid); if(sid)sessionId=sid; }
 
+  // ══════════════════════════════════════════════════════════════════
+  // NAVEGAÇÃO TURN-BY-TURN (absorvido do GPS Tracking)
+  // Stack gratuita: Nominatim (geocode) + OSRM (rota) — sem chave.
+  // O mapa Mapbox GL já está carregado; a rota é desenhada via
+  // _setRouteLine (linha Mapbox) que o Ultra GPS já possui.
+  // ══════════════════════════════════════════════════════════════════
+  function _navHaversine(a,b){const R=6371000,toRad=d=>d*Math.PI/180;const dLat=toRad(b.lat-a.lat),dLng=toRad(b.lng-a.lng);const sa=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(sa));}
+  function _navDistToRoute(pos,coords){let min=Infinity;for(let i=0;i<coords.length;i++){const d=_navHaversine(pos,{lat:coords[i][1],lng:coords[i][0]});if(d<min)min=d;}return min;}
+
+  async function _navGeocode(q){const url='https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=0&countrycodes=br&q='+encodeURIComponent(q);const r=await fetch(url,{headers:{'Accept-Language':'pt-BR'}});if(!r.ok)throw new Error('geocode falhou');return r.json();}
+
+  async function _navCalcRoute(from,to){const url=`https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson&steps=true&language=pt`;const r=await fetch(url);const data=await r.json();if(!data.routes?.length)throw new Error('sem rota');return data.routes[0];}
+
+  function _navManeuverIcon(type,mod){const m={turn:{left:'⬅️',right:'➡️',straight:'⬆️','slight left':'↖️','slight right':'↗️','sharp left':'↩️','sharp right':'↪️'},merge:{left:'↖️',right:'↗️'},roundabout:{default:'🔄'},rotary:{default:'🔄'},arrive:{default:'🏁'},depart:{default:'🚦'},fork:{left:'↖️',right:'↗️'},'new name':{default:'⬆️'},continue:{default:'⬆️'},'end of road':{left:'⬅️',right:'➡️'}};const g=m[type]||{};return g[mod]||g['default']||'⬆️';}
+
+  function _navManeuverText(step){const type=step.maneuver.type,mod=step.maneuver.modifier,name=step.name||'';const dict={'turn-left':'Vire à esquerda','turn-right':'Vire à direita','turn-straight':'Siga em frente','turn-slight left':'Mantenha-se à esquerda','turn-slight right':'Mantenha-se à direita','turn-sharp left':'Vire bruscamente à esquerda','turn-sharp right':'Vire bruscamente à direita','depart-default':'Iniciar rota','arrive-default':'Você chegou ao destino','roundabout-default':'Entre na rotatória','rotary-default':'Entre na rotatória','merge-left':'Convirja à esquerda','merge-right':'Convirja à direita','fork-left':'Mantenha-se à esquerda na bifurcação','fork-right':'Mantenha-se à direita na bifurcação','continue-default':'Continue em frente','new name-default':'Continue em frente','end of road-left':'No fim da via, vire à esquerda','end of road-right':'No fim da via, vire à direita'};const key=type+'-'+(mod||'default');let txt=dict[key]||dict[type+'-default']||'Siga em frente';if(name&&type!=='arrive')txt+=` em ${name}`;return txt;}
+
+  function _navSpeak(text){if(!_navState.voiceOn||!('speechSynthesis' in window))return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';u.rate=1.0;window.speechSynthesis.speak(u);}catch{}}
+
+  function _navVibrate(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch{}}
+
+  function _navUpdManeuver(step,dist){const icon=document.getElementById('ultraNavIcon'),text=document.getElementById('ultraNavText'),distEl=document.getElementById('ultraNavDist');if(icon)icon.textContent=_navManeuverIcon(step.maneuver.type,step.maneuver.modifier);if(text)text.textContent=_navManeuverText(step);if(distEl)distEl.textContent=dist>=1000?(dist/1000).toFixed(1)+' km':Math.round(dist)+' m';_navUpdLookAhead();}
+
+  function _navUpdLookAhead(){const el=document.getElementById('ultraNavLookAhead');if(!el)return;const next=_navState.steps[_navState.stepIdx+1];el.textContent=next?`Depois: ${_navManeuverIcon(next.maneuver.type,next.maneuver.modifier)} ${_navManeuverText(next)}`:''}
+
+  function _navEstimateLimit(step){const name=(step?.name||'').toLowerCase();if(/rodovia|br-\d|km\s?\d|rota\s?\d/.test(name))return 110;if(/marginal|via expressa|avenida|av\.|alameda das/.test(name))return 60;if(/rua|alameda|travessa|beco/.test(name))return 40;return 50;}
+
+  function _navUpdSpeed(speedMs){const badge=document.getElementById('ultraNavSpeed');if(!badge)return;const kmh=speedMs!=null&&!isNaN(speedMs)?Math.round(speedMs*3.6):0;const cur=_navState.steps[_navState.stepIdx];const limit=cur?_navEstimateLimit(cur):50;const over=kmh>limit+5;badge.textContent=`${kmh} km/h · lim. ~${limit}`;badge.style.background=over?'rgba(239,68,68,.25)':'rgba(255,255,255,.06)';badge.style.color=over?'#ef4444':'';}
+
+  function _navUpdETA(){const el=document.getElementById('ultraNavETA');if(!el||!_navState.totalDistance)return;let rem=0;for(let i=_navState.stepIdx;i<_navState.steps.length;i++)rem+=_navState.steps[i].distance;const ratio=_navState.totalDistance>0?rem/_navState.totalDistance:0;const sec=_navState.totalDuration*ratio;const arr=new Date(Date.now()+sec*1000);const hh=String(arr.getHours()).padStart(2,'0'),mm=String(arr.getMinutes()).padStart(2,'0');el.textContent=`🏁 ${hh}:${mm} · ${Math.max(0,Math.round(sec/60))}min`;}
+
+  function _navLoadHistory(){try{const s=localStorage.getItem(HISTORY_KEY);return s?JSON.parse(s):[];}catch{return[];}}
+  function _navSaveHistory(lat,lng,label){try{let h=_navLoadHistory().filter(e=>!(Math.abs(e.lat-lat)<0.0005&&Math.abs(e.lng-lng)<0.0005));h.unshift({lat,lng,label:label||'Destino',ts:Date.now()});localStorage.setItem(HISTORY_KEY,JSON.stringify(h.slice(0,HISTORY_MAX)));}catch{}}
+
+  function navShowHistory(){const box=document.getElementById('ultraNavResults');if(!box)return;const input=document.getElementById('ultraNavInput');if(input&&input.value.trim().length>=3)return;const hist=_navLoadHistory();if(!hist.length){box.style.display='none';return;}const escH=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');box.innerHTML='<div style="padding:7px 12px;color:var(--muted);font-size:.7rem;font-weight:600">DESTINOS RECENTES</div>'+hist.map(h=>`<div style="padding:9px 12px;font-size:.8rem;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:8px;align-items:center" onclick='UltraGPS.navSelect(${h.lat},${h.lng},${JSON.stringify(h.label)})'>🕘 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(h.label)}</span></div>`).join('');box.style.display='block';}
+
+  function navSearch(query){clearTimeout(_navSearchTimer);const box=document.getElementById('ultraNavResults');if(!box)return;const escH=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');if(!query||query.trim().length<3){navShowHistory();return;}_navSearchTimer=setTimeout(async()=>{box.innerHTML='<div style="padding:8px 12px;color:var(--muted);font-size:.78rem">Buscando...</div>';box.style.display='block';try{const results=await _navGeocode(query);if(!results.length){box.innerHTML='<div style="padding:8px 12px;color:var(--muted);font-size:.78rem">Nenhum resultado.</div>';return;}box.innerHTML=results.map(r=>`<div style="padding:9px 12px;font-size:.8rem;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:8px;align-items:center" onclick='UltraGPS.navSelect(${r.lat},${r.lon},${JSON.stringify(r.display_name)})'>📍 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(r.display_name)}</span></div>`).join('');}catch{box.innerHTML='<div style="padding:8px 12px;color:#ef4444;font-size:.78rem">Erro na busca.</div>';}},450);}
+
+  function navSelect(lat,lng,label){const box=document.getElementById('ultraNavResults');if(box){box.innerHTML='';box.style.display='none';}const input=document.getElementById('ultraNavInput');if(input)input.value=label;navStart(lat,lng,label);}
+
+  async function navStart(destLat,destLng,destLabel){if(!map){Toast.show('Mapa não carregado.','warn');return;}if(!navigator.geolocation){Toast.show('GPS não disponível.','warn');return;}const pos=await new Promise(res=>{navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),()=>res(null),{enableHighAccuracy:true,timeout:8000});});if(!pos){Toast.show('Não foi possível obter sua localização.','error');return;}Toast.show('🧭 Calculando rota...','info');try{const route=await _navCalcRoute(pos,{lat:destLat,lng:destLng});_navState.route=route;_navState.coords=route.geometry.coordinates;_navState.steps=route.legs[0].steps;_navState.stepIdx=0;_navState.offRouteHits=0;_navState.destLat=destLat;_navState.destLng=destLng;_navState.destLabel=destLabel||'Destino';_navState.preAlerted=new Set();_navState.totalDistance=route.distance;_navState.totalDuration=route.duration;_navState.trailPts=[];if(_navState.trailLayer){try{map.removeLayer('ultra-nav-trail');map.removeSource('ultra-nav-trail');}catch{}_navState.trailLayer=false;}drawRealRoute(_navState.coords);_navSaveHistory(destLat,destLng,destLabel);if(_navState.destMarker){_navState.destMarker.remove();_navState.destMarker=null;}const flagEl=document.createElement('div');flagEl.style.cssText='font-size:26px';flagEl.textContent='🏁';_navState.destMarker=new mapboxgl.Marker({element:flagEl}).setLngLat([destLng,destLat]).addTo(map);const banner=document.getElementById('ultraNavBanner');if(banner)banner.style.display='flex';const stopBtn=document.getElementById('ultraNavStopBtn');if(stopBtn)stopBtn.style.display='';const destEl=document.getElementById('ultraNavDest');if(destEl)destEl.textContent=destLabel||'Destino';const devEl=document.getElementById('ultraNavDeviation');if(devEl)devEl.style.display='none';map.easeTo({center:[pos.lng,pos.lat],zoom:17,duration:600});_navSpeak('Rota calculada. '+_navManeuverText(_navState.steps[0]));_navUpdManeuver(_navState.steps[0],_navState.steps[0].distance);_navUpdETA();_navVibrate(80);if(_navState.watchId!==null)navigator.geolocation.clearWatch(_navState.watchId);_navState.watchId=navigator.geolocation.watchPosition(_navOnPosition,e=>console.warn('[UltraNav]',e.message),{enableHighAccuracy:true,maximumAge:1000,timeout:10000});Toast.show('🧭 Navegação iniciada','ok');}catch(e){console.warn('[UltraNav]',e);Toast.show('Não foi possível calcular a rota.','error');}}
+
+  function _navOnPosition(pos){if(!map||!_navState.steps.length)return;const{latitude:lat,longitude:lng,heading,speed}=pos.coords;map.easeTo({center:[lng,lat],zoom:map.getZoom(),duration:300});_navState.trailPts.push([lng,lat]);if(_navState.trailPts.length>200)_navState.trailPts.shift();if(_navState.trailPts.length>=2){const data={type:'Feature',geometry:{type:'LineString',coordinates:_navState.trailPts}};if(map.getSource('ultra-nav-trail')){map.getSource('ultra-nav-trail').setData(data);}else{map.addSource('ultra-nav-trail',{type:'geojson',data});map.addLayer({id:'ultra-nav-trail',type:'line',source:'ultra-nav-trail',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#22d88f','line-width':4,'line-opacity':.75}});}_navState.trailLayer=true;}_navUpdSpeed(speed);const cur=_navState.steps[_navState.stepIdx];if(!cur)return;const mPos={lat:cur.maneuver.location[1],lng:cur.maneuver.location[0]};const dist=_navHaversine({lat,lng},mPos);_navUpdManeuver(cur,dist);_navUpdETA();if(dist<=200&&!_navState.preAlerted.has(_navState.stepIdx)){_navState.preAlerted.add(_navState.stepIdx);_navSpeak('Em 200 metros, '+_navManeuverText(cur).toLowerCase());_navVibrate([60,40,60]);}if(dist<30){_navState.stepIdx++;_navVibrate(150);if(_navState.stepIdx>=_navState.steps.length){_navSpeak('Você chegou ao seu destino.');Toast.show('🏁 Você chegou ao destino!','ok');navStop();return;}const next=_navState.steps[_navState.stepIdx];_navSpeak(_navManeuverText(next));_navUpdManeuver(next,next.distance);}const offDist=_navDistToRoute({lat,lng},_navState.coords);const devEl=document.getElementById('ultraNavDeviation');if(offDist>50){_navState.offRouteHits++;if(devEl){devEl.style.display='inline';devEl.textContent=`↻ desvio detectado (${_navState.offRouteHits}/3)`;}if(_navState.offRouteHits>=3){_navState.offRouteHits=0;Toast.show('↻ Recalculando rota...','warn');if(devEl)devEl.style.display='none';navStart(_navState.destLat,_navState.destLng,_navState.destLabel);}}else{_navState.offRouteHits=0;if(devEl)devEl.style.display='none';}}
+
+  function navStop(){if(_navState.watchId!==null){navigator.geolocation.clearWatch(_navState.watchId);_navState.watchId=null;}if(_navState.destMarker){_navState.destMarker.remove();_navState.destMarker=null;}try{if(map.getLayer('ultra-nav-trail'))map.removeLayer('ultra-nav-trail');if(map.getSource('ultra-nav-trail'))map.removeSource('ultra-nav-trail');}catch{}_navState.trailLayer=false;_navState.route=null;_navState.coords=[];_navState.steps=[];_navState.stepIdx=0;_navState.trailPts=[];_navState.preAlerted=new Set();_navState.totalDistance=0;_navState.totalDuration=0;const banner=document.getElementById('ultraNavBanner');if(banner)banner.style.display='none';const stopBtn=document.getElementById('ultraNavStopBtn');if(stopBtn)stopBtn.style.display='none';const layer=document.getElementById('ultra-route-line');if(map.getLayer('ultra-route-line')){map.removeLayer('ultra-route-line');map.removeSource('ultra-route-line');}if(window.speechSynthesis)window.speechSynthesis.cancel();}
+
+  function navToggleVoice(){_navState.voiceOn=!_navState.voiceOn;const btn=document.getElementById('ultraNavVoiceBtn');if(btn)btn.textContent=_navState.voiceOn?'🔊':'🔇';}
+
+  async function navShare(){if(!navigator.geolocation){Toast.show('GPS não disponível.','warn');return;}navigator.geolocation.getCurrentPosition(async(pos)=>{const{latitude:lat,longitude:lng}=pos.coords;const url=`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;const text=`📍 Minha localização (Mobya): ${url}`;try{if(navigator.share){await navigator.share({title:'Minha localização — Mobya',text,url});}else{await navigator.clipboard.writeText(text);Toast.show('📋 Link copiado.','ok');}}catch(e){if(e?.name!=='AbortError'){try{await navigator.clipboard.writeText(text);Toast.show('📋 Link copiado.','ok');}catch{Toast.show('Não foi possível compartilhar.','error');}}}},()=>Toast.show('Não foi possível obter sua localização.','error'),{enableHighAccuracy:true,timeout:8000});}
+
   return { render, openTracking, setMode, toggle3D, toggleHeat, toggleRoute, toggleCluster,
-    setStatus, doCheckin, sendChatMessage, doCall, doChat, doSOS, startWatchingLocation, stopWatchingLocation };
+    setStatus, doCheckin, sendChatMessage, doCall, doChat, doSOS, startWatchingLocation, stopWatchingLocation,
+    navSearch, navShowHistory, navSelect, navStart, navStop, navToggleVoice, navShare };
 })();
