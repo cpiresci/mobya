@@ -210,10 +210,10 @@ window.DispatchUI = (() => {
         window.__mobyaTrackingSessionId = r?.data?.sessionId || null;
         if (typeof App !== 'undefined') App.navigate('gps-tracking');
       } else {
-        if (typeof Toast !== 'undefined') Toast.show(r?.error?.message || 'Oferta indisponível.', 'error');
+        if (typeof Toast !== 'undefined') Toast.show(r?.error?.message || 'Oferta indisponível.', 'err');
       }
     } catch (e) {
-      if (typeof Toast !== 'undefined') Toast.show('Erro ao aceitar oferta.', 'error');
+      if (typeof Toast !== 'undefined') Toast.show('Erro ao aceitar oferta.', 'err');
     }
   }
 
