@@ -275,7 +275,21 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
     if(wrap)wrap.innerHTML='<div id="gpsMap" style="width:100%;height:100%"></div>';
     initMap('gpsMap').then(()=>{
       const tk=_pendingToken;
-      if(tk){connectSocket(tk);if(_pendingSid){setTimeout(()=>joinSession(_pendingSid),800);}else if(window.__mobyaPendingEmergencyId){_waitForProviderAccept(window.__mobyaPendingEmergencyId);}startWatchingLocation();}
+      if(tk){
+        connectSocket(tk);
+        // Aguarda connect antes de fazer join — evita race condition em cold start do Render
+        if(_pendingSid){
+          const _sid=_pendingSid;
+          if(socket&&!socket.connected){
+            socket.once('connect',()=>{ setTimeout(()=>joinSession(_sid),100); });
+          }else{
+            setTimeout(()=>joinSession(_sid),200);
+          }
+        }else if(window.__mobyaPendingEmergencyId){
+          _waitForProviderAccept(window.__mobyaPendingEmergencyId);
+        }
+        startWatchingLocation();
+      }
     });
   }
   async function render(sid){
