@@ -367,7 +367,7 @@ window.UltraGPS = (() => {
   // ── Entrada principal — renderiza DENTRO do SPA (não abre aba nova) ──
   async function render(sid){
     const main=document.getElementById('main'); if(!main)return;
-    main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px);position:relative">
+    main.innerHTML=`<div style="display:flex;flex-direction:column;min-height:calc(100vh - 60px);max-height:calc(100vh - 60px);overflow-y:auto;position:relative;padding-bottom:calc(var(--bnh,0px) + 12px)">
       <div id="ultraSosBanner">🚨 SOS ATIVO — aguardando resposta</div>
       <div style="padding:12px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div>
