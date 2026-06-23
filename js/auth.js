@@ -7,7 +7,14 @@ window.MobyaAuth = (() => {
     // (faz sentido rodar isso ANTES do fluxo normal de sessão/refresh).
     const resetToken = new URLSearchParams(window.location.search).get('reset_token');
     if (resetToken) {
-      showResetPassword(resetToken);
+      // Guard: auth.js pode ser parseado antes de showResetPassword estar definida
+      if (typeof showResetPassword === 'function') {
+        showResetPassword(resetToken);
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          if (typeof showResetPassword === 'function') showResetPassword(resetToken);
+        }, { once: true });
+      }
     }
 
     if (!API.isAuth()) {
