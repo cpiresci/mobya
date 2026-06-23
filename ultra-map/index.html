@@ -653,6 +653,7 @@ function initMap(token) {
   });
 
   map.on('load', () => {
+  map.on('moveend', _scheduleNearbyRefresh);
     apply3DBuildings();
     addHeatmapLayer();
     addClusterLayer(); // começa invisível, ativa no modo discover
@@ -1059,32 +1060,44 @@ function addClusterLayer() {
   });
 }
 
-// Carrega prestadores reais da API quando modo discover ativar
+// MOBYA-PATCH: explore-nearby-fix
+// Carrega prestadores reais da API quando modo discover ativar.
+// Rota pública (sem auth) — qualquer visitante pode descobrir
+// parceiros próximos no mapa.
+const VERTICAL_ICON = { SERVICE: '🔧', LOGISTICS: '🚚', RENTAL: '🚗', FLEET_RENTAL: '🚗', INSURANCE: '🛡️', FINANCING: '💳', CONSORTIUM: '🤝', PARTS: '⚙️' };
+
 async function loadNearbyProviders() {
   try {
     if (!map.getSource('providers')) return;
     const center = map.getCenter();
-    let url = `${API_BASE}/api/v1/providers/nearby?lat=${center.lat}&lng=${center.lng}&radius=10`;
-    const token = getAuthToken();
-    const headers = token ? { Authorization: 'Bearer ' + token } : {};
-    const r = await fetch(url, { headers });
+    const url = `${API_BASE}/api/v1/monetization/providers/nearby?lat=${center.lat}&lng=${center.lng}&radiusKm=10`;
+    const r = await fetch(url);
     if (!r.ok) throw new Error(r.statusText);
     const { data } = await r.json();
-    if (!data?.length) { showToast('ℹ️ Nenhum prestador próximo'); return; }
+    const providers = data?.providers || [];
+    if (!providers.length) { showToast('ℹ️ Nenhum prestador próximo'); return; }
     const geojson = {
       type: 'FeatureCollection',
-      features: data.map(p => ({
+      features: providers.map(p => ({
         type: 'Feature',
-        geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
-        properties: { type: '🔧', name: p.name, rating: p.rating || 0 },
+        geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] },
+        properties: { type: VERTICAL_ICON[p.vertical] || '📍', name: p.name, rating: p.ratingAvg || 0 },
       })),
     };
     map.getSource('providers').setData(geojson);
-    showToast(`📍 ${data.length} prestadores carregados`);
+    showToast(`📍 ${providers.length} prestadores carregados`);
   } catch (e) {
     console.warn('[UltraMap] Não foi possível carregar prestadores:', e.message);
     // fallback: deixa cluster vazio, sem travar nada
   }
+}
+
+// Refresca a lista ao arrastar/zoom o mapa no modo discover (debounce 600ms)
+let _nearbyDebounce = null;
+function _scheduleNearbyRefresh() {
+  if (currentMode !== 'discover') return;
+  clearTimeout(_nearbyDebounce);
+  _nearbyDebounce = setTimeout(loadNearbyProviders, 600);
 }
 
 // ── TOGGLES ──────────────────────────────────────────────────
