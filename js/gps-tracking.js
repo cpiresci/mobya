@@ -349,7 +349,8 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
             setTimeout(()=>joinSession(_sid),200);
           }
         }else if(window.__mobyaPendingEmergencyId){
-          _waitForProviderAccept(window.__mobyaPendingEmergencyId,0,_pendingGen);
+          // [GPS-TRACKING] busca de prestador removida — responsabilidade exclusiva do Ultra GPS
+          _setWaitingStatus('Aguardando confirmação — acompanhe pelo Ultra GPS.');
         }
         startWatchingLocation();
       }
@@ -370,27 +371,6 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
     },100);
   }
   function _setWaitingStatus(msg){const el=document.getElementById('gpsSessionStatus');if(el)el.innerHTML=`<span style="color:#f59e0b">⏳ ${msg}</span>`;}
-  async function _waitForProviderAccept(emergencyId,attempt=0,gen=_pendingGen){
-    const MAX_ATTEMPTS=20,DELAY_MS=3000; // ~60s de espera
-    if(gen!==_renderGen)return; // usuário já saiu desta tela (renderizou outra) — cancela o loop fantasma
-    _setWaitingStatus('Buscando prestador mais próximo...');
-    try{
-      const r=await API.req('GET',`/emergency/${emergencyId}/tracking-session`);
-      if(r?.data?.sessionId){
-        window.__mobyaPendingEmergencyId=null;
-        sessionId=r.data.sessionId;
-        Toast.show('✅ Prestador encontrado! Conectando rastreamento...','ok');
-        joinSession(sessionId);
-        return;
-      }
-    }catch(e){/* ainda não aceitou — normal, continua tentando */}
-    if(gen!==_renderGen)return; // checa de novo após o await — pode ter navegado durante a chamada à API
-    if(attempt>=MAX_ATTEMPTS){
-      _setWaitingStatus('Nenhum prestador aceitou ainda. Tente novamente em alguns instantes.');
-      return;
-    }
-    setTimeout(()=>_waitForProviderAccept(emergencyId,attempt+1,gen),DELAY_MS);
-  }
   async function createSession({quoteId,userId,vertical,address}){const r=await API.req('POST','/tracking/sessions',{quoteId,userId,vertical,address});return r.data;}
   async function openTracking(sid){await render(sid);if(sid)sessionId=sid;}
 
