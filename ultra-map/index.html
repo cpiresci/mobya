@@ -1140,6 +1140,33 @@ function toggleCluster() {
 }
 
 // ── MODO ──────────────────────────────────────────────────────
+// MOBYA-PATCH: discover-real-geolocation
+// Pede a localização real do navegador pra centrar o modo discover.
+// Fallback silencioso pro centro fixo de SP se negar/falhar/timeout.
+function _centerOnRealLocationThenLoad() {
+  if (!navigator.geolocation) {
+    showToast('🔍 Prestadores próximos (localização indisponível)');
+    loadNearbyProviders();
+    return;
+  }
+  showToast('📡 Obtendo sua localização...');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      map.easeTo({ center: [longitude, latitude], zoom: 13, duration: 800 });
+      showToast('🔍 Prestadores próximos da sua localização');
+      // espera a câmera assentar antes de buscar (loadNearbyProviders lê o centro atual do mapa)
+      setTimeout(loadNearbyProviders, 850);
+    },
+    (err) => {
+      console.warn('[UltraMap] Geolocalização negada/indisponível:', err.message);
+      showToast('🔍 Prestadores próximos (usando região padrão)');
+      loadNearbyProviders();
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+  );
+}
+
 function setMode(mode) {
   currentMode = mode;
   document.querySelectorAll('.top-pills .pill').forEach((p, i) => {
@@ -1147,13 +1174,16 @@ function setMode(mode) {
   });
   if (!map) return;
   if (mode === 'discover') {
+    // MOBYA-PATCH: discover-real-geolocation
+    // Antes o mapa nunca pedia a posição real do visitante — sempre
+    // centrava num ponto fixo de SP. Agora pede geolocalização real
+    // do navegador e só então busca prestadores próximos dali.
     map.easeTo({ zoom: 12.5, pitch: 20, duration: 800 });
     if (!showHeat) toggleHeat();
     ['clusters','cluster-count','unclustered-point','unclustered-icon'].forEach(id => {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible');
     });
-    loadNearbyProviders();
-    showToast('🔍 Prestadores próximos');
+    _centerOnRealLocationThenLoad();
   } else if (mode === 'tracking') {
     map.easeTo({ zoom: 14, pitch: 55, duration: 800 });
     if (showHeat) toggleHeat();
