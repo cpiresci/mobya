@@ -294,7 +294,7 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
   }
   async function render(sid){
     const main=document.getElementById('main');if(!main)return;
-    main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px);gap:0"><div style="padding:14px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div id="gpsHeader">📡 GPS TRACKING</div><div id="gpsSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.76rem">Conectando...</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:150px"><span id="gpsConnectionStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><span id="gpsWatchStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><div style="width:100%"><span id="gpsETA" style="font-family:'JetBrains Mono',monospace;font-size:.78rem"></span><div id="gpsProximityWrap"><div id="gpsProximityFill"></div></div></div></div></div><div id="gpsMapWrap" style="flex:1;min-height:260px;width:100%;position:relative"><div id="gpsMap" style="width:100%;height:100%"></div></div><div id="gpsProviderControls" style="display:none;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)"><div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">ATUALIZAR STATUS</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('A_CAMINHO')">🚗 A Caminho</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.4)" onclick="GPSTracking.promptCheckin()">📸 Check-in (foto)</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('CHEGOU')">📍 Cheguei</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('EM_SERVICO')">🔧 Em Serviço</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="GPSTracking.setStatus('CONCLUIDO')">✅ Concluído</button></div></div><div style="background:var(--card-bg);border-top:1px solid var(--border)"><div id="gpsChatMessages" style="height:110px;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column"></div><div style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border)"><input id="gpsChatInput" placeholder="Mensagem rápida..." style="flex:1;background:var(--input-bg,rgba(255,255,255,.06));border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;outline:none" onkeydown="if(event.key==='Enter'){GPSTracking.sendChatMessage(this.value);this.value='';}"><button class="ai-btn" style="padding:8px 14px;font-size:.82rem" onclick="const i=document.getElementById('gpsChatInput');GPSTracking.sendChatMessage(i.value);i.value=''">Enviar</button></div></div></div>`;
+    main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px);gap:0"><div style="padding:14px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div id="gpsHeader">📡 GPS TRACKING</div><div id="gpsSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.76rem">Conectando...</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:150px"><span id="gpsConnectionStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><span id="gpsWatchStatus" style="font-family:'JetBrains Mono',monospace;font-size:.72rem"></span><div style="width:100%"><span id="gpsETA" style="font-family:'JetBrains Mono',monospace;font-size:.78rem"></span><div id="gpsProximityWrap"><div id="gpsProximityFill"></div></div></div></div></div><div id="gpsMapWrap" style="flex:1;min-height:260px;width:100%;position:relative"><div id="gpsMap" style="width:100%;height:100%"></div><div id="navSearchBar" style="position:absolute;top:10px;left:10px;right:10px;z-index:15;display:flex;gap:6px"><input id="navSearchInput" placeholder="Para onde vamos?" style="flex:1;background:rgba(10,10,20,.92);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.84rem;outline:none;box-shadow:0 4px 14px rgba(0,0,0,.4)" oninput="GPSTracking.searchDestination(this.value)"><button class="ai-btn" id="navStopBtn" style="display:none;padding:10px 14px;background:rgba(239,68,68,.85);color:#fff" onclick="GPSTracking.stopNavigation()">✕</button></div><div id="navSearchResults" style="display:none;position:absolute;top:58px;left:10px;right:10px;z-index:16;background:rgba(10,10,20,.96);border:1px solid var(--border);border-radius:10px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.5)"></div><div id="navBanner" style="display:none;position:absolute;bottom:12px;left:10px;right:10px;z-index:15;background:linear-gradient(135deg,#0d1424,#15152b);border:1px solid #00d4ff66;border-radius:14px;padding:12px 14px;box-shadow:0 6px 22px rgba(0,212,255,.25);align-items:center;gap:12px"><div id="navManeuverIcon" style="font-size:28px;min-width:36px;text-align:center">⬆️</div><div style="flex:1;min-width:0"><div id="navManeuverText" style="font-size:.86rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Calculando rota...</div><div style="font-size:.72rem;color:var(--muted);margin-top:2px"><span id="navManeuverDist">--</span> · <span id="navDestLabel">Destino</span></div></div><button id="navVoiceBtn" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px" onclick="GPSTracking.toggleNavVoice()">🔊</button></div></div><div id="gpsProviderControls" style="display:none;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)"><div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">ATUALIZAR STATUS</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('A_CAMINHO')">🚗 A Caminho</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.4)" onclick="GPSTracking.promptCheckin()">📸 Check-in (foto)</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('CHEGOU')">📍 Cheguei</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="GPSTracking.setStatus('EM_SERVICO')">🔧 Em Serviço</button><button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="GPSTracking.setStatus('CONCLUIDO')">✅ Concluído</button></div></div><div style="background:var(--card-bg);border-top:1px solid var(--border)"><div id="gpsChatMessages" style="height:110px;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column"></div><div style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border)"><input id="gpsChatInput" placeholder="Mensagem rápida..." style="flex:1;background:var(--input-bg,rgba(255,255,255,.06));border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;outline:none" onkeydown="if(event.key==='Enter'){GPSTracking.sendChatMessage(this.value);this.value='';}"><button class="ai-btn" style="padding:8px 14px;font-size:.82rem" onclick="const i=document.getElementById('gpsChatInput');GPSTracking.sendChatMessage(i.value);i.value=''">Enviar</button></div></div></div>`;
     _injectStyles();
     updateConnectionStatus('reconectando');
     updateGPSStatus('parado');
@@ -328,5 +328,149 @@ socket.on('session_joined',({role,session})=>{myRole=role;_flushOwnPosition();up
   }
   async function createSession({quoteId,userId,vertical,address}){const r=await API.req('POST','/tracking/sessions',{quoteId,userId,vertical,address});return r.data;}
   async function openTracking(sid){await render(sid);if(sid)sessionId=sid;}
-  return{render,openTracking,createSession,joinSession,setStatus,sendChatMessage,startWatchingLocation,stopWatchingLocation,promptCheckin};
+  
+  let _navSearchTimer=null;
+  let _navState={route:null,coords:[],steps:[],stepIdx:0,destMarker:null,watchId:null,voiceOn:true,offRouteHits:0};
+
+  function _haversine(a,b){const R=6371000,toRad=d=>d*Math.PI/180;const dLat=toRad(b.lat-a.lat),dLng=toRad(b.lng-a.lng);const sa=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(sa));}
+  function _distToRoute(pos,coords){let min=Infinity;for(let i=0;i<coords.length;i++){const d=_haversine(pos,{lat:coords[i][1],lng:coords[i][0]});if(d<min)min=d;}return min;}
+
+  async function _geocodeAddress(q){
+    const url='https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=0&q='+encodeURIComponent(q);
+    const r=await fetch(url,{headers:{'Accept-Language':'pt-BR'}});
+    if(!r.ok)throw new Error('geocode falhou');
+    return r.json();
+  }
+
+  async function _calcOSRMRoute(from,to){
+    const url=`https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson&steps=true&language=pt`;
+    const r=await fetch(url);
+    const data=await r.json();
+    if(!data.routes||!data.routes.length)throw new Error('sem rota');
+    return data.routes[0];
+  }
+
+  function _maneuverIcon(type,modifier){
+    const m={turn:{left:'⬅️',right:'➡️',straight:'⬆️','slight left':'↖️','slight right':'↗️','sharp left':'↩️','sharp right':'↪️'},
+      merge:{left:'↖️',right:'↗️'},roundabout:{default:'🔄'},rotary:{default:'🔄'},arrive:{default:'🏁'},depart:{default:'🚦'},
+      fork:{left:'↖️',right:'↗️'},'new name':{default:'⬆️'},continue:{default:'⬆️'},'end of road':{left:'⬅️',right:'➡️'}};
+    const g=m[type]||{};
+    return g[modifier]||g['default']||'⬆️';
+  }
+
+  function _maneuverText(step){
+    const type=step.maneuver.type,mod=step.maneuver.modifier,name=step.name||'';
+    const dict={'turn-left':'Vire à esquerda','turn-right':'Vire à direita','turn-straight':'Siga em frente',
+      'turn-slight left':'Mantenha-se à esquerda','turn-slight right':'Mantenha-se à direita',
+      'turn-sharp left':'Vire bruscamente à esquerda','turn-sharp right':'Vire bruscamente à direita',
+      'depart-default':'Iniciar rota','arrive-default':'Você chegou ao destino',
+      'roundabout-default':'Entre na rotatória','rotary-default':'Entre na rotatória',
+      'merge-left':'Convirja à esquerda','merge-right':'Convirja à direita',
+      'fork-left':'Mantenha-se à esquerda na bifurcação','fork-right':'Mantenha-se à direita na bifurcação',
+      'continue-default':'Continue em frente','new name-default':'Continue em frente',
+      'end of road-left':'No fim da via, vire à esquerda','end of road-right':'No fim da via, vire à direita'};
+    const key=type+'-'+(mod||'default');
+    let txt=dict[key]||dict[type+'-default']||'Siga em frente';
+    if(name&&type!=='arrive')txt+=` em ${name}`;
+    return txt;
+  }
+
+  function _speakNav(text){
+    if(!_navState.voiceOn||!('speechSynthesis' in window))return;
+    try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';u.rate=1.0;window.speechSynthesis.speak(u);}catch{}
+  }
+
+  function _updManeuverUI(step,dist){
+    const icon=document.getElementById('navManeuverIcon'),text=document.getElementById('navManeuverText'),distEl=document.getElementById('navManeuverDist');
+    if(icon)icon.textContent=_maneuverIcon(step.maneuver.type,step.maneuver.modifier);
+    if(text)text.textContent=_maneuverText(step);
+    if(distEl)distEl.textContent=dist>=1000?(dist/1000).toFixed(1)+' km':Math.round(dist)+' m';
+  }
+
+  function searchDestination(query){
+    clearTimeout(_navSearchTimer);
+    const box=document.getElementById('navSearchResults');if(!box)return;
+    if(!query||query.trim().length<3){box.innerHTML='';box.style.display='none';return;}
+    _navSearchTimer=setTimeout(async()=>{
+      box.innerHTML='<div style="padding:8px 12px;color:var(--muted);font-size:.78rem">Buscando...</div>';
+      box.style.display='block';
+      try{
+        const results=await _geocodeAddress(query);
+        if(!results.length){box.innerHTML='<div style="padding:8px 12px;color:var(--muted);font-size:.78rem">Nenhum resultado.</div>';return;}
+        box.innerHTML=results.map(r=>`<div style="padding:9px 12px;font-size:.8rem;border-bottom:1px solid var(--border);cursor:pointer" onclick='GPSTracking.selectDestination(${r.lat},${r.lon},${JSON.stringify(r.display_name)})'>📍 ${escHtml(r.display_name)}</div>`).join('');
+      }catch(e){box.innerHTML='<div style="padding:8px 12px;color:#ef4444;font-size:.78rem">Erro na busca.</div>';}
+    },450);
+  }
+
+  function selectDestination(lat,lng,label){
+    const box=document.getElementById('navSearchResults');if(box){box.innerHTML='';box.style.display='none';}
+    const input=document.getElementById('navSearchInput');if(input)input.value=label;
+    startNavigation(lat,lng,label);
+  }
+
+  async function startNavigation(destLat,destLng,destLabel){
+    if(!map){Toast.show('Mapa não carregado.','warn');return;}
+    if(!navigator.geolocation){Toast.show('GPS não disponível.','warn');return;}
+    const pos=await new Promise(res=>{navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),()=>res(null),{enableHighAccuracy:true,timeout:8000});});
+    if(!pos){Toast.show('Não foi possível obter sua localização.','error');return;}
+    Toast.show('🧭 Calculando rota...','info');
+    try{
+      const route=await _calcOSRMRoute(pos,{lat:destLat,lng:destLng});
+      _navState.route=route;_navState.coords=route.geometry.coordinates;_navState.steps=route.legs[0].steps;_navState.stepIdx=0;_navState.offRouteHits=0;
+      drawRealRoute(_navState.coords);
+      if(_navState.destMarker)_navState.destMarker.remove();
+      const el=document.createElement('div');el.style.cssText='font-size:26px';el.textContent='🏁';
+      _navState.destMarker=new mapboxgl.Marker({element:el}).setLngLat([destLng,destLat]).addTo(map);
+      document.getElementById('navBanner').style.display='flex';
+      document.getElementById('navStopBtn').style.display='';
+      const lbl=document.getElementById('navDestLabel');if(lbl)lbl.textContent=destLabel||'Destino';
+      map.easeTo({center:[pos.lng,pos.lat],zoom:17,pitch:60,duration:800});
+      _speakNav('Rota calculada. '+_maneuverText(_navState.steps[0]));
+      _updManeuverUI(_navState.steps[0],_navState.steps[0].distance);
+      if(_navState.watchId!==null)navigator.geolocation.clearWatch(_navState.watchId);
+      _navState.watchId=navigator.geolocation.watchPosition(_onNavPosition,(e)=>console.warn('[Nav]',e.message),{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+      Toast.show('🧭 Navegação iniciada','ok');
+    }catch(e){console.warn('[Nav] erro rota',e);Toast.show('Não foi possível calcular a rota.','error');}
+  }
+
+  function _onNavPosition(pos){
+    if(!map||!_navState.steps.length)return;
+    const{latitude:lat,longitude:lng,heading}=pos.coords;
+    map.easeTo({center:[lng,lat],bearing:(heading!=null&&!isNaN(heading))?heading:map.getBearing(),duration:500});
+    const cur=_navState.steps[_navState.stepIdx];if(!cur)return;
+    const mPos={lat:cur.maneuver.location[1],lng:cur.maneuver.location[0]};
+    const dist=_haversine({lat,lng},mPos);
+    _updManeuverUI(cur,dist);
+    if(dist<30){
+      _navState.stepIdx++;
+      if(_navState.stepIdx>=_navState.steps.length){_speakNav('Você chegou ao seu destino.');Toast.show('🏁 Você chegou ao destino!','ok');stopNavigation();return;}
+      const next=_navState.steps[_navState.stepIdx];_speakNav(_maneuverText(next));_updManeuverUI(next,next.distance);
+    }
+    const offDist=_distToRoute({lat,lng},_navState.coords);
+    if(offDist>50){
+      _navState.offRouteHits++;
+      if(_navState.offRouteHits>=3){
+        _navState.offRouteHits=0;Toast.show('↻ Recalculando rota...','warn');
+        const dc=_navState.coords[_navState.coords.length-1];
+        startNavigation(dc[1],dc[0],document.getElementById('navDestLabel')?.textContent);
+      }
+    }else{_navState.offRouteHits=0;}
+  }
+
+  function stopNavigation(){
+    if(_navState.watchId!==null){navigator.geolocation.clearWatch(_navState.watchId);_navState.watchId=null;}
+    if(_navState.destMarker){_navState.destMarker.remove();_navState.destMarker=null;}
+    _navState.route=null;_navState.coords=[];_navState.steps=[];_navState.stepIdx=0;
+    const banner=document.getElementById('navBanner');if(banner)banner.style.display='none';
+    const stopBtn=document.getElementById('navStopBtn');if(stopBtn)stopBtn.style.display='none';
+    if(map)map.easeTo({pitch:55,duration:600});
+    if(window.speechSynthesis)window.speechSynthesis.cancel();
+  }
+
+  function toggleNavVoice(){
+    _navState.voiceOn=!_navState.voiceOn;
+    const btn=document.getElementById('navVoiceBtn');if(btn)btn.textContent=_navState.voiceOn?'🔊':'🔇';
+  }
+
+return{render,openTracking,searchDestination,selectDestination,startNavigation,stopNavigation,toggleNavVoice,createSession,joinSession,setStatus,sendChatMessage,startWatchingLocation,stopWatchingLocation,promptCheckin};
 })();
