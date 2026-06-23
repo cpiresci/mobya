@@ -339,19 +339,28 @@ socket.on('session_joined',({role,session})=>{myRole=role;sessionProviderId=sess
     }
     initMap('gpsMap').then(()=>{
       const tk=_pendingToken;
+      const isSessionMode=!!_pendingSid||!!window.__mobyaPendingEmergencyId;
+      const provCtrl=document.getElementById('gpsProviderControls');
+      const chatPanel=document.querySelector('#gpsChatMessages')?.closest('div[style*="card-bg"]');
+      if(!isSessionMode){
+        if(provCtrl)provCtrl.style.display='none';
+        if(chatPanel)chatPanel.style.display='none';
+        const hdr=document.getElementById('gpsHeader');
+        if(hdr)hdr.textContent='🧭 NAVEGAÇÃO';
+      }
       if(tk){
-        connectSocket(tk);
-        // Aguarda connect antes de fazer join — evita race condition em cold start do Render
-        if(_pendingSid){
-          const _sid=_pendingSid;
-          if(socket&&!socket.connected){
-            socket.once('connect',()=>{ setTimeout(()=>joinSession(_sid),100); });
-          }else{
-            setTimeout(()=>joinSession(_sid),200);
+        if(isSessionMode){
+          connectSocket(tk);
+          if(_pendingSid){
+            const _sid=_pendingSid;
+            if(socket&&!socket.connected){
+              socket.once('connect',()=>{ setTimeout(()=>joinSession(_sid),100); });
+            }else{
+              setTimeout(()=>joinSession(_sid),200);
+            }
+          }else if(window.__mobyaPendingEmergencyId){
+            _setWaitingStatus('Aguardando confirmação — acompanhe pelo Ultra GPS.');
           }
-        }else if(window.__mobyaPendingEmergencyId){
-          // [GPS-TRACKING] busca de prestador removida — responsabilidade exclusiva do Ultra GPS
-          _setWaitingStatus('Aguardando confirmação — acompanhe pelo Ultra GPS.');
         }
         startWatchingLocation();
       }

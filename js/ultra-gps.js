@@ -363,6 +363,7 @@ window.UltraGPS = (() => {
         window.__mobyaPendingEmergencyId=null;
         Toast.show('✅ Prestador encontrado! Conectando rastreamento...','ok');
         joinSession(r.data.sessionId);
+        if(watchId===null) startWatchingLocation();
         return;
       }
     }catch(e){ /* ainda não aceitou — segue tentando */ }
@@ -430,7 +431,20 @@ window.UltraGPS = (() => {
 
     const token=API.getToken();
     if(!token){ Toast.show('Faça login para usar o Ultra GPS.','warn'); return; }
-    if(typeof mapboxgl==='undefined'){ Toast.show('⚠️ Mapbox GL JS não carregado.','error'); return; }
+    if(typeof mapboxgl==='undefined'||!getMapboxToken()){
+      const mapEl=document.getElementById('ultraMap');
+      if(mapEl)mapEl.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;background:#0b0b18;color:#9090b0;font-family:monospace;font-size:.82rem;padding:20px;text-align:center"><div style="font-size:2rem">🗺️</div><div>Mapa indisponível momentaneamente.<br>O rastreamento de sessão continua ativo.</div></div>`;
+      Toast.show('⚠️ Mapbox GL JS não carregado — rastreamento via socket ativo.','warn');
+      connectSocket(token);
+      if(sid){
+        if(socket&&!socket.connected){ socket.once('connect',()=>setTimeout(()=>joinSession(sid),100)); }
+        else{ setTimeout(()=>joinSession(sid),200); }
+      } else if(window.__mobyaPendingEmergencyId){
+        _waitForProviderAccept(window.__mobyaPendingEmergencyId);
+      }
+      startWatchingLocation();
+      return;
+    }
 
     const pos=await _getCurrentPosition();
     if(!pos)Toast.show('ℹ️ Não foi possível obter sua localização — ative o GPS do aparelho.','warn');
