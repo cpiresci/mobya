@@ -177,7 +177,8 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="js/admin-approval.js?v=20260620b"></script>
 <script src="js/gps-tracking.js?v=20260620b"></script>
-<script src="js/ultra-gps.js?v=20260622a"></script>
+<script>window.addEventListener('error',function(e){if(e.filename&&e.filename.indexOf('ultra-gps')>-1){alert('ULTRA GPS ERRO: '+e.message+' | linha '+e.lineno+':'+e.colno);}});</script>
+<script src="js/ultra-gps.js?v=20260622b"></script>
 <!-- home-chat ANTES de app.js para que HomeChat esteja disponível no init -->
 <script src="js/home-chat.js?v=20260620b"></script>
 <script src="js/garagem.js?v=20260621a"></script>
