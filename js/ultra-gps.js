@@ -367,9 +367,9 @@ window.UltraGPS = (() => {
   // ── Entrada principal — renderiza DENTRO do SPA (não abre aba nova) ──
   async function render(sid){
     const main=document.getElementById('main'); if(!main)return;
-    main.innerHTML=`<div style="display:flex;flex-direction:column;min-height:calc(100vh - 60px);max-height:calc(100vh - 60px);overflow-y:auto;position:relative;padding-bottom:calc(var(--bnh,0px) + 12px)">
+    main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px - var(--bnh,0px));position:relative;overflow:hidden">
       <div id="ultraSosBanner">🚨 SOS ATIVO — aguardando resposta</div>
-      <div style="padding:12px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="flex:none;padding:6px 14px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div>
           <div id="ultraHeader">🛣️ ULTRA GPS</div>
           <div id="ultraSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:monospace;font-size:.76rem">Conectando...</span></div>
@@ -384,7 +384,7 @@ window.UltraGPS = (() => {
           <div style="width:100%"><span id="ultraETA" style="font-family:monospace;font-size:.78rem"></span><div id="ultraProximityWrap"><div id="ultraProximityFill"></div></div></div>
         </div>
       </div>
-      <div style="flex:1;min-height:260px;width:100%;position:relative">
+      <div style="flex:1;min-height:0;width:100%;position:relative">
         <div id="ultraMap" style="width:100%;height:100%"></div>
         <div style="position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:10">
           <div class="ultra-layer-btn on" id="ultra-btn-3d" onclick="UltraGPS.toggle3D()" title="3D">🏙️</div>
@@ -393,8 +393,8 @@ window.UltraGPS = (() => {
           <div class="ultra-layer-btn on" id="ultra-btn-cluster" onclick="UltraGPS.toggleCluster()" title="Clusters">📍</div>
         </div>
       </div>
-      <div id="ultraTrackingPanel">
-        <div id="ultraProviderControls" style="display:none;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)">
+      <div id="ultraTrackingPanel" style="flex:none">
+        <div id="ultraProviderControls" style="display:none;padding:6px 14px;background:var(--card-bg);border-top:1px solid var(--border)">
           <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">ATUALIZAR STATUS</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="ai-btn" style="font-size:.75rem;padding:6px 12px" onclick="UltraGPS.setStatus('A_CAMINHO')">🚗 A Caminho</button>
@@ -404,14 +404,14 @@ window.UltraGPS = (() => {
             <button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981" onclick="UltraGPS.setStatus('CONCLUIDO')">✅ Concluído</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;padding:10px 16px;background:var(--card-bg);border-top:1px solid var(--border)">
+        <div style="display:flex;gap:6px;padding:6px 14px;background:var(--card-bg);border-top:1px solid var(--border)">
           <button class="ai-btn" style="flex:1" onclick="UltraGPS.doCall()">📞 Contato</button>
           <button class="ai-btn" style="flex:1" onclick="UltraGPS.doChat()">💬 Chat</button>
           <button class="ai-btn" style="flex:1;background:rgba(239,68,68,.18);color:#ef4444;border:1px solid rgba(239,68,68,.4)" onclick="UltraGPS.doSOS()">🚨 SOS</button>
         </div>
         <div style="background:var(--card-bg);border-top:1px solid var(--border)">
-          <div id="ultraChatMessages" style="height:110px;overflow-y:auto;padding:8px 14px;display:flex;flex-direction:column"></div>
-          <div style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border)">
+          <div id="ultraChatMessages" style="height:70px;overflow-y:auto;padding:6px 14px;display:flex;flex-direction:column"></div>
+          <div style="display:flex;gap:6px;padding:6px 14px;border-top:1px solid var(--border)">
             <input id="ultraChatInput" placeholder="Mensagem rápida..." style="flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;outline:none" onkeydown="if(event.key==='Enter'){UltraGPS.sendChatMessage(this.value);this.value='';}">
             <button class="ai-btn" style="padding:8px 14px;font-size:.82rem" onclick="const i=document.getElementById('ultraChatInput');UltraGPS.sendChatMessage(i.value);i.value=''">Enviar</button>
           </div>
