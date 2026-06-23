@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/home-premium.css?v=20260620b">
 <link rel="stylesheet" href="css/auth-extra.css?v=20260621a">
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 <body data-env="production">
 
@@ -176,7 +177,8 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="js/admin-approval.js?v=20260620b"></script>
-<script src="js/gps-tracking.js?v=20260620b"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/gps-tracking.js?v=leaflet1"></script>
 <script>window.addEventListener('error',function(e){if(e.filename&&e.filename.indexOf('ultra-gps')>-1){alert('ULTRA GPS ERRO: '+e.message+' | linha '+e.lineno+':'+e.colno);}});</script>
 <script src="js/ultra-gps.js?v=20260622c"></script>
 <!-- home-chat ANTES de app.js para que HomeChat esteja disponível no init -->
