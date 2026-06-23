@@ -5,7 +5,7 @@
 //   1. SOS confirmado → API cria a Emergency (sem dispatch)
 //   2. showPixPayment() exibe modal com QR code + valor estimado
 //   3. Polling de /emergency/:id/payment-status até customerPaymentStatus === 'PAID'
-//   4. Pago → fecha modal → navega para gps-tracking (que fica esperando o aceite)
+//   4. Pago → fecha modal → navega para ultra-gps (que fica esperando o aceite)
 //   5. Se o usuário fechar → pode reabrir via botão no painel
 
 window.EmergencyPayment = (() => {
@@ -78,11 +78,11 @@ window.EmergencyPayment = (() => {
         _closeModal();
         // Navega para GPS tracking (já tem o emergencyId armazenado)
         window.__mobyaPendingEmergencyId = _emergencyId;
-        if (typeof App !== 'undefined') App.navigate('gps-tracking');
+        if (typeof App !== 'undefined') App.navigate('ultra-gps');
       }, 1800);
     } else {
       window.__mobyaPendingEmergencyId = _emergencyId;
-      if (typeof App !== 'undefined') App.navigate('gps-tracking');
+      if (typeof App !== 'undefined') App.navigate('ultra-gps');
     }
   }
 

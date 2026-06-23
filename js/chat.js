@@ -131,7 +131,7 @@ window.Chat = (() => {
             <strong>Emergência registrada</strong>
             <p>Buscando o prestador mais próximo automaticamente...</p>
           </div>
-          <button class="action-card-btn" onclick="App.navigate('gps-tracking')">Acompanhar</button>
+          <button class="action-card-btn" onclick="App.navigate('ultra-gps')">Acompanhar</button>
         </div>`;
     } else if (action.type === 'NEEDS_LOCATION') {
       html = `

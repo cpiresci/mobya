@@ -566,7 +566,7 @@
         const r = await API.emergency.create({ type: 'TOW', description: 'Solicitação de reboque via app MOBYA', ...coords });
         window.App?.toast('🚛 ' + (r.message || 'Motorista acionado! Acompanhe em tempo real.'), 'ok');
         window.__mobyaPendingEmergencyId = r.data?.id || null;
-        window.App?.navigate('gps-tracking');
+        window.App?.navigate('ultra-gps');
       } catch (e) {
         window.App?.toast(e?.message || 'Não foi possível acionar o reboque agora.', 'err');
       }
@@ -579,7 +579,7 @@
         const r = await API.emergency.create({ type: 'LOCKSMITH', description: 'Solicitação de chaveiro via app MOBYA', ...coords });
         window.App?.toast('🔑 ' + (r.message || 'Técnico acionado!'), 'ok');
         window.__mobyaPendingEmergencyId = r.data?.id || null;
-        window.App?.navigate('gps-tracking');
+        window.App?.navigate('ultra-gps');
       } catch (e) {
         window.App?.toast(e?.message || 'Não foi possível acionar o chaveiro agora.', 'err');
       }
@@ -592,7 +592,7 @@
         const r = await API.emergency.create({ type: 'FREIGHT', description: 'Solicitação de frete via app MOBYA', ...coords });
         window.App?.toast('🚚 ' + (r.message || 'Transportador acionado!'), 'ok');
         window.__mobyaPendingEmergencyId = r.data?.id || null;
-        window.App?.navigate('gps-tracking');
+        window.App?.navigate('ultra-gps');
       } catch (e) {
         window.App?.toast(e?.message || 'Não foi possível acionar o frete agora.', 'err');
       }
@@ -605,7 +605,7 @@
         const r = await API.emergency.create({ type: 'MECHANIC', description: 'Solicitação de mecânico de emergência via app MOBYA', ...coords });
         window.App?.toast('🔧 ' + (r.message || 'Mecânico acionado!'), 'ok');
         window.__mobyaPendingEmergencyId = r.data?.id || null;
-        window.App?.navigate('gps-tracking');
+        window.App?.navigate('ultra-gps');
       } catch (e) {
         window.App?.toast(e?.message || 'Não foi possível acionar o mecânico agora.', 'err');
       }

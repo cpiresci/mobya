@@ -660,17 +660,7 @@ window.Pages = (() => {
         if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc || ''}`);
         const emergencyId = created?.data?.id || null;
         window.__mobyaPendingEmergencyId = emergencyId;
-        const _u = (typeof MobyaAuth !== 'undefined') ? MobyaAuth.getUser() : null;
-        if (_u?.role === 'PROVIDER') {
-          App.navigate('gps-tracking');
-        } else {
-          const _base = (location.origin + location.pathname).replace(/\/[^/]*$/, '/') + 'ultra-map/';
-          const _p = new URLSearchParams();
-          if (emergencyId) _p.set('emergency', emergencyId);
-          const _tk = (typeof API !== 'undefined') ? API.getToken() : null;
-          if (_tk) _p.set('token', _tk);
-          window.location.href = _base + '?' + _p.toString();
-        }
+        App.navigate('ultra-gps');
       } catch(e) {
         btn.disabled = false;
         btn.textContent = '🚨 Acionar Agora';

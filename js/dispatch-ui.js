@@ -208,7 +208,7 @@ window.DispatchUI = (() => {
         if (typeof Toast !== 'undefined') Toast.show('✅ Oferta aceita! Abrindo GPS Tracking...', 'ok');
         window.__mobyaPendingEmergencyId = null;
         window.__mobyaTrackingSessionId = r?.data?.sessionId || null;
-        if (typeof App !== 'undefined') App.navigate('gps-tracking');
+        if (typeof App !== 'undefined') App.navigate('ultra-gps');
       } else {
         if (typeof Toast !== 'undefined') Toast.show(r?.error?.message || 'Oferta indisponível.', 'err');
       }
