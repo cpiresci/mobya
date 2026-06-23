@@ -228,14 +228,6 @@ const BASE_PAGES = {
     if (typeof UltraGPS!=='undefined') UltraGPS.render(sid);
     else comingSoon('ULTRA GPS','🛣️');
   },
-  'ultra-gps': () => {
-    const user = MobyaAuth.getUser();
-    if (!user) { MobyaAuth.showLogin('ultra-gps'); return; }
-    const sid = window.__mobyaTrackingSessionId || null;
-    window.__mobyaTrackingSessionId = null;
-    if (typeof UltraGPS!=='undefined') UltraGPS.render(sid);
-    else comingSoon('ULTRA GPS','🛣️');
-  },
   'admin-aprovacao': () => {
     const u = MobyaAuth.getUser();
     if (!u||!['ADMIN','SUPER_ADMIN'].includes(u.role)) { App.navigate('home'); return; }

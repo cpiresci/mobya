@@ -14,6 +14,7 @@ window.UltraGPS = (() => {
   const WS_BASE  = API_BASE.replace('/api/v1','').replace('https://','wss://').replace('http://','ws://');
 
   let socket=null, map=null, markers={}, watchId=null, sessionId=null, myRole=null, chatMsgs=[];
+  let sessionProviderId=null, sessionQuoteId=null, _ratingPrompted=false;
   let trailPts=[], _trailIds=[], _initialDistanceKm=null;
   let offlineBuffer=[], pollingTimer=null;
   const OFFLINE_POLL_MS=5000, OFFLINE_POLL_DELAY=10000, BUFFER_KEY='mobya_ultra_buf', TRAIL_MAX=12;
@@ -197,7 +198,8 @@ window.UltraGPS = (() => {
     socket.on('disconnect',()=>{ updateConnectionStatus('offline'); setTimeout(()=>{ if(!socket?.connected)_startPolling(); },OFFLINE_POLL_DELAY); });
     socket.on('connect_error',(e)=>{ console.warn('[UltraGPS]',e.message); updateConnectionStatus('reconectando'); });
     socket.on('session_joined',({role,session})=>{
-      myRole=role; _flushOwnPosition(); updateSessionStatus(session.status); _updateProviderControls(role);
+      myRole=role; sessionProviderId=session.providerId||null; sessionQuoteId=session.quoteId||null;
+      _flushOwnPosition(); updateSessionStatus(session.status); _updateProviderControls(role);
       addChatMessage({text:`Você entrou como ${role==='USER'?'Cliente':'Prestador'}.`,from:'Sistema',role:'SYSTEM',ts:Date.now()});
     });
     socket.on('location_update',({role,lat,lng,name,eta})=>{
@@ -208,6 +210,10 @@ window.UltraGPS = (() => {
       updateSessionStatus(status); const s=STATUS_LABEL[status];
       if(s)Toast.show(`${s.icon} ${s.text}`,status==='CONCLUIDO'?'ok':'info');
       if(['CONCLUIDO','CANCELADO'].includes(status))stopWatchingLocation();
+      if(status==='CONCLUIDO'&&myRole==='USER'&&!_ratingPrompted){
+        _ratingPrompted=true;
+        if(typeof RatingModal!=='undefined')setTimeout(()=>RatingModal.prompt(sessionProviderId,sessionId,sessionQuoteId),600);
+      }
     });
     socket.on('participant_online',({name})=>addChatMessage({text:`${name} entrou.`,from:'Sistema',role:'SYSTEM',ts:Date.now()}));
     socket.on('participant_offline',({role})=>addChatMessage({text:`${role==='USER'?'Cliente':'Prestador'} saiu.`,from:'Sistema',role:'SYSTEM',ts:Date.now()}));
@@ -367,6 +373,7 @@ window.UltraGPS = (() => {
   // ── Entrada principal — renderiza DENTRO do SPA (não abre aba nova) ──
   async function render(sid){
     const main=document.getElementById('main'); if(!main)return;
+    sessionProviderId=null; sessionQuoteId=null; _ratingPrompted=false;
     main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px - var(--bnh,0px));position:relative;overflow:hidden">
       <div id="ultraSosBanner">🚨 SOS ATIVO — aguardando resposta</div>
       <div style="flex:none;padding:6px 14px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
