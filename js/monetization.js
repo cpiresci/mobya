@@ -39,13 +39,17 @@ window.Monetization = (() => {
       rate: '18%',
       desc: 'Oficinas, concessionárias, auto centers, chaveiros, elétricos, borracheiros',
     },
-    RENTAL: {
+    FLEET_RENTAL: {
       icon: '🗝️', label: 'Locação de Veículos',
       color: 'var(--neon)', bg: 'rgba(0,245,255,.09)',
       border: 'rgba(0,245,255,.25)',
       rate: '5%',
       desc: 'Localiza, Unidas, Movida, Hertz, Avis, frotas PJ',
     },
+    // Alias legado: providers ainda não migrados ou cache antigo podem
+    // chegar com vertical='RENTAL' (locadora-empresa). Não confundir com
+    // o aluguel P2P cliente-x-cliente (RentalBooking), que é outro sistema.
+    get RENTAL() { return this.FLEET_RENTAL; },
     LOGISTICS: {
       icon: '🚛', label: 'Fretes & Reboques',
       color: 'var(--gold)', bg: 'rgba(251,191,36,.1)',
@@ -321,6 +325,7 @@ window.Monetization = (() => {
     const cached = providerId ? (window.__mobyaProviderCache || {})[providerId] : null;
     const providerName = cached?.name || providerNameFallback || 'Parceiro MOBYA';
     const vertical      = cached?.vertical || verticalFallback || 'SERVICE';
+    const isEmergency24h = !!cached?.emergency24h;
 
     const vm = VERTICAL_META[vertical] || VERTICAL_META.SERVICE;
 
@@ -363,11 +368,19 @@ window.Monetization = (() => {
             padding:10px 14px;border-radius:8px;font-size:.82rem;outline:none">
         </div>
         <div>
+          ${isEmergency24h ? `
+          <label style="font-size:.76rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+            letter-spacing:1px;display:block;margin-bottom:6px">ATENDIMENTO</label>
+          <div style="font-size:.74rem;color:var(--red);background:rgba(239,68,68,.08);
+            border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px 12px;line-height:1.3">
+            🚨 Este parceiro atende 24h via SOS/emergência.<br>Não é possível agendar.
+          </div>` : `
           <label style="font-size:.76rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
             letter-spacing:1px;display:block;margin-bottom:6px">AGENDAR PARA</label>
           <input id="qdate" type="datetime-local" style="
             width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
             padding:10px 14px;border-radius:8px;font-size:.82rem;outline:none;color-scheme:dark">
+          `}
         </div>
       </div>
 
@@ -393,7 +406,7 @@ window.Monetization = (() => {
       const prev = document.getElementById('qCommPreview');
       if (!prev) return;
       if (val > 0) {
-        const rate    = vertical === 'RENTAL' ? 0.05 : vertical === 'LOGISTICS' ? 0.15 : vertical === 'INSURANCE' ? 0.12 : 0.18;
+        const rate    = (vertical === 'FLEET_RENTAL' || vertical === 'RENTAL') ? 0.05 : vertical === 'LOGISTICS' ? 0.15 : vertical === 'INSURANCE' ? 0.12 : 0.18;
         const comm    = (val * rate).toFixed(2);
         prev.style.display = 'block';
         prev.innerHTML = `💰 Comissão MOBYA estimada: <strong>R$ ${parseFloat(comm).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> (${(rate*100).toFixed(0)}% de R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})})`;
@@ -412,7 +425,7 @@ window.Monetization = (() => {
     const btn  = document.getElementById('qSubmitBtn');
     const desc = document.getElementById('qdesc')?.value?.trim();
     const amt  = document.getElementById('qamount')?.value;
-    const dt   = document.getElementById('qdate')?.value;
+    const dt   = document.getElementById('qdate')?.value; // ausente quando provider é 24h (campo não é renderizado)
     const ins  = document.getElementById('qinsProduct')?.value;
 
     if (!desc) return toast('Descreva o serviço necessário.', 'warn');
@@ -1178,7 +1191,7 @@ window.Monetization = (() => {
   const qBadge = s => { const m=QSMETA[s]||{label:s,color:'var(--muted)',bg:'rgba(0,0,0,.2)',border:'rgba(255,255,255,.1)',icon:'•'}; return `<span style="display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:3px 10px;border-radius:4px;background:${m.bg};color:${m.color};border:1px solid ${m.border}">${m.icon} ${m.label}</span>`; };
   const cBadge = s => { const m=CSMETA[s]||{label:s,color:'var(--muted)',bg:'rgba(0,0,0,.2)'}; return `<span style="font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:2px 8px;border-radius:4px;background:${m.bg};color:${m.color}">${m.label}</span>`; };
 
-  const VMETA = { SERVICE:{icon:'🔧',color:'var(--q3)'}, RENTAL:{icon:'🗝️',color:'var(--neon)'}, LOGISTICS:{icon:'🚛',color:'var(--gold)'}, INSURANCE:{icon:'🛡️',color:'var(--green)'} };
+  const VMETA = { SERVICE:{icon:'🔧',color:'var(--q3)'}, FLEET_RENTAL:{icon:'🗝️',color:'var(--neon)'}, RENTAL:{icon:'🗝️',color:'var(--neon)'}, LOGISTICS:{icon:'🚛',color:'var(--gold)'}, INSURANCE:{icon:'🛡️',color:'var(--green)'} };
 
   // Subtipo dentro de cada vertical — usado pra "personalizar" o header do painel do prestador
   const CATEGORY_META = {
