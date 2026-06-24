@@ -68,13 +68,13 @@ const BASE_PAGES = {
   financiamento:     () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento()           : comingSoon('FINANCIAMENTO','💰')),
   consorcio:         () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderConsorcio()               : comingSoon('CONSÓRCIOS','🤝')),
   mecanico:          () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderMecanico()              : comingSoon('MECÂNICO','🔧')),
-  fretes:            () => (typeof PagesExtra !== 'undefined' && PagesExtra.renderFretes
-                              ? PagesExtra.renderFretes()
-                              : comingSoon('FRETES','🚚')),
+  fretes:            () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderFrete()   : comingSoon('FRETES','🚚')),
   'painel-anfitriao':() => (typeof RentalHost !== 'undefined' ? RentalHost.render()                     : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
   'minhas-reservas': () => (typeof RentalGuest!== 'undefined' ? RentalGuest.render()                    : comingSoon('MINHAS RESERVAS','📋')),
   'painel-prestador':() => (typeof Monetization!=='undefined' ? Monetization.renderProviderDashboard()  : comingSoon('PAINEL DO PRESTADOR','🛠️')),
   'admin-aprovacao': () => (typeof AdminApproval!=='undefined'? AdminApproval.render()                   : comingSoon('APROVAÇÃO DE PRESTADORES','✅')),
+  notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),
+  carteira:          () => (typeof WalletPage!=='undefined'        ? WalletPage.render()                 : comingSoon('CARTEIRA','💳')),
 };
 
 window.renderPage = function(page) {
