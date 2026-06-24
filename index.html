@@ -3,194 +3,1119 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="MOBYA — Motor de Inteligência Quântica Automotiva">
-<meta name="theme-color" content="#7c3aed">
-<title>MOBYA — Inteligência Quântica Automotiva</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260620b">
-<link rel="stylesheet" href="css/home-premium.css?v=20260620b">
-<link rel="stylesheet" href="css/auth-extra.css?v=20260621a">
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<title>Agentus — Inteligência OSINT + IA para Prospecção B2B</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00ff41;
+    --green-dim: #00cc33;
+    --blue: #00aaff;
+    --red: #ff3333;
+    --bg: #030303;
+    --bg2: #080808;
+    --bg3: #0d0d0d;
+    --border: rgba(0,255,65,.12);
+    --text: #c8c8c8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,.15) 2px,
+      rgba(0,0,0,.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    opacity: .4;
+  }
+
+  /* GRID BACKGROUND */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,65,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,65,.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 60px;
+    background: rgba(3,3,3,.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: var(--green);
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(0,255,65,.5);
+  }
+
+  .nav-logo span { color: #fff; }
+
+  .nav-links { display: flex; gap: 40px; align-items: center; }
+
+  .nav-links a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .85rem;
+    color: #666;
+    text-decoration: none;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color .3s;
+  }
+
+  .nav-links a:hover { color: var(--green); }
+
+  .nav-cta {
+    font-family: 'Orbitron', monospace;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #000 !important;
+    background: var(--green);
+    padding: 10px 24px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all .3s !important;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  .nav-cta:hover {
+    background: #fff !important;
+    box-shadow: 0 0 30px rgba(0,255,65,.6);
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(ellipse, rgba(0,255,65,.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .75rem;
+    color: var(--green);
+    border: 1px solid rgba(0,255,65,.3);
+    padding: 6px 16px;
+    letter-spacing: 3px;
+    margin-bottom: 32px;
+    animation: fadeDown .8s ease both;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: .9;
+    letter-spacing: -2px;
+    margin-bottom: 8px;
+    animation: fadeDown .8s .1s ease both;
+  }
+
+  .hero-title .line1 { color: #fff; display: block; }
+  .hero-title .line2 {
+    color: var(--green);
+    display: block;
+    text-shadow: 0 0 40px rgba(0,255,65,.4);
+    position: relative;
+  }
+
+  .hero-title .line2::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0; right: 0;
+    top: 4px;
+    color: rgba(0,255,65,.15);
+    filter: blur(8px);
+  }
+
+  .hero-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(.9rem, 2vw, 1.1rem);
+    color: #555;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    animation: fadeDown .8s .2s ease both;
+  }
+
+  .hero-desc {
+    max-width: 640px;
+    margin: 0 auto 48px;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #777;
+    animation: fadeDown .8s .3s ease both;
+  }
+
+  .hero-desc strong { color: #bbb; }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeDown .8s .4s ease both;
+  }
+
+  .btn-primary {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: .85rem;
+    color: #000;
+    background: var(--green);
+    padding: 16px 40px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-decoration: none;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+    transform: translateX(-100%);
+    transition: transform .4s;
+  }
+
+  .btn-primary:hover { box-shadow: 0 0 40px rgba(0,255,65,.5); }
+  .btn-primary:hover::after { transform: translateX(100%); }
+
+  .btn-secondary {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .85rem;
+    color: var(--green);
+    background: transparent;
+    border: 1px solid rgba(0,255,65,.3);
+    padding: 16px 40px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all .3s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--green);
+    background: rgba(0,255,65,.05);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 60px;
+    justify-content: center;
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+    animation: fadeDown .8s .5s ease both;
+  }
+
+  .stat-item { text-align: center; }
+
+  .stat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--green);
+    display: block;
+    text-shadow: 0 0 20px rgba(0,255,65,.3);
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .72rem;
+    color: #444;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* TERMINAL DEMO */
+  .terminal-section {
+    position: relative;
+    z-index: 1;
+    padding: 80px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .terminal {
+    background: #050505;
+    border: 1px solid rgba(0,255,65,.2);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(0,255,65,.05), 0 40px 80px rgba(0,0,0,.8);
+  }
+
+  .terminal-bar {
+    background: #0a0a0a;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(0,255,65,.1);
+  }
+
+  .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .t-dot.r { background: #ff5f57; }
+  .t-dot.y { background: #febc2e; }
+  .t-dot.g { background: #28c840; }
+
+  .terminal-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .78rem;
+    color: #444;
+    margin-left: 12px;
+    letter-spacing: 2px;
+  }
+
+  .terminal-body {
+    padding: 30px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .85rem;
+    line-height: 2;
+  }
+
+  .t-line { display: flex; gap: 12px; }
+  .t-prompt { color: var(--green); }
+  .t-cmd { color: #fff; }
+  .t-out { color: #555; padding-left: 24px; }
+  .t-out.hit { color: var(--green); }
+  .t-out.warn { color: #ffaa00; }
+  .t-out.info { color: var(--blue); }
+  .t-cursor {
+    display: inline-block;
+    width: 10px; height: 16px;
+    background: var(--green);
+    animation: blink 1s infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  /* HOW IT WORKS */
+  .section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .72rem;
+    color: var(--green);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 30px; height: 1px;
+    background: var(--green);
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+
+  .section-title span { color: var(--green); }
+
+  .section-desc {
+    font-size: 1.05rem;
+    color: #666;
+    max-width: 560px;
+    line-height: 1.8;
+    margin-bottom: 60px;
+  }
+
+  /* STEPS */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .step {
+    background: var(--bg2);
+    padding: 40px 32px;
+    position: relative;
+    transition: background .3s;
+  }
+
+  .step:hover { background: var(--bg3); }
+
+  .step-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(0,255,65,.08);
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+
+  .step-icon {
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .step-title {
+    font-family: 'Orbitron', monospace;
+    font-size: .9rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .step-desc {
+    font-size: .88rem;
+    color: #555;
+    line-height: 1.7;
+  }
+
+  .step-arrow {
+    position: absolute;
+    right: -20px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--green);
+    font-size: 1.2rem;
+    z-index: 2;
+    display: none;
+  }
+
+  /* FEATURES */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .feature {
+    background: var(--bg2);
+    padding: 36px;
+    transition: background .3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 0;
+    background: var(--green);
+    transition: height .4s;
+  }
+
+  .feature:hover { background: var(--bg3); }
+  .feature:hover::before { height: 100%; }
+
+  .feature-icon {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .feature-title {
+    font-family: 'Orbitron', monospace;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .feature-desc {
+    font-size: .87rem;
+    color: #555;
+    line-height: 1.7;
+  }
+
+  /* PRICING */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .plan {
+    background: var(--bg2);
+    padding: 48px 36px;
+    position: relative;
+    transition: background .3s;
+  }
+
+  .plan:hover { background: var(--bg3); }
+
+  .plan.featured {
+    background: #050505;
+    border: 1px solid rgba(0,255,65,.25);
+    margin: -1px;
+    z-index: 2;
+  }
+
+  .plan-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .68rem;
+    color: #000;
+    background: var(--green);
+    padding: 4px 12px;
+    letter-spacing: 2px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  .plan-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+
+  .plan-price {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--green);
+    margin-bottom: 4px;
+    text-shadow: 0 0 20px rgba(0,255,65,.2);
+  }
+
+  .plan-period {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .75rem;
+    color: #444;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  .plan-features { list-style: none; margin-bottom: 36px; }
+
+  .plan-features li {
+    font-size: .88rem;
+    color: #666;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .plan-features li::before {
+    content: '▸';
+    color: var(--green);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .plan-cta {
+    display: block;
+    font-family: 'Orbitron', monospace;
+    font-size: .75rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all .3s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  .plan-cta.primary {
+    background: var(--green);
+    color: #000;
+  }
+
+  .plan-cta.primary:hover {
+    box-shadow: 0 0 30px rgba(0,255,65,.4);
+  }
+
+  .plan-cta.outline {
+    border: 1px solid rgba(0,255,65,.25);
+    color: var(--green);
+    clip-path: none;
+  }
+
+  .plan-cta.outline:hover {
+    background: rgba(0,255,65,.05);
+    border-color: var(--green);
+  }
+
+  /* PAIN SECTION */
+  .pain-section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 40px;
+    background: linear-gradient(180deg, transparent, rgba(0,255,65,.02), transparent);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pain-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .pain-list { list-style: none; }
+
+  .pain-item {
+    display: flex;
+    gap: 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .pain-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+
+  .pain-text strong {
+    font-family: 'Orbitron', monospace;
+    font-size: .82rem;
+    color: #bbb;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .pain-text span { font-size: .85rem; color: #555; line-height: 1.6; }
+
+  /* TESTIMONIAL / QUOTE */
+  .quote-section {
+    position: relative;
+    z-index: 1;
+    padding: 80px 40px;
+    text-align: center;
+  }
+
+  .quote-mark {
+    font-family: 'Orbitron', monospace;
+    font-size: 6rem;
+    color: rgba(0,255,65,.08);
+    line-height: .8;
+    margin-bottom: 20px;
+  }
+
+  .quote-text {
+    font-size: 1.4rem;
+    color: #888;
+    max-width: 700px;
+    margin: 0 auto 24px;
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  .quote-text strong { color: #ddd; font-style: normal; }
+
+  /* CTA FINAL */
+  .cta-final {
+    position: relative;
+    z-index: 1;
+    padding: 120px 40px;
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(0,255,65,.04) 0%, transparent 70%);
+    border-top: 1px solid var(--border);
+  }
+
+  .cta-final h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 20px;
+    line-height: 1.1;
+  }
+
+  .cta-final h2 span { color: var(--green); }
+
+  .cta-final p {
+    color: #555;
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+
+  .free-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .75rem;
+    color: #444;
+    letter-spacing: 2px;
+    margin-top: 24px;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 40px 60px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(0,255,65,.3);
+  }
+
+  .footer-copy {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: .72rem;
+    color: #333;
+    letter-spacing: 2px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: .15;
+    margin: 0;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes glitch {
+    0%,100% { transform: translate(0); }
+    20%      { transform: translate(-2px, 1px); }
+    40%      { transform: translate(2px, -1px); }
+    60%      { transform: translate(-1px, 2px); }
+    80%      { transform: translate(1px, -2px); }
+  }
+
+  .glitch:hover { animation: glitch .3s steps(2) infinite; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .hero-stats { gap: 30px; flex-wrap: wrap; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .pain-inner { grid-template-columns: 1fr; gap: 40px; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
 </head>
-<body data-env="production">
+<body>
 
-<!-- LOADING -->
-<div class="ls" id="ls">
-  <div class="ls-box">
-    <div class="ls-logo">MOBYA</div>
-    <div class="ls-sub">QUANTUM ENGINE v3.0</div>
-    <div class="ls-bar"><div class="ls-fill" id="lsFill"></div></div>
-    <div class="ls-txt" id="lsTxt">Iniciando motor quântico...</div>
-  </div>
-</div>
-
-<!-- HEADER -->
-<header id="header">
-  <div class="h-left">
-    <div class="logo-ico" onclick="App.navigate('home')" style="cursor:pointer"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradHeader" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradHeader)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></div>
-    <div class="logo-wrap" onclick="App.navigate('home')" style="cursor:pointer">
-      <div class="logo">MOBYA</div>
-      <div class="logo-sub">QUANTUM ENGINE v3.0</div>
-    </div>
-  </div>
-  <nav id="nav">
-    <button class="nb active" data-page="home">Início</button>
-    <button class="nb" data-page="classificados">Classificados</button>
-    <button class="nb" data-page="pecas">Peças</button>
-    <button class="nb" data-page="aluguel">Aluguel</button>
-    <button class="nb" data-page="servicos">Serviços</button>
-    <button class="nb" data-page="agentes">Agentes IA</button>
-    <button class="nb nb-sos" data-page="emergencia">🚨 SOS</button>
-  </nav>
-  <div class="h-right">
-    <div class="q-status" id="apiStatus">
-      <div class="q-dot" id="apiDot"></div>
-      <span id="apiTxt">CONECTANDO</span>
-    </div>
-    <button class="btn-cta" id="btnCta" onclick="MobyaAuth.showLogin()">Entrar</button>
-    <button class="btn-notif" id="btnNotif" onclick="Notif.toggle()" style="display:none;position:relative;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:4px 6px">🔔<span id="notifBadge" style="display:none;position:absolute;top:0;right:0;background:var(--red,#f44);color:#fff;border-radius:50%;font-size:.6rem;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px">0</span></button>
-<button class="btn-menu" id="btnMenu" onclick="toggleMenu()">☰</button>
-  </div>
-</header>
-
-<!-- LAYOUT -->
-<div class="layout">
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sb-sec">
-      <div class="sb-lbl">Plataforma</div>
-      <div class="sb-item active" data-page="home">⬡ Painel Quântico</div>
-      <div class="sb-item" data-page="classificados">🚘 Comprar Carro <span class="sb-badge v" id="bdClassi">...</span></div>
-      <div class="sb-item" data-page="aluguel">🗝️ Alugar Carro <span class="sb-badge g">12</span></div>
-      <div class="sb-item" data-page="pecas">⚙️ Peças <span class="sb-badge b">128</span></div>
-      <div class="sb-item" data-page="servicos">🔨 Serviços</div>
-      <div class="sb-item" data-page="seguros">🛡️ Seguros <span class="sb-badge v">NOVO</span></div>
-      <div class="sb-item" data-page="consorcio">🤝 Consórcios</div>
-      <div class="sb-item" data-page="financiamento">💰 Financiamentos</div>
-    </div>
-    <div class="sb-div"></div>
-    <div class="sb-sec">
-      <div class="sb-lbl">Rede de Parceiros</div>
-      <div class="sb-item" data-page="monetizacao">🤝 Seja um Parceiro <span class="sb-badge g">Cadastre-se</span></div>
-      <div class="sb-item sb-role-mechanic" data-page="painel-prestador" id="sbPainelPrestador" style="display:none">🛠️ Painel do Prestador</div>
-      <div class="sb-item sb-role-mechanic" data-page="carteira" id="sbCarteira" style="display:none">💳 Minha Carteira</div>
-      <div class="sb-item sb-role-admin" data-page="admin-aprovacao" id="sbAdminAprov" style="display:none">✅ Aprovar Prestadores <span class="sb-badge r" id="sbPendingBadge" style="display:none">0</span></div>
-      <div class="sb-item sb-role-admin" data-page="painel-receita" id="sbPainelReceita" style="display:none">📊 Painel de Receita</div>
-    </div>
-    <div class="sb-div"></div>
-    <div class="sb-sec">
-      <div class="sb-lbl">Emergência 24H</div>
-      <div class="sb-item sb-sos" data-page="emergencia">🚨 Central SOS <span class="sb-badge r">24H</span></div>
-      <div class="sb-item" data-page="reboque">🚛 Reboque e Guincho</div>
-      <div class="sb-item" data-page="fretes">🚚 Frete</div>
-      <div class="sb-item" data-page="chaveiro">🔑 Chaveiro</div>
-      <div class="sb-item" data-page="mecanico">🔧 Mecânico</div>
-    </div>
-    <div class="sb-div"></div>
-    <div class="sb-sec">
-      <div class="sb-lbl">Ferramentas</div>
-      <div class="sb-item" data-page="garagem">🚗 Minha Garagem</div>
-      <div class="sb-item" data-page="calculadoras">🧮 Calculadoras</div>
-      <div class="sb-item" data-page="vistoria">🔍 Vistoria & Laudo</div>
-      <div class="sb-item" data-page="documentacao">📋 Documentação</div>
-      <div class="sb-item sb-auth-only" id="sbPainelAnfitriao" data-page="painel-anfitriao" style="display:none">🗝️ Meu Painel de Aluguel</div>
-      <div class="sb-item sb-auth-only" id="sbMinhasReservas" data-page="minhas-reservas" style="display:none">📋 Minhas Reservas</div>
-    </div>
-    <div class="sb-div"></div>
-    <div class="sb-sec">
-      <div class="sb-lbl">Motor de IA</div>
-      
-      <div class="sb-item" data-page="chat">💬 Chat Quântico</div>
-      <div class="sb-item" data-page="dashboard">📊 Dashboard</div>
-      <div class="sb-item" data-page="ultra-gps">🛣️ Ultra GPS</div>
-    </div>
-    <div class="sb-status">
-      <div class="sbs-title">◈ MOTOR QUÂNTICO</div>
-      <div class="sbs-row"><span>9 Agentes NEXUS</span><span class="sbs-on">● ATIVOS</span></div>
-      <div class="sbs-row"><span>SambaNova</span><span class="sbs-on" id="sbSambanova">● –</span></div>
-      <div class="sbs-row"><span>Cerebras</span><span class="sbs-on" id="sbCerebras">● –</span></div>
-      <div class="sbs-row"><span>Gemini</span><span class="sbs-on" id="sbGemini">● –</span></div>
-      <div class="sbs-row"><span>OpenRouter</span><span class="sbs-on" id="sbOpenRouter">● –</span></div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main id="main"></main>
-</div>
-
-<!-- AUTH MODAL -->
-<div class="modal-bg" id="authModal">
-  <div class="modal">
-    <button class="modal-close" onclick="MobyaAuth.closeModal()">✕</button>
-    <div id="authContent"></div>
-  </div>
-</div>
-
-<!-- MODAIS -->
-<div id="modals"></div>
-
-<!-- BOTTOM NAV (mobile) -->
-<nav id="bottom-nav">
-  <div class="bn-wrap">
-    <button class="bn-item active" data-page="home">
-      <span class="bn-ico bn-ico-mark"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradNav" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradNav)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></span><span>Início</span>
-    </button>
-    <button class="bn-item" data-page="classificados">
-      <span class="bn-ico">🚘</span><span>Autos</span>
-    </button>
-    <button class="bn-item" data-page="chat">
-      <span class="bn-ico">💬</span><span>Chat IA</span>
-      <span class="bn-dot" id="bnDotChat"></span>
-    </button>
-    <button class="bn-item bn-sos" data-page="emergencia">
-      <span class="bn-ico">🚨</span><span>SOS</span>
-    </button>
-    <button class="bn-item" id="bnMenuBtn" onclick="toggleBnMenu()">
-      <span class="bn-ico">☰</span><span>Menu</span>
-    </button>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo glitch">🦅 <span>AGENTUS</span></div>
+  <div class="nav-links">
+    <a href="#how">Como funciona</a>
+    <a href="#features">Funcionalidades</a>
+    <a href="#pricing">Planos</a>
+    <a href="https://huggingface.co/spaces/pirescl/agentus-dominator" class="nav-cta">INICIAR GRÁTIS</a>
   </div>
 </nav>
 
-<!-- SCRIPTS -->
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div>
+    <div class="hero-badge">SISTEMA OPERACIONAL · V.200 · ONLINE</div>
+    <h1 class="hero-title">
+      <span class="line1">PROSPECTE COM</span>
+      <span class="line2" data-text="INTELIGÊNCIA">INTELIGÊNCIA</span>
+    </h1>
+    <p class="hero-sub">OSINT + IA · Cold Email · Prospecção B2B</p>
+    <p class="hero-desc">
+      O Agentus <strong>pesquisa a empresa alvo</strong>, extrai dados reais do site, cruza com informações do Google e usa IA para identificar as dores do negócio e <strong>escrever o cold email certo</strong> — em segundos.
+    </p>
+    <div class="hero-actions">
+      <a href="https://huggingface.co/spaces/pirescl/agentus-dominator" class="btn-primary">⚡ COMEÇAR GRÁTIS</a>
+      <a href="#how" class="btn-secondary">VER COMO FUNCIONA</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">3</span>
+        <span class="stat-label">Buscas grátis</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">&lt;60s</span>
+        <span class="stat-label">Por análise</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">GPT-4o</span>
+        <span class="stat-label">Motor de IA</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">0</span>
+        <span class="stat-label">Cartão necessário</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TERMINAL DEMO -->
+<div class="terminal-section">
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="t-dot r"></div>
+      <div class="t-dot y"></div>
+      <div class="t-dot g"></div>
+      <span class="terminal-title">agentus · radar · scan</span>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="t-prompt">▸</span><span class="t-cmd">agentus scan --nicho "Agência de Marketing Digital" --cidade "São Paulo" --depth 20</span></div>
+      <div class="t-out">Iniciando varredura OSINT...</div>
+      <div class="t-out hit">✓ 20 alvos identificados em 3.2s</div>
+      <div class="t-out">Analisando alvo: MKT Digital SP Ltda</div>
+      <div class="t-out info">→ Crawler: emails=2 | telefones=1 | social=3 | H1=5</div>
+      <div class="t-out info">→ Google enrichment: avaliações=47 | menções=12</div>
+      <div class="t-out">Processando com GPT-4o-mini...</div>
+      <div class="t-out hit">✓ DOR 1: Sem ranqueamento no Google para termos locais</div>
+      <div class="t-out hit">✓ DOR 2: Instagram desatualizado — último post há 3 semanas</div>
+      <div class="t-out hit">✓ DOR 3: Site sem conversão — nenhum formulário visível</div>
+      <div class="t-out">Gerando cold email personalizado...</div>
+      <div class="t-out hit">✓ Email pronto — 147 palavras · 0 clichês · 1 pergunta direta</div>
+      <div class="t-line"><span class="t-prompt">▸</span><span class="t-cursor"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAIN SECTION -->
+<section class="pain-section" id="how">
+  <div class="pain-inner">
+    <div>
+      <div class="section-label">O PROBLEMA</div>
+      <h2 class="section-title">Emails <span>genéricos</span> não convertem.</h2>
+      <p class="section-desc">Times de vendas perdem horas pesquisando prospects — e ainda assim mandam templates que ninguém abre.</p>
+    </div>
+    <ul class="pain-list">
+      <li class="pain-item">
+        <span class="pain-icon">⏱️</span>
+        <div class="pain-text">
+          <strong>30 MINUTOS POR PROSPECT</strong>
+          <span>Pesquisar no Google, copiar email, tentar entender o negócio — para mandar um email que vai para o lixo.</span>
+        </div>
+      </li>
+      <li class="pain-item">
+        <span class="pain-icon">📨</span>
+        <div class="pain-text">
+          <strong>TEMPLATES QUE NÃO ABREM</strong>
+          <span>"Nossa equipe de especialistas..." — todo mundo manda a mesma coisa. Ninguém lê.</span>
+        </div>
+      </li>
+      <li class="pain-item">
+        <span class="pain-icon">🎯</span>
+        <div class="pain-text">
+          <strong>SEM PERSONALIZAÇÃO REAL</strong>
+          <span>Trocar o nome não é personalização. Saber a dor específica daquele negócio é.</span>
+        </div>
+      </li>
+      <li class="pain-item">
+        <span class="pain-icon">💸</span>
+        <div class="pain-text">
+          <strong>CUSTO DE OPORTUNIDADE ALTO</strong>
+          <span>Cada email genérico enviado é uma porta fechada para sempre com aquele prospect.</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="section-label">COMO FUNCIONA</div>
+  <h2 class="section-title">De zero ao <span>email perfeito</span><br>em 4 passos.</h2>
+  <p class="section-desc">O Agentus automatiza toda a inteligência comercial que você faria manualmente.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <span class="step-icon">🛰️</span>
+      <div class="step-title">RADAR</div>
+      <div class="step-desc">Digite o nicho e a cidade. O Agentus varre o Google e encontra empresas reais com contatos em segundos.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <span class="step-icon">🧠</span>
+      <div class="step-title">INTEL</div>
+      <div class="step-desc">Crawler analisa o site do alvo — emails, redes sociais, headings, tecnologias e conteúdo. Cruzado com dados do Google.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <span class="step-icon">🤖</span>
+      <div class="step-title">IA</div>
+      <div class="step-desc">GPT-4o-mini identifica 3 dores reais do negócio e escreve um cold email personalizado — usando só dados coletados, sem inventar.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <span class="step-icon">🎯</span>
+      <div class="step-title">SNIPER</div>
+      <div class="step-desc">Revise, edite e dispare o email diretamente da plataforma. Ou copie e envie pelo seu Gmail.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-label">FUNCIONALIDADES</div>
+  <h2 class="section-title">Tudo que você precisa<br>para <span>prospectar</span> melhor.</h2>
+
+  <div class="features-grid">
+    <div class="feature">
+      <span class="feature-icon">🔍</span>
+      <div class="feature-title">BUSCA OSINT</div>
+      <div class="feature-desc">Varre o Google com profundidade de até 20 resultados usando paginação real. Encontra empresas que seus concorrentes não acharam.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🕷️</span>
+      <div class="feature-title">DEEP CRAWLER</div>
+      <div class="feature-desc">Extrai emails, telefones, redes sociais, H1/H2, anos de experiência e número de clientes diretamente do site da empresa.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🌐</span>
+      <div class="feature-title">ENRIQUECIMENTO GOOGLE</div>
+      <div class="feature-desc">Busca avaliações, menções e dados públicos da empresa no Google para enriquecer o contexto da IA.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">✍️</span>
+      <div class="feature-title">COLD EMAIL COM IA</div>
+      <div class="feature-desc">GPT-4o-mini com prompt cirúrgico que proíbe clichês, exige especificidade e termina com pergunta de sim/não.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">📧</span>
+      <div class="feature-title">DISPARO REAL</div>
+      <div class="feature-desc">Integração com SendGrid para disparar emails diretamente da plataforma nos planos Starter e Pro.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🔗</span>
+      <div class="feature-title">LINKS VIRAIS</div>
+      <div class="feature-desc">Gere relatórios públicos compartilháveis. Quem abrir o link vira lead do Agentus automaticamente.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">📊</span>
+      <div class="feature-title">EXPORT PDF & CSV</div>
+      <div class="feature-desc">Exporte dossiês completos em PDF e listas de leads em CSV para usar no seu CRM favorito.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⚡</span>
+      <div class="feature-title">FALLBACK GROQ</div>
+      <div class="feature-desc">Se a OpenAI estiver indisponível, o Llama 3.3 70B via Groq assume automaticamente. 100% de uptime.</div>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🔐</span>
+      <div class="feature-title">BANCO PERSISTENTE</div>
+      <div class="feature-desc">PostgreSQL na nuvem via Neon. Seus leads e histórico nunca somem — mesmo se o servidor reiniciar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote-section">
+  <div class="quote-mark">"</div>
+  <p class="quote-text">
+    A diferença entre um cold email que converte e um que vai para o lixo não é o produto.<br>
+    É <strong>o quanto você conhece o prospect antes de falar com ele.</strong>
+  </p>
+  <div class="section-label" style="justify-content:center;">Cleiton Pires · Fundador, Agentus</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="section-label">PLANOS</div>
+  <h2 class="section-title">Preço justo para<br>cada <span>estágio.</span></h2>
+
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="plan-name">FREE</div>
+      <div class="plan-price">R$ 0</div>
+      <div class="plan-period">PARA SEMPRE</div>
+      <ul class="plan-features">
+        <li>3 buscas para experimentar</li>
+        <li>Análise básica com IA</li>
+        <li>Export PDF</li>
+        <li>Link viral</li>
+        <li>Sem cartão de crédito</li>
+      </ul>
+      <a href="https://huggingface.co/spaces/pirescl/agentus-dominator" class="plan-cta outline">COMEÇAR GRÁTIS</a>
+    </div>
+    <div class="plan featured">
+      <div class="plan-badge">MAIS POPULAR</div>
+      <div class="plan-name">STARTER</div>
+      <div class="plan-price">R$ 49</div>
+      <div class="plan-period">POR MÊS</div>
+      <ul class="plan-features">
+        <li>50 buscas por mês</li>
+        <li>Relatório completo</li>
+        <li>Disparo de email real</li>
+        <li>Export CSV</li>
+        <li>Histórico completo</li>
+      </ul>
+      <a href="https://huggingface.co/spaces/pirescl/agentus-dominator" class="plan-cta primary">ASSINAR STARTER</a>
+    </div>
+    <div class="plan">
+      <div class="plan-name">PRO</div>
+      <div class="plan-price">R$ 149</div>
+      <div class="plan-period">POR MÊS</div>
+      <ul class="plan-features">
+        <li>Buscas ilimitadas</li>
+        <li>Análise profunda + follow-up</li>
+        <li>Análise de concorrência</li>
+        <li>Disparo ilimitado</li>
+        <li>White-label</li>
+      </ul>
+      <a href="https://huggingface.co/spaces/pirescl/agentus-dominator" class="plan-cta outline">ASSINAR PRO</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <h2>Comece a prospectar<br>com <span>inteligência</span>.</h2>
+  <p>3 buscas gratuitas. Sem cartão. Sem compromisso.<br>Veja o Agentus funcionar em menos de 2 minutos.</p>
+  <a href="https://huggingface.co/spaces/pirescl/agentus-dominator" class="btn-primary">⚡ CRIAR CONTA GRÁTIS</a>
+  <div class="free-tag">▸ SEM CARTÃO · SEM CONTRATO · CANCELE QUANDO QUISER</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🦅 AGENTUS</div>
+  <div class="footer-copy">© 2026 AGENTUS · OMNI INTELLIGENCE V.200 · TODOS OS DIREITOS RESERVADOS</div>
+</footer>
+
 <script>
-  window.MOBYA = {
-    API: location.hostname==='localhost'||location.hostname==='127.0.0.1'
-      ? 'http://localhost:4000'
-      : 'https://mobya.onrender.com',
-    VERSION: '5.2.0',  // patches 22/06/2026
-    // Opcional: defina um token público Mapbox (pk.eyJ...) para pular o gate de token no GPS Tracking.
-    // Sem isso, o usuário insere o próprio token uma vez e ele fica salvo no localStorage do navegador.
-    MAPBOX_TOKEN: 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw',
-  };
+  // Animate stats counter on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.step, .feature, .plan').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+
+  // Terminal typewriter effect
+  const lines = document.querySelectorAll('.terminal-body .t-out');
+  lines.forEach((line, i) => {
+    line.style.opacity = '0';
+    setTimeout(() => {
+      line.style.transition = 'opacity .3s';
+      line.style.opacity = '1';
+    }, 800 + i * 300);
+  });
 </script>
-<script src="js/api.js?v=20260621b"></script>
-<script src="js/auth.js?v=20260620b"></script>
-<script src="js/pages.js?v=20260624a"></script>
-<script src="js/home-premium.js?v=20260619e"></script>
-<script src="js/chat.js?v=20260620b"></script>
-<script src="js/calc.js?v=20260620b"></script>
-<script src="js/pages-extra.js?v=20260622b"></script>
-<script src="js/pages-monetize.js?v=20260619f"></script>
-<script src="js/monetization.js?v=20260620a"></script>
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="js/admin-approval.js?v=20260620b"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="js/rating-modal.js?v=20260623a"></script>
-<script src="js/ultra-gps.js?v=1782185647"></script>
-<!-- home-chat ANTES de app.js para que HomeChat esteja disponível no init -->
-<script src="js/home-chat.js?v=20260620b"></script>
-<script src="js/garagem.js?v=20260621a"></script>
-<script src="js/sos-alarm.js?v=20260624a"></script>
-<script src="js/dispatch-ui.js?v=20260622b"></script>
-<script src="js/app.js?v=20260624a"></script>
-  <script src="js/emergency-payment.js?v=20260621a"></script>
-  <script src="js/wallet-page.js?v=20260621a"></script>
-  <script src="js/rental-host.js?v=20260622b"></script>
-  <script src="js/rental-guest.js?v=20260622b"></script>
-  <script src="js/notifications.js?v=20260622a"></script>
-  <script src="js/notificacoes-page.js?v=20260622a"></script>
+
 </body>
 </html>
