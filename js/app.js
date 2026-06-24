@@ -63,19 +63,7 @@ const BASE_PAGES = {
   reboque:       () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderReboque()  : comingSoon('REBOQUE & GUINCHO','🚛')),
   chaveiro:      () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderChaveiro() : comingSoon('CHAVEIRO AUTOMOTIVO','🔑')),
   seguros:       () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderSeguros()    : comingSoon('SEGUROS','🛡️')),
-  'gps-tracking': () => { window.location.hash='#ultra-gps'; window.renderPage('ultra-gps'); },
-  'ultra-gps':    () => { if(typeof UltraGPS!=='undefined'){ const s=window.__mobyaTrackingSessionId||null; window.__mobyaTrackingSessionId=null; UltraGPS.render(s); } },
-  financiamento:     () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento()           : comingSoon('FINANCIAMENTO','💰')),
-  consorcio:         () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderConsorcio()               : comingSoon('CONSÓRCIOS','🤝')),
-  mecanico:          () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderMecanico()              : comingSoon('MECÂNICO','🔧')),
-  fretes:            () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderFrete()   : comingSoon('FRETES','🚚')),
-  'painel-anfitriao':() => (typeof RentalHost !== 'undefined' ? RentalHost.render()                     : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
-  'minhas-reservas': () => (typeof RentalGuest!== 'undefined' ? RentalGuest.render()                    : comingSoon('MINHAS RESERVAS','📋')),
-  'painel-prestador':() => (typeof Monetization!=='undefined' ? Monetization.renderProviderDashboard()  : comingSoon('PAINEL DO PRESTADOR','🛠️')),
-  'admin-aprovacao': () => (typeof AdminApproval!=='undefined'? AdminApproval.render()                   : comingSoon('APROVAÇÃO DE PRESTADORES','✅')),
-  'meus-anuncios':   () => App.navigate('dashboard'),  // alias → dashboard tem seção de anúncios
-  notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),
-  carteira:          () => (typeof WalletPage!=='undefined'        ? WalletPage.render()                 : comingSoon('CARTEIRA','💳')),
+  financiamento: () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento() : comingSoon('FINANCIAMENTO','💰')),
 };
 
 window.renderPage = function(page) {
@@ -118,9 +106,6 @@ window.App = (() => {
     document.getElementById('header')?.classList.toggle('menu-open');
   }
   window.toggleMenu = toggleMenu;
-  // Fix: #bnMenuBtn (item "Menu" da bottom-nav mobile) chamava
-  // toggleBnMenu(), função que nunca existiu — menu não abria no celular.
-  window.toggleBnMenu = toggleMenu;
 
   function bindNavigation() {
     document.querySelectorAll('[data-page]').forEach(el => {
@@ -133,9 +118,8 @@ window.App = (() => {
     document.addEventListener('click', ev => {
       const sidebar = document.getElementById('sidebar');
       const btn = document.getElementById('btnMenu');
-      const bnBtn = document.getElementById('bnMenuBtn');
       if (!sidebar || !sidebar.classList.contains('open')) return;
-      if (sidebar.contains(ev.target) || ev.target === btn || ev.target.closest?.('#btnMenu, #bnMenuBtn')) return;
+      if (sidebar.contains(ev.target) || ev.target === btn) return;
       closeMenu();
     });
   }

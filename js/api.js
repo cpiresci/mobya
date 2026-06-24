@@ -34,50 +34,39 @@ window.API = (() => {
     logout:   ()     => post('/auth/logout',   {}),
     me:       ()     => get('/auth/me'),
     updateMe: (d)    => patch('/auth/me',      d),
-    updatePassword: (d) => patch('/auth/password',          d),
     forgotPassword: (d) => post('/auth/forgot-password', d),
     resetPassword:  (d) => post('/auth/reset-password',  d),
   };
 
   const ai = {
-    agents:        ()     => get('/ai/agents'),
-    providers:     ()     => get('/ai/providers'),
-    chat:          (d)    => post('/ai/chat',                 d),
-    diagnose:      (d)    => post('/ai/diagnose',             d),
-    fraud:         (d)    => post('/ai/fraud-analysis',       d),
-    insurance:     (d)    => post('/ai/insurance-score',      d),
-    financing:     (d)    => post('/ai/financing-simulation', d),
-    conversations: (p={}) => get(`/ai/conversations?${new URLSearchParams(p)}`),
-    conversation:  (id)   => get(`/ai/conversations/${id}`),
-    deleteConversation: (id) => del(`/ai/conversations/${id}`),
+    agents:      ()  => get('/ai/agents'),
+    providers:   ()  => get('/ai/providers'),
+    chat:        (d) => post('/ai/chat',                 d),
+    diagnose:    (d) => post('/ai/diagnose',             d),
+    fraud:       (d) => post('/ai/fraud-analysis',       d),
+    insurance:   (d) => post('/ai/insurance-score',      d),
+    financing:   (d) => post('/ai/financing-simulation', d),
   };
 
   const listings = {
-    search:    (p={}) => get(`/listings?${new URLSearchParams(p)}`),
-    get:       (id)   => get(`/listings/${id}`),
-    create:    (d)    => post('/listings', d),
-    update:    (id,d) => put(`/listings/${id}`, d),
-    remove:    (id)   => del(`/listings/${id}`),
-    favorite:  (id)   => post(`/listings/${id}/favorite`, {}),
-    mine:      (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
-    favorites: (p={}) => get(`/listings/favorites?${new URLSearchParams(p)}`),
+    search:   (p={}) => get(`/listings?${new URLSearchParams(p)}`),
+    get:      (id)   => get(`/listings/${id}`),
+    create:   (d)    => post('/listings', d),
+    update:   (id,d) => put(`/listings/${id}`, d),
+    remove:   (id)   => del(`/listings/${id}`),
+    favorite: (id)   => post(`/listings/${id}/favorite`, {}),
+    mine:     (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
   };
 
   const emergency = {
-    create:          (d)    => post('/emergency', d),
-    mine:            (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
-    update:          (id,d) => patch(`/emergency/${id}/status`, d),
-    myOffers:        ()     => get('/emergency/my-offers'),
-    // Fase 5 — pagamento do cliente
-    initiatePayment: (id)   => post(`/emergency/${id}/initiate-payment`),
-    paymentStatus:   (id)   => get(`/emergency/${id}/payment-status`),
-    refund:          (id)   => post(`/emergency/${id}/refund`),
+    create:  (d)    => post('/emergency', d),
+    mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
+    update:  (id,d) => patch(`/emergency/${id}/status`, d),
+    myOffers:()     => get('/emergency/my-offers'),
     nearby:  (lat, lng, opts={}) =>
       get(`/emergency/nearby?latitude=${lat}&longitude=${lng}` +
           `&radiusKm=${opts.radiusKm||50}` +
           (opts.vertical ? `&vertical=${opts.vertical}` : '')),
-    dispatchStatus: (id) => get(`/emergency/${id}/dispatch-status`),
-    mockPay:        (id) => post(`/emergency/${id}/mock-pay`, {}),
   };
 
   const monetization = {
@@ -98,19 +87,9 @@ window.API = (() => {
     dashboard:        ()       => get('/monetization/dashboard'),
     simulateInsurance:(d)      => post('/monetization/insurance/simulate', d),
     quoteLogistics:   (d)      => post('/monetization/logistics/quote', d),
-    quoteParts:       (d)      => post('/monetization/parts/quote', d),
     chargeCommission: (id)     => post(`/monetization/commissions/${id}/charge`, {}),
     getPayment:       (id)     => get(`/monetization/commissions/${id}/payment`),
     pendingPayments:  ()       => get('/monetization/commissions/pending-payment'),
-  };
-
-  const vehicle = {
-    list:           ()       => get('/vehicles'),
-    get:            (id)     => get(`/vehicles/${id}`),
-    create:         (d)      => post('/vehicles', d),
-    update:         (id,d)   => patch(`/vehicles/${id}`, d),
-    remove:         (id)     => del(`/vehicles/${id}`),
-    addMaintenance: (id,d)   => post(`/vehicles/${id}/maintenances`, d),
   };
 
   function pollEmergency(emergencyId, onUpdate, intervalMs = 10000) {
@@ -167,53 +146,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  // Fase 5 — carteira do prestador
-  const wallet = {
-    balance:        ()           => get('/wallet/balance'),
-    transactions:   (p={})       => get(`/wallet/transactions?${new URLSearchParams(p)}`),
-    withdraw:       (d)          => post('/wallet/withdraw', d),
-    withdrawals:    ()           => get('/wallet/withdrawals'),
-    approveSaque:   (id, d)      => patch(`/wallet/withdrawals/${id}`, d),
-    releasePending: ()           => post('/wallet/release-pending', {}),
-  };
-
-
-  const rental = {
-    createConfig:   (d)      => post('/rental/configs', d),
-    myConfigs:      (p={})   => get(`/rental/configs/mine?${new URLSearchParams(p)}`),
-    getConfig:      (id)     => get(`/rental/configs/${id}`),
-    getConfigByListing: (lid) => get(`/rental/configs/listing/${lid}`),
-    updateConfig:   (id,d)   => patch(`/rental/configs/${id}`, d),
-    deleteConfig:   (id)     => del(`/rental/configs/${id}`),
-    previewPrice:   (p={})   => get(`/rental/preview-price?${new URLSearchParams(p)}`),
-    createBooking:  (d)      => post('/rental/bookings', d),
-    myBookings:     (p={})   => get(`/rental/bookings/mine?${new URLSearchParams(p)}`),
-    hostBookings:   (p={})   => get(`/rental/bookings/host?${new URLSearchParams(p)}`),
-    getBooking:     (id)     => get(`/rental/bookings/${id}`),
-    confirmBooking: (id)     => patch(`/rental/bookings/${id}/confirm`, {}),
-    declineBooking: (id,d)   => patch(`/rental/bookings/${id}/decline`, d||{}),
-    checkinBooking: (id)     => patch(`/rental/bookings/${id}/checkin`, {}),
-    checkoutBooking:(id)     => patch(`/rental/bookings/${id}/checkout`, {}),
-    cancelBooking:  (id,d)   => patch(`/rental/bookings/${id}/cancel`, d||{}),
-    cancelPaidBooking: (id,d) => patch(`/rental/bookings/${id}/cancel-paid`, d||{}),
-    payBooking:     (id)     => post(`/rental/bookings/${id}/pay`),
-    mockPayBooking: (id)     => post(`/rental/bookings/${id}/mock-pay`),
-  };
-
-
-  const notifications = {
-    list:       (p={}) => get(`/notifications?${new URLSearchParams(p)}`),
-    unread:     ()     => get('/notifications/unread-count'),
-    markRead:   (id)   => patch(`/notifications/${id}/read`, {}),
-    markAll:    ()     => patch('/notifications/read-all', {}),
-  };
-
-  const tracking = {
-    sessionHistory: (id) => get(`/tracking/sessions/${id}/history`),
-  };
-
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, notifications, tracking, pollEmergency, ping,
-    // Alias raiz — rating-modal.js chama API.rateProvider(...) diretamente
-    rateProvider: (id, d) => monetization.rateProvider(id, d),
-  };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, pollEmergency, ping };
 })();
