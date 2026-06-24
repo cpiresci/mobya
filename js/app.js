@@ -63,6 +63,8 @@ const BASE_PAGES = {
   reboque:       () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderReboque()  : comingSoon('REBOQUE & GUINCHO','🚛')),
   chaveiro:      () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderChaveiro() : comingSoon('CHAVEIRO AUTOMOTIVO','🔑')),
   seguros:       () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderSeguros()    : comingSoon('SEGUROS','🛡️')),
+  'gps-tracking': () => { window.location.hash='#ultra-gps'; window.renderPage('ultra-gps'); },
+  'ultra-gps':    () => { if(typeof UltraGPS!=='undefined'){ const s=window.__mobyaTrackingSessionId||null; window.__mobyaTrackingSessionId=null; UltraGPS.render(s); } },
   financiamento: () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento() : comingSoon('FINANCIAMENTO','💰')),
 };
 
