@@ -1,175 +1,197 @@
-// ============================================================
-// MOBYA — app.js (Quantum Engine v3.0)
-// ============================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="MOBYA — Motor de Inteligência Quântica Automotiva">
+<meta name="theme-color" content="#7c3aed">
+<title>MOBYA — Inteligência Quântica Automotiva</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20260620b">
+<link rel="stylesheet" href="css/home-premium.css?v=20260620b">
+<link rel="stylesheet" href="css/auth-extra.css?v=20260621a">
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body data-env="production">
 
-window.Toast = (() => {
-  function ensureWrap() {
-    let wrap = document.getElementById('toastWrap');
-    if (!wrap) {
-      wrap = document.createElement('div');
-      wrap.id = 'toastWrap';
-      wrap.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:340px';
-      document.body.appendChild(wrap);
-    }
-    return wrap;
-  }
-  const COLORS = {
-    ok:   { bg:'rgba(16,185,129,.12)', border:'rgba(16,185,129,.35)', text:'#10b981' },
-    err:  { bg:'rgba(239,68,68,.12)',  border:'rgba(239,68,68,.35)',  text:'#ef4444' },
-    warn: { bg:'rgba(245,158,11,.12)', border:'rgba(245,158,11,.35)', text:'#f59e0b' },
-    info: { bg:'rgba(124,58,237,.12)', border:'rgba(124,58,237,.35)', text:'#a78bfa' },
+<!-- LOADING -->
+<div class="ls" id="ls">
+  <div class="ls-box">
+    <div class="ls-logo">MOBYA</div>
+    <div class="ls-sub">QUANTUM ENGINE v3.0</div>
+    <div class="ls-bar"><div class="ls-fill" id="lsFill"></div></div>
+    <div class="ls-txt" id="lsTxt">Iniciando motor quântico...</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="h-left">
+    <div class="logo-ico" onclick="App.navigate('home')" style="cursor:pointer"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradHeader" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradHeader)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></div>
+    <div class="logo-wrap" onclick="App.navigate('home')" style="cursor:pointer">
+      <div class="logo">MOBYA</div>
+      <div class="logo-sub">QUANTUM ENGINE v3.0</div>
+    </div>
+  </div>
+  <nav id="nav">
+    <button class="nb active" data-page="home">Início</button>
+    <button class="nb" data-page="classificados">Classificados</button>
+    <button class="nb" data-page="pecas">Peças</button>
+    <button class="nb" data-page="aluguel">Aluguel</button>
+    <button class="nb" data-page="servicos">Serviços</button>
+    <button class="nb" data-page="agentes">Agentes IA</button>
+    <button class="nb nb-sos" data-page="emergencia">🚨 SOS</button>
+  </nav>
+  <div class="h-right">
+    <div class="q-status" id="apiStatus">
+      <div class="q-dot" id="apiDot"></div>
+      <span id="apiTxt">CONECTANDO</span>
+    </div>
+    <button class="btn-cta" id="btnCta" onclick="MobyaAuth.showLogin()">Entrar</button>
+    <button class="btn-notif" id="btnNotif" onclick="Notif.toggle()" style="display:none;position:relative;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:4px 6px">🔔<span id="notifBadge" style="display:none;position:absolute;top:0;right:0;background:var(--red,#f44);color:#fff;border-radius:50%;font-size:.6rem;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px">0</span></button>
+<button class="btn-menu" id="btnMenu" onclick="toggleMenu()">☰</button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-sec">
+      <div class="sb-lbl">Plataforma</div>
+      <div class="sb-item active" data-page="home">⬡ Painel Quântico</div>
+      <div class="sb-item" data-page="classificados">🚘 Comprar Carro <span class="sb-badge v" id="bdClassi">...</span></div>
+      <div class="sb-item" data-page="aluguel">🗝️ Alugar Carro <span class="sb-badge g">12</span></div>
+      <div class="sb-item" data-page="pecas">⚙️ Peças <span class="sb-badge b">128</span></div>
+      <div class="sb-item" data-page="servicos">🔨 Serviços</div>
+      <div class="sb-item" data-page="seguros">🛡️ Seguros <span class="sb-badge v">NOVO</span></div>
+      <div class="sb-item" data-page="consorcio">🤝 Consórcios</div>
+      <div class="sb-item" data-page="financiamento">💰 Financiamentos</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Rede de Parceiros</div>
+      <div class="sb-item" data-page="monetizacao">🤝 Seja um Parceiro <span class="sb-badge g">Cadastre-se</span></div>
+      <div class="sb-item sb-role-mechanic" data-page="painel-prestador" id="sbPainelPrestador" style="display:none">🛠️ Painel do Prestador</div>
+      <div class="sb-item sb-role-admin" data-page="admin-aprovacao" id="sbAdminAprov" style="display:none">✅ Aprovar Prestadores <span class="sb-badge r" id="sbPendingBadge" style="display:none">0</span></div>
+      <div class="sb-item sb-role-admin" data-page="painel-receita" id="sbPainelReceita" style="display:none">📊 Painel de Receita</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Emergência 24H</div>
+      <div class="sb-item sb-sos" data-page="emergencia">🚨 Central SOS <span class="sb-badge r">24H</span></div>
+      <div class="sb-item" data-page="reboque">🚛 Reboque e Guincho</div>
+      <div class="sb-item" data-page="fretes">🚚 Frete</div>
+      <div class="sb-item" data-page="chaveiro">🔑 Chaveiro</div>
+      <div class="sb-item" data-page="mecanico">🔧 Mecânico</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Ferramentas</div>
+      <div class="sb-item" data-page="garagem">🚗 Minha Garagem</div>
+      <div class="sb-item" data-page="calculadoras">🧮 Calculadoras</div>
+      <div class="sb-item" data-page="vistoria">🔍 Vistoria & Laudo</div>
+      <div class="sb-item" data-page="documentacao">📋 Documentação</div>
+      <div class="sb-item sb-auth-only" id="sbPainelAnfitriao" data-page="painel-anfitriao" style="display:none">🗝️ Meu Painel de Aluguel</div>
+      <div class="sb-item sb-auth-only" id="sbMinhasReservas" data-page="minhas-reservas" style="display:none">📋 Minhas Reservas</div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Motor de IA</div>
+      <div class="sb-item" data-page="agentes">🤖 Agentes Quânticos</div>
+      <div class="sb-item" data-page="chat">💬 Chat Quântico</div>
+      <div class="sb-item" data-page="dashboard">📊 Dashboard</div>
+      <div class="sb-item" data-page="gps-tracking">📡 GPS Tracking</div>
+      <div class="sb-item" data-page="ultra-gps">🛣️ Ultra GPS</div>
+    </div>
+    <div class="sb-status">
+      <div class="sbs-title">◈ MOTOR QUÂNTICO</div>
+      <div class="sbs-row"><span>9 Agentes NEXUS</span><span class="sbs-on">● ATIVOS</span></div>
+      <div class="sbs-row"><span>SambaNova</span><span class="sbs-on" id="sbSambanova">● –</span></div>
+      <div class="sbs-row"><span>Cerebras</span><span class="sbs-on" id="sbCerebras">● –</span></div>
+      <div class="sbs-row"><span>Gemini</span><span class="sbs-on" id="sbGemini">● –</span></div>
+      <div class="sbs-row"><span>OpenRouter</span><span class="sbs-on" id="sbOpenRouter">● –</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main"></main>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-bg" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="MobyaAuth.closeModal()">✕</button>
+    <div id="authContent"></div>
+  </div>
+</div>
+
+<!-- MODAIS -->
+<div id="modals"></div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav id="bottom-nav">
+  <div class="bn-wrap">
+    <button class="bn-item active" data-page="home">
+      <span class="bn-ico bn-ico-mark"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradNav" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradNav)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></span><span>Início</span>
+    </button>
+    <button class="bn-item" data-page="classificados">
+      <span class="bn-ico">🚘</span><span>Autos</span>
+    </button>
+    <button class="bn-item" data-page="chat">
+      <span class="bn-ico">💬</span><span>Chat IA</span>
+      <span class="bn-dot" id="bnDotChat"></span>
+    </button>
+    <button class="bn-item bn-sos" data-page="emergencia">
+      <span class="bn-ico">🚨</span><span>SOS</span>
+    </button>
+    <button class="bn-item" id="bnMenuBtn" onclick="toggleBnMenu()">
+      <span class="bn-ico">☰</span><span>Menu</span>
+    </button>
+  </div>
+</nav>
+
+<!-- SCRIPTS -->
+<script>
+  window.MOBYA = {
+    API: location.hostname==='localhost'||location.hostname==='127.0.0.1'
+      ? 'http://localhost:4000'
+      : 'https://mobya.onrender.com',
+    VERSION: '5.2.0',  // patches 22/06/2026
+    // Opcional: defina um token público Mapbox (pk.eyJ...) para pular o gate de token no GPS Tracking.
+    // Sem isso, o usuário insere o próprio token uma vez e ele fica salvo no localStorage do navegador.
+    MAPBOX_TOKEN: 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw',
   };
-  function show(msg, type='info', duration=3500) {
-    const wrap = ensureWrap();
-    const c = COLORS[type] || COLORS.info;
-    const el = document.createElement('div');
-    el.style.cssText = `background:${c.bg};border:1px solid ${c.border};color:${c.text};padding:12px 16px;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-size:.84rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.35);backdrop-filter:blur(8px);opacity:0;transform:translateX(16px);transition:all .25s ease;`;
-    el.textContent = msg;
-    wrap.appendChild(el);
-    requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateX(0)'; });
-    setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(16px)'; setTimeout(() => el.remove(), 250); }, duration);
-  }
-  return { show };
-})();
-
-function comingSoon(title, icon='🚧') {
-  const el = document.getElementById('main');
-  if (!el) return;
-  el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;text-align:center;gap:14px;padding:40px"><div style="font-size:3rem">${icon}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;background:linear-gradient(135deg,#fff,var(--q3),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent">${title}</div><div style="color:var(--muted);font-size:.85rem;max-width:380px">Este módulo está em desenvolvimento e estará disponível em breve.</div><button onclick="App.navigate('home')" style="margin-top:8px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:10px 22px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-weight:600;cursor:pointer">← Voltar ao painel</button></div>`;
-}
-
-function renderChatPage() {
-  const el = document.getElementById('main');
-  if (!el) return;
-  el.innerHTML = `<div style="margin-bottom:24px"><div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--q3),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent">CHAT QUÂNTICO</div><div style="color:var(--muted);font-size:.84rem;margin-top:4px">Converse com os agentes NEXUS em tempo real</div></div><div id="agentChatContainer"></div>`;
-  if (typeof Chat !== 'undefined') Chat.render('agentChatContainer', 'orquestrador');
-}
-
-if (typeof Pages === "undefined") { console.error("[MOBYA] pages.js falhou"); window.Pages = {}; ["renderHome","renderClassificados","renderAgentes","renderEmergencia","renderCalculadoras","renderVistoria","renderDocumentacao","renderDashboard","renderListing"].forEach(m => Pages[m] = () => {}); }
-const BASE_PAGES = {
-  home:          () => Pages.renderHome(),
-  classificados: () => Pages.renderClassificados(),
-  agentes:       () => Pages.renderAgentes(),
-  emergencia:    () => Pages.renderEmergencia(),
-  calculadoras:  () => Pages.renderCalculadoras(),
-  vistoria:      () => Pages.renderVistoria(),
-  documentacao:  () => Pages.renderDocumentacao(),
-  dashboard:     () => Pages.renderDashboard(),
-  chat:          () => renderChatPage(),
-  listing:       () => Pages.renderListing(window.__mobyaListingId),
-  pecas:         () => Pages.renderPecas(),
-  aluguel:       () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderAluguel()  : comingSoon('ALUGUEL DE VEÍCULOS','🗝️')),
-  servicos:      () => Pages.renderServicos(),
-  reboque:       () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderReboque()  : comingSoon('REBOQUE & GUINCHO','🚛')),
-  chaveiro:      () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderChaveiro() : comingSoon('CHAVEIRO AUTOMOTIVO','🔑')),
-  seguros:       () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderSeguros()    : comingSoon('SEGUROS','🛡️')),
-  financiamento: () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento() : comingSoon('FINANCIAMENTO','💰')),
-};
-
-window.renderPage = function(page) {
-  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
-  document.querySelectorAll('.nb').forEach(el => el.classList.toggle('active', el.dataset.page === page));
-  window.scrollTo({ top:0, behavior:'instant' });
-  const handler = BASE_PAGES[page];
-  if (handler) {
-    try { handler(); } catch(e) {
-      console.error('Erro ao renderizar página', page, e);
-      const m = document.getElementById('main');
-      if (m) m.innerHTML = `<pre style="color:red;padding:20px;font-size:11px">${e}\n${e.stack||''}</pre>`;
-    }
-  } else {
-    comingSoon((page||'PÁGINA').toUpperCase());
-  }
-};
-
-window.App = (() => {
-  let currentPage = 'home';
-
-  function navigate(page, param) {
-    currentPage = page;
-    if (param !== undefined) window.__mobyaListingId = param;
-    history.replaceState(null, '', `#${page}`);
-    closeMenu();
-    window.renderPage(page);
-  }
-
-  function toast(msg, type='info', duration) { Toast.show(msg, type, duration); }
-  function getCurrentPage() { return currentPage; }
-
-  function closeMenu() {
-    document.getElementById('sidebar')?.classList.remove('open');
-    document.getElementById('header')?.classList.remove('menu-open');
-  }
-
-  function toggleMenu() {
-    document.getElementById('sidebar')?.classList.toggle('open');
-    document.getElementById('header')?.classList.toggle('menu-open');
-  }
-  window.toggleMenu = toggleMenu;
-
-  function bindNavigation() {
-    document.querySelectorAll('[data-page]').forEach(el => {
-      el.addEventListener('click', ev => {
-        ev.preventDefault();
-        const page = el.dataset.page;
-        if (page) navigate(page);
-      });
-    });
-    document.addEventListener('click', ev => {
-      const sidebar = document.getElementById('sidebar');
-      const btn = document.getElementById('btnMenu');
-      if (!sidebar || !sidebar.classList.contains('open')) return;
-      if (sidebar.contains(ev.target) || ev.target === btn) return;
-      closeMenu();
-    });
-  }
-
-  function hideLoadingScreen() {
-    const ls = document.getElementById('ls');
-    if (!ls) return;
-    ls.style.opacity = '0';
-    ls.style.transition = 'opacity .4s ease';
-    setTimeout(() => ls.remove(), 450);
-  }
-
-  function setLoadingProgress(pct, txt) {
-    const fill = document.getElementById('lsFill');
-    const label = document.getElementById('lsTxt');
-    if (fill) fill.style.width = `${pct}%`;
-    if (label && txt) label.textContent = txt;
-  }
-
-  async function init() {
-    setLoadingProgress(30, 'Montando interface...');
-    bindNavigation();
-
-    if (typeof Monetization !== 'undefined' && typeof Monetization.init === 'function') {
-      try { Monetization.init(); } catch(e) { console.warn('Monetization init falhou', e); }
-    }
-
-    const initial = (location.hash || '#home').replace('#','') || 'home';
-    setLoadingProgress(100, 'Pronto.');
-    navigate(initial);
-    setTimeout(hideLoadingScreen, 300);
-
-    // Auth e ping em background
-    setTimeout(async () => {
-      try { await Promise.race([API.ping(), new Promise(r => setTimeout(r, 8000))]); } catch {}
-      if (typeof MobyaAuth !== 'undefined') {
-        try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 8000))]); } catch {}
-      }
-      setInterval(() => API.ping().catch(() => {}), 60000);
-    }, 200);
-  }
-
-  return { navigate, toast, getCurrentPage, toggleMenu, init };
-})();
-
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => { document.getElementById('ls')?.remove(); }, 8000);
-  App.init().catch(err => {
-    console.error('Falha ao iniciar MOBYA', err);
-    Toast.show('Erro ao iniciar o motor quântico.', 'err', 6000);
-    document.getElementById('ls')?.remove();
-  });
-});
+</script>
+<script src="js/api.js?v=20260621b"></script>
+<script src="js/auth.js?v=20260620b"></script>
+<script src="js/pages.js?v=20260621a"></script>
+<script src="js/home-premium.js?v=20260619e"></script>
+<script src="js/chat.js?v=20260620b"></script>
+<script src="js/calc.js?v=20260620b"></script>
+<script src="js/pages-extra.js?v=20260622b"></script>
+<script src="js/pages-monetize.js?v=20260619f"></script>
+<script src="js/monetization.js?v=20260620a"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="js/admin-approval.js?v=20260620b"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/rating-modal.js?v=20260623a"></script>
+<script src="js/gps-tracking.js?v=1782185647"></script>
+<script>window.addEventListener('error',function(e){if(e.filename&&e.filename.indexOf('ultra-gps')>-1){alert('ULTRA GPS ERRO: '+e.message+' | linha '+e.lineno+':'+e.colno);}});</script>
+<script src="js/ultra-gps.js?v=1782185647"></script>
+<!-- home-chat ANTES de app.js para que HomeChat esteja disponível no init -->
+<script src="js/home-chat.js?v=20260620b"></script>
+<script src="js/garagem.js?v=20260621a"></script>
+<script src="js/dispatch-ui.js?v=20260622b"></script>
+<script src="js/app.js?v=20260621a"></script>
+  <script src="js/emergency-payment.js?v=20260621a"></script>
+  <script src="js/wallet-page.js?v=20260621a"></script>
+  <script src="js/rental-host.js?v=20260622b"></script>
+  <script src="js/rental-guest.js?v=20260622b"></script>
+  <script src="js/notifications.js?v=20260622a"></script>
+  <script src="js/notificacoes-page.js?v=20260622a"></script>
+</body>
+</html>
