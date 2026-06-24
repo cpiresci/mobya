@@ -192,6 +192,41 @@
     <div class="px-badge px-badge--live">● AO VIVO</div>
   </div>
   <button class="px-btn-sos" onclick="PagesExtra.solicitarMecanico()">🚨 SOLICITAR MECÂNICO AGORA</button>
+
+  <!-- ── DIAGNÓSTICO AI NEXUS-PD ───────────────────────── -->
+  <div class="px-card" style="border:1px solid rgba(245,158,11,.25);background:rgba(245,158,11,.04)">
+    <div class="px-card-title" style="color:var(--q4,#f59e0b)">◈ DIAGNÓSTICO AI — NEXUS-PD</div>
+    <p style="font-size:.8rem;color:var(--muted);margin:0 0 14px">Descreva o sintoma e deixe a IA identificar causas, peças (código OEM) e estimativa de custo.</p>
+    <div class="px-form-row">
+      <div class="px-form-group" style="flex:2">
+        <label>Marca</label>
+        <input type="text" class="px-input" id="diagBrand" placeholder="Ex: Toyota">
+      </div>
+      <div class="px-form-group" style="flex:2">
+        <label>Modelo</label>
+        <input type="text" class="px-input" id="diagModel" placeholder="Ex: Corolla">
+      </div>
+      <div class="px-form-group" style="flex:1">
+        <label>Ano</label>
+        <input type="number" class="px-input" id="diagYear" placeholder="2020" min="1990" max="2030">
+      </div>
+    </div>
+    <div class="px-form-group">
+      <label>Quilometragem (km)</label>
+      <input type="number" class="px-input" id="diagMileage" placeholder="Ex: 85000">
+    </div>
+    <div class="px-form-group">
+      <label>Descreva o sintoma</label>
+      <textarea class="px-input" id="diagSymptom" rows="3"
+        placeholder="Ex: barulho metálico ao frear, fumaça branca, vibração no volante acima de 80 km/h..."
+        style="resize:vertical;min-height:70px"></textarea>
+    </div>
+    <button class="px-btn" id="diagBtn" onclick="PagesExtra.runDiagnose()">
+      🔍 ANALISAR COM IA
+    </button>
+    <div id="diagResult" style="margin-top:16px"></div>
+  </div>
+
   <div class="px-card">
     <div class="px-card-title">◈ MECÂNICOS DISPONÍVEIS</div>
     <div class="px-grid3" id="mecDrivers">${_mecCards()}</div>
@@ -210,6 +245,95 @@
     ${_review('Sandra V.','⭐⭐⭐⭐⭐','Mecânico muito atencioso, explicou tudo.','4h atrás')}
   </div>
 </div>`;
+  }
+
+  async function runDiagnose() {
+    const symptom  = document.getElementById('diagSymptom')?.value?.trim();
+    const brand    = document.getElementById('diagBrand')?.value?.trim()    || '';
+    const model    = document.getElementById('diagModel')?.value?.trim()    || '';
+    const year     = document.getElementById('diagYear')?.value?.trim()     || '';
+    const mileage  = document.getElementById('diagMileage')?.value?.trim()  || '';
+    const resultEl = document.getElementById('diagResult');
+    const btn      = document.getElementById('diagBtn');
+
+    if (!symptom) { if (typeof Toast !== 'undefined') Toast.show('Descreva o sintoma primeiro.', 'warn'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Analisando...'; }
+    if (resultEl) resultEl.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">🔍 Motor NEXUS-PD analisando...</div>';
+
+    const URGENCY_COLOR = { critico: '#ef4444', urgente: '#f59e0b', monitorar: '#10b981' };
+    const URGENCY_ICON  = { critico: '🔴', urgente: '🟡', monitorar: '🟢' };
+
+    try {
+      const r = await API.ai.diagnose({
+        symptom,
+        vehicleBrand: brand,
+        vehicleModel: model,
+        vehicleYear:  year,
+        mileage,
+      });
+
+      const d = r?.data || r;
+      const urgColor = URGENCY_COLOR[d.urgency] || '#f59e0b';
+      const urgIcon  = URGENCY_ICON[d.urgency]  || '⚠️';
+
+      // Causas prováveis
+      const causesHTML = (d.causes || []).map(c => `
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--s2)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <strong style="font-size:.85rem">${c.cause||c.part||'Causa'}</strong>
+            <span style="font-size:.75rem;color:${urgColor};font-weight:700">${c.probability||''}%</span>
+          </div>
+          ${c.part    ? `<div style="font-size:.75rem;color:var(--muted)">Peça: <code>${c.part}</code>${c.oemCode ? ` · OEM: <code>${c.oemCode}</code>`:''}</div>` : ''}
+          ${(c.laborCost||c.partCost) ? `<div style="font-size:.75rem;color:var(--neon);margin-top:3px">Peça: R$${c.partCost||0} · MO: R$${c.laborCost||0}</div>` : ''}
+        </div>`).join('');
+
+      resultEl.innerHTML = `
+        <!-- Urgência -->
+        <div style="background:rgba(${urgColor.replace('#','').match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.12);
+                    border:1px solid ${urgColor};border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:1.1rem;font-weight:700;color:${urgColor}">${urgIcon} ${String(d.urgency||'urgente').toUpperCase()}</div>
+          ${d.urgencyDescription ? `<div style="font-size:.82rem;margin-top:4px">${d.urgencyDescription}</div>` : ''}
+        </div>
+
+        <!-- Ação imediata -->
+        ${d.immediateAction ? `
+        <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:12px;margin-bottom:14px;font-size:.83rem">
+          <strong style="color:#10b981">⚡ Ação imediata:</strong><br>${d.immediateAction}
+        </div>` : ''}
+
+        <!-- Causas -->
+        ${causesHTML ? `<div style="font-size:.78rem;color:var(--muted);margin-bottom:6px;font-weight:600">CAUSAS PROVÁVEIS</div>${causesHTML}` : ''}
+
+        <!-- Estimativa total -->
+        ${d.totalEstimate ? `
+        <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-size:.78rem;color:var(--muted)">ESTIMATIVA TOTAL</div>
+          <div style="font-size:1.2rem;font-weight:700;color:var(--neon)">
+            R$ ${d.totalEstimate.min||0} – R$ ${d.totalEstimate.max||0}
+          </div>
+        </div>` : ''}
+
+        <!-- Risco cascata + DIY -->
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          ${d.cascadeRisk ? `<div style="flex:1;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px;font-size:.78rem"><strong style="color:#ef4444">⚠️ Risco cascata</strong><br>${d.cascadeRisk}</div>` : ''}
+          ${d.diyPossible !== undefined ? `<div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:.78rem"><strong style="color:var(--muted)">🔩 DIY possível?</strong><br>${d.diyPossible ? '✅ Sim' : '❌ Não — leve à oficina'}</div>` : ''}
+        </div>
+
+        <!-- Provider -->
+        <div style="font-size:.7rem;color:var(--muted);text-align:right">
+          ${d.fromCache ? '🗄️ Cache' : '🤖 NEXUS-PD'} · ${d.provider||'AI'}
+        </div>
+
+        <!-- CTA emergência -->
+        <button class="px-btn-sos" style="margin-top:8px;font-size:.85rem;padding:12px"
+          onclick="PagesExtra.solicitarMecanico()">🚨 CHAMAR MECÂNICO AGORA</button>
+      `;
+    } catch (e) {
+      if (resultEl) resultEl.innerHTML = `<div style="color:#ef4444;font-size:.83rem;padding:10px">❌ Erro: ${e?.message||'Falha na análise'}</div>`;
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🔍 ANALISAR COM IA'; }
+    }
   }
 
   function _mecCards() {
@@ -623,6 +747,7 @@
   PagesExtra.renderAluguel  = renderAluguel;
   PagesExtra.renderFrete    = renderFrete;
   PagesExtra.renderMecanico = renderMecanico;
+  PagesExtra.runDiagnose    = runDiagnose;
   PagesExtra.abrirDetalhes    = PagesExtra.abrirDetalhes;
   PagesExtra.confirmarReserva = PagesExtra.confirmarReserva;
 

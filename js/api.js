@@ -71,6 +71,7 @@ window.API = (() => {
       get(`/emergency/nearby?latitude=${lat}&longitude=${lng}` +
           `&radiusKm=${opts.radiusKm||50}` +
           (opts.vertical ? `&vertical=${opts.vertical}` : '')),
+    dispatchStatus: (id) => get(`/emergency/${id}/dispatch-status`),
   };
 
   const monetization = {
@@ -162,11 +163,12 @@ window.API = (() => {
 
   // Fase 5 — carteira do prestador
   const wallet = {
-    balance:      ()           => get('/wallet/balance'),
-    transactions: (p={})       => get(`/wallet/transactions?${new URLSearchParams(p)}`),
-    withdraw:     (d)          => post('/wallet/withdraw', d),
-    withdrawals:  ()           => get('/wallet/withdrawals'),
-    approveSaque: (id, d)      => patch(`/wallet/withdrawals/${id}`, d),
+    balance:        ()           => get('/wallet/balance'),
+    transactions:   (p={})       => get(`/wallet/transactions?${new URLSearchParams(p)}`),
+    withdraw:       (d)          => post('/wallet/withdraw', d),
+    withdrawals:    ()           => get('/wallet/withdrawals'),
+    approveSaque:   (id, d)      => patch(`/wallet/withdrawals/${id}`, d),
+    releasePending: ()           => post('/wallet/release-pending', {}),
   };
 
 

@@ -414,10 +414,18 @@ window.UltraGPS = (() => {
   async function _waitForProviderAccept(emergencyId,attempt=0){
     const MAX_ATTEMPTS=20, DELAY_MS=3000;
     _setWaitingStatus('Buscando prestador mais próximo...');
+
+    // Inicia painel de cascata de despacho na primeira tentativa
+    if (attempt === 0 && typeof DispatchUI !== 'undefined' && DispatchUI.startStatusPoll) {
+      const statusContainer = document.getElementById('ultraDispatchStatus');
+      if (statusContainer) DispatchUI.startStatusPoll(emergencyId, statusContainer);
+    }
+
     try{
       const r=await API.req('GET',`/emergency/${emergencyId}/tracking-session`);
       if(r?.data?.sessionId){
         window.__mobyaPendingEmergencyId=null;
+        if (typeof DispatchUI !== 'undefined' && DispatchUI.stopStatusPoll) DispatchUI.stopStatusPoll();
         Toast.show('✅ Prestador encontrado! Conectando rastreamento...','ok');
         joinSession(r.data.sessionId);
         if(watchId===null) startWatchingLocation();
@@ -438,6 +446,7 @@ window.UltraGPS = (() => {
         <div>
           <div id="ultraHeader">🛣️ ULTRA GPS</div>
           <div id="ultraSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:monospace;font-size:.76rem">Conectando...</span></div>
+          <div id="ultraDispatchStatus" style="margin-top:8px"></div>
         </div>
         <div style="display:flex;gap:6px">
           <div class="ultra-pill active" data-mode="tracking" onclick="UltraGPS.setMode('tracking')">📡 Sessão</div>

@@ -23,7 +23,16 @@ window.AdminApproval = (() => {
   }
   async function render(){
     const m=document.getElementById('main'); if(!m) return;
-    m.innerHTML=`<div class="page-header"><h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px">APROVACAO DE PRESTADORES</h2><p style="color:var(--muted);font-size:.85rem;margin-top:4px">Revise e aprove parceiros pendentes</p></div><div id="approvalList" style="display:flex;flex-direction:column;gap:14px;margin-top:18px"><div class="callout" style="color:var(--muted)">Carregando...</div></div><div id="approvalPagination" style="display:flex;justify-content:center;gap:10px;margin-top:20px"></div>`;
+    m.innerHTML=`<div class="page-header"><h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px">APROVACAO DE PRESTADORES</h2><p style="color:var(--muted);font-size:.85rem;margin-top:4px">Revise e aprove parceiros pendentes</p>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+      <button id="btnRelease" onclick="AdminApproval.releasePending(this)"
+        style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#10b981;
+               padding:8px 16px;border-radius:8px;font-family:'Space Grotesk',sans-serif;
+               font-weight:600;font-size:.8rem;cursor:pointer">
+        💰 Liberar Saldos Pendentes
+      </button>
+    </div>
+    </div><div id="approvalList" style="display:flex;flex-direction:column;gap:14px;margin-top:18px"><div class="callout" style="color:var(--muted)">Carregando...</div></div><div id="approvalPagination" style="display:flex;justify-content:center;gap:10px;margin-top:20px"></div>`;
     await loadPending(1);
   }
   async function loadPending(page=1){
@@ -48,5 +57,18 @@ window.AdminApproval = (() => {
     try{ const r=await API.req('PATCH',`/monetization/providers/${id}/reject`,{reason:reason||''}); Toast.show(r.message||'Rejeitado.','warn'); await loadPending(1); }
     catch(e){ Toast.show(e.message||'Erro','error'); if(btn){btn.disabled=false;btn.innerHTML=orig;} }
   }
-  return {render,approve,reject,fetchPendingCount,loadPending};
+  async function releasePending(btn) {
+    if (!confirm('Liberar todos os saldos pendentes expirados? Esta ação não pode ser desfeita.')) return;
+    const orig = btn?.innerHTML;
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Liberando...'; }
+    try {
+      const r = await API.wallet.releasePending();
+      Toast.show(r?.message || `${r?.data?.released ?? 0} saldos liberados.`, 'ok');
+    } catch(e) {
+      Toast.show(e?.message || 'Erro ao liberar saldos.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+    }
+  }
+  return {render,approve,reject,fetchPendingCount,loadPending,releasePending};
 })();

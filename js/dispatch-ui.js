@@ -291,5 +291,76 @@ window.DispatchUI = (() => {
     _clearModal();
   }
 
-  return { connect, disconnect, accept, reject };
+  // ── Polling da cascata de dispatch (lado cliente/passageiro) ───
+  // Exibe quantos prestadores foram acionados e o status em tempo real
+  // na tela que aparece logo após o cliente criar a emergência.
+  // Uso: DispatchUI.startStatusPoll(emergencyId, containerElement)
+  // Para quando recebe status ACCEPTED ou EXPIRED ou ao sair da tela.
+  let _statusPollTimer = null;
+
+  function startStatusPoll(emergencyId, containerEl) {
+    stopStatusPoll();
+
+    const STATUS_LABELS = {
+      PENDING:  '⏳ Aguardando prestadores...',
+      ACTIVE:   '📡 Despachando prestadores...',
+      ACCEPTED: '✅ Prestador confirmado!',
+      EXPIRED:  '⌛ Tempo esgotado — nenhum prestador disponível.',
+      FAILED:   '❌ Falha no despacho.',
+    };
+
+    async function _tick() {
+      try {
+        const r = await API.emergency.dispatchStatus(emergencyId);
+        const s = r?.data || r;
+        if (!containerEl || !document.body.contains(containerEl)) { stopStatusPoll(); return; }
+
+        const contacted  = s.contactedProviders  ?? s.contacted   ?? 0;
+        const rejected   = s.rejectedProviders   ?? s.rejected    ?? 0;
+        const timeout    = s.timeoutMs           ?? 0;
+        const statusText = STATUS_LABELS[s.status] || s.status || '';
+        const elapsed    = s.elapsedMs           ?? 0;
+        const pct        = timeout > 0 ? Math.min(100, Math.round((elapsed / timeout) * 100)) : 0;
+
+        containerEl.innerHTML = `
+          <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;font-family:'Space Grotesk',sans-serif">
+            <div style="font-size:.82rem;font-weight:700;color:var(--neon);margin-bottom:10px">📡 STATUS DO DESPACHO</div>
+            <div style="font-size:.85rem;margin-bottom:8px">${statusText}</div>
+            <div style="display:flex;gap:16px;margin-bottom:10px">
+              <div style="text-align:center">
+                <div style="font-size:1.4rem;font-weight:700;color:var(--neon)">${contacted}</div>
+                <div style="font-size:.68rem;color:var(--muted)">ACIONADOS</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:1.4rem;font-weight:700;color:#ef4444">${rejected}</div>
+                <div style="font-size:.68rem;color:var(--muted)">REJEITARAM</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:1.4rem;font-weight:700;color:#10b981">${Math.max(0, contacted - rejected)}</div>
+                <div style="font-size:.68rem;color:var(--muted)">PENDENTES</div>
+              </div>
+            </div>
+            ${timeout > 0 ? `
+            <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:var(--neon);border-radius:2px;transition:width .8s linear"></div>
+            </div>
+            <div style="font-size:.68rem;color:var(--muted);text-align:right;margin-top:3px">${pct}% do tempo decorrido</div>` : ''}
+            ${s.acceptedProvider ? `<div style="margin-top:8px;font-size:.8rem;color:#10b981">✅ ${s.acceptedProvider}</div>` : ''}
+          </div>`;
+
+        // Para de pollar quando encerrado
+        if (['ACCEPTED','EXPIRED','FAILED'].includes(s.status)) stopStatusPoll();
+      } catch { /* falha silenciosa — tenta de novo */ }
+    }
+
+    _tick();
+    _statusPollTimer = setInterval(_tick, 5000);
+  }
+
+  function stopStatusPoll() {
+    clearInterval(_statusPollTimer);
+    _statusPollTimer = null;
+  }
+
+  return { connect, disconnect, accept, reject, startStatusPoll, stopStatusPoll };
 })();
