@@ -72,6 +72,7 @@ window.UltraGPS = (() => {
       });
       map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
       map.on('load',()=>{ _addHeatmapLayer(); _addClusterLayer(); resolve(map); });
+      map.on('moveend',()=>{ _scheduleNearbyRefresh(); });
       map.on('error',(e)=>console.warn('[UltraGPS][MapLibre]',e?.error?.message||e));
     });
   }
@@ -111,12 +112,31 @@ window.UltraGPS = (() => {
     });
   }
 
+  let _nearbyDebounce=null;
+  function _scheduleNearbyRefresh(){ if(mode!=='discover')return; clearTimeout(_nearbyDebounce); _nearbyDebounce=setTimeout(()=>_loadNearbyReal(50),600); }
+
   async function _loadNearbyReal(radiusKm){
     if(!map)return;
-    const pos=await _getCurrentPosition();
+    Toast.show('📡 Obtendo sua localização...','info');
+    const pos=await new Promise(resolve=>{
+      if(!navigator.geolocation)return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
+        ()=>resolve(null),
+        {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
+      );
+    });
+    if(pos){ map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>_loadNearbyRealAt(pos,radiusKm),850); return; }
+    Toast.show('🔍 Prestadores próximos (usando região padrão)','info');
+    _loadNearbyRealAt(null,radiusKm);
+  }
+
+  async function _loadNearbyRealAt(pos,radiusKm){
+    if(!map)return;
+    const center=pos||await _getCurrentPosition();
     if(!pos){ Toast.show('Não foi possível obter sua localização para buscar prestadores.','warn'); return; }
     try{
-      const r=await API.emergency.nearby(pos.lat,pos.lng,{radiusKm:radiusKm||50});
+      const r=await API.emergency.nearby(center.lat,center.lng,{radiusKm:radiusKm||50});
       const list=r?.data||r?.providers||[];
       if(!list.length){ Toast.show('ℹ️ Nenhum prestador encontrado nesse raio.','info'); }
       const features=list.map(p=>({type:'Feature',geometry:{type:'Point',coordinates:[p.lng??p.longitude,p.lat??p.latitude]},properties:{name:p.name||'Prestador',weight:1}}));
@@ -296,11 +316,30 @@ window.UltraGPS = (() => {
     sendChatMessage('📞 Solicito contato por telefone — pode me ligar ou informar um número?');
     Toast.show('📞 Pedido de contato enviado pelo chat da sessão.','ok');
   }
+  let _sosBeepTimer=null;
+  function _startSosAlarm(){
+    if(_sosBeepTimer)return;
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    function beep(){ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='square'; o.frequency.value=880; g.gain.value=0.3; o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{o.stop();},200); }
+    beep(); _sosBeepTimer=setInterval(beep,600);
+  }
+  function _stopSosAlarm(){ if(_sosBeepTimer){clearInterval(_sosBeepTimer);_sosBeepTimer=null;} }
+
   function doSOS(){
     if(!socket?.connected){ Toast.show('Sem conexão — SOS não pôde ser enviado. Tente novamente.','error'); return; }
     sendChatMessage('🚨 SOS — preciso de ajuda urgente agora!');
     const banner=document.getElementById('ultraSosBanner'); if(banner){ banner.classList.add('show'); setTimeout(()=>banner.classList.remove('show'),6000); }
     Toast.show('🚨 SOS enviado para a sessão.','error');
+    // alarme sonoro
+    try{ _startSosAlarm(); setTimeout(_stopSosAlarm, 8000); }catch(e){}
+    try{ if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]); }catch{}
+    // overlay full-screen com telefone direto
+    let ov=document.getElementById('ultraSosOverlay');
+    if(!ov){ ov=document.createElement('div'); ov.id='ultraSosOverlay'; document.body.appendChild(ov); }
+    const phoneLink=sessionProviderId?`<a href="tel:" id="ultraSosCall" style="display:inline-block;margin-top:10px;background:#fff;color:#ef4444;font-weight:800;padding:10px 22px;border-radius:30px;text-decoration:none;font-size:.9rem">📞 Ligar agora</a>`:'<div style="margin-top:10px;font-size:.8rem;opacity:.85">Responda pelo chat da sessão.</div>';
+    ov.innerHTML=`<div style="font-size:2.2rem">🚨</div><div style="font-weight:800;font-size:1.05rem;margin-top:6px">SOS enviado!</div>${phoneLink}<button onclick="document.getElementById('ultraSosOverlay').classList.remove('show');clearInterval(window._sosBeepTimer)" style="display:block;margin:16px auto 0;background:transparent;border:1px solid #fff;color:#fff;padding:6px 18px;border-radius:20px;font-size:.78rem">Fechar alarme</button>`;
+    ov.classList.add('show');
+    setTimeout(()=>ov.classList.remove('show'),12000);
   }
 
   // ── Compartilhamento de localização ──
@@ -621,6 +660,9 @@ window.UltraGPS = (() => {
       @keyframes navOverspeed{from{opacity:1}to{opacity:.5}}
       #navETABadge{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#22d88f}
       #navDeviationBadge{display:none;font-size:.72rem;color:#f59e0b;font-family:'JetBrains Mono',monospace}
+      #ultraSosOverlay{position:fixed;inset:0;background:rgba(239,68,68,.97);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:9999;animation:ultraSosFlash 1s infinite}
+      #ultraSosOverlay.show{display:flex}
+      @keyframes ultraSosFlash{0%,100%{background:rgba(239,68,68,.97)}50%{background:rgba(180,20,20,.97)}}
     `;
     document.head.appendChild(s);
   }
