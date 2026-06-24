@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="MOBYA — Motor de Inteligência Quântica Automotiva">
+<meta name="description" content="MOBYA — Super App Automotivo do Brasil">
 <meta name="theme-color" content="#7c3aed">
-<title>MOBYA — Inteligência Quântica Automotiva</title>
+<title>MOBYA — Super App Automotivo</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260620b">
-<link rel="stylesheet" href="css/home-premium.css?v=20260620b">
+<link rel="stylesheet" href="css/style.css?v=20260624a">
+<link rel="stylesheet" href="css/home-premium.css?v=20260624a">
 <link rel="stylesheet" href="css/auth-extra.css?v=20260621a">
 <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 <body data-env="production">
 
@@ -20,7 +20,7 @@
 <div class="ls" id="ls">
   <div class="ls-box">
     <div class="ls-logo">MOBYA</div>
-    <div class="ls-sub">QUANTUM ENGINE v3.0</div>
+    <div class="ls-sub">SUPER APP AUTOMOTIVO</div>
     <div class="ls-bar"><div class="ls-fill" id="lsFill"></div></div>
     <div class="ls-txt" id="lsTxt">Iniciando motor quântico...</div>
   </div>
@@ -32,18 +32,20 @@
     <div class="logo-ico" onclick="App.navigate('home')" style="cursor:pointer"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradHeader" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradHeader)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></div>
     <div class="logo-wrap" onclick="App.navigate('home')" style="cursor:pointer">
       <div class="logo">MOBYA</div>
-      <div class="logo-sub">QUANTUM ENGINE v3.0</div>
+      <div class="logo-sub">SUPER APP AUTOMOTIVO</div>
     </div>
   </div>
+
+  <!-- HEADER NAV: 3 produtos principais + SOS -->
   <nav id="nav">
     <button class="nb active" data-page="home">Início</button>
-    <button class="nb" data-page="classificados">Classificados</button>
-    <button class="nb" data-page="pecas">Peças</button>
-    <button class="nb" data-page="aluguel">Aluguel</button>
-    <button class="nb" data-page="servicos">Serviços</button>
-    <button class="nb" data-page="agentes">Agentes IA</button>
+    <button class="nb nb-product" data-page="classificados">🚘 Comprar</button>
+    <button class="nb nb-product" data-page="aluguel">🗝️ Alugar</button>
+    <button class="nb nb-product" data-page="servicos">🔧 Serviços</button>
+    <button class="nb" data-page="agentes">🤖 IA</button>
     <button class="nb nb-sos" data-page="emergencia">🚨 SOS</button>
   </nav>
+
   <div class="h-right">
     <div class="q-status" id="apiStatus">
       <div class="q-dot" id="apiDot"></div>
@@ -51,60 +53,81 @@
     </div>
     <button class="btn-cta" id="btnCta" onclick="MobyaAuth.showLogin()">Entrar</button>
     <button class="btn-notif" id="btnNotif" onclick="Notif.toggle()" style="display:none;position:relative;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:4px 6px">🔔<span id="notifBadge" style="display:none;position:absolute;top:0;right:0;background:var(--red,#f44);color:#fff;border-radius:50%;font-size:.6rem;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px">0</span></button>
-<button class="btn-menu" id="btnMenu" onclick="toggleMenu()">☰</button>
+    <button class="btn-menu" id="btnMenu" onclick="toggleMenu()">☰</button>
   </div>
 </header>
 
 <!-- LAYOUT -->
 <div class="layout">
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR — organizado por produto, depois ferramentas -->
   <aside class="sidebar" id="sidebar">
+
+    <!-- PRODUTO 1: MOBYA DRIVE (Uber) -->
     <div class="sb-sec">
-      <div class="sb-lbl">Plataforma</div>
-      <div class="sb-item active" data-page="home">⬡ Painel Quântico</div>
+      <div class="sb-lbl">🚨 MOBYA DRIVE — Emergência</div>
+      <div class="sb-item sb-sos" data-page="emergencia">🚨 Central SOS <span class="sb-badge r">24H</span></div>
+      <div class="sb-item" data-page="reboque">🚛 Reboque & Guincho</div>
+      <div class="sb-item" data-page="chaveiro">🔑 Chaveiro</div>
+      <div class="sb-item" data-page="mecanico">🔧 Mecânico de Emergência</div>
+      <div class="sb-item" data-page="fretes">🚚 Frete & Transporte</div>
+    </div>
+    <div class="sb-div"></div>
+
+    <!-- PRODUTO 2: MOBYA RENT (Turo) -->
+    <div class="sb-sec">
+      <div class="sb-lbl">🗝️ MOBYA RENT — Aluguel P2P</div>
+      <div class="sb-item" data-page="aluguel">🗝️ Alugar um Carro</div>
+      <div class="sb-item sb-auth-only" id="sbPainelAnfitriao" data-page="painel-anfitriao" style="display:none">🏠 Meu Painel de Anfitrião</div>
+      <div class="sb-item sb-auth-only" id="sbMinhasReservas" data-page="minhas-reservas" style="display:none">📋 Minhas Reservas</div>
+    </div>
+    <div class="sb-div"></div>
+
+    <!-- PRODUTO 3: MARKETPLACE -->
+    <div class="sb-sec">
+      <div class="sb-lbl">🚘 MOBYA MARKET — Marketplace</div>
       <div class="sb-item" data-page="classificados">🚘 Comprar Carro <span class="sb-badge v" id="bdClassi">...</span></div>
-      <div class="sb-item" data-page="aluguel">🗝️ Alugar Carro <span class="sb-badge g">12</span></div>
-      <div class="sb-item" data-page="pecas">⚙️ Peças <span class="sb-badge b">128</span></div>
-      <div class="sb-item" data-page="servicos">🔨 Serviços</div>
+      <div class="sb-item" data-page="pecas">⚙️ Peças & Acessórios</div>
+      <div class="sb-item" data-page="servicos">🔨 Oficinas & Serviços</div>
       <div class="sb-item" data-page="seguros">🛡️ Seguros <span class="sb-badge v">NOVO</span></div>
       <div class="sb-item" data-page="consorcio">🤝 Consórcios</div>
-      <div class="sb-item" data-page="financiamento">💰 Financiamentos</div>
+      <div class="sb-item" data-page="financiamento">💰 Financiamento</div>
     </div>
     <div class="sb-div"></div>
+
+    <!-- FERRAMENTAS -->
     <div class="sb-sec">
-      <div class="sb-lbl">Rede de Parceiros</div>
-      <div class="sb-item" data-page="monetizacao">🤝 Seja um Parceiro <span class="sb-badge g">Cadastre-se</span></div>
-      <div class="sb-item sb-role-mechanic" data-page="painel-prestador" id="sbPainelPrestador" style="display:none">🛠️ Painel do Prestador</div>
-      <div class="sb-item sb-role-admin" data-page="admin-aprovacao" id="sbAdminAprov" style="display:none">✅ Aprovar Prestadores <span class="sb-badge r" id="sbPendingBadge" style="display:none">0</span></div>
-      <div class="sb-item sb-role-admin" data-page="painel-receita" id="sbPainelReceita" style="display:none">📊 Painel de Receita</div>
-    </div>
-    <div class="sb-div"></div>
-    <div class="sb-sec">
-      <div class="sb-lbl">Emergência 24H</div>
-      <div class="sb-item sb-sos" data-page="emergencia">🚨 Central SOS <span class="sb-badge r">24H</span></div>
-      <div class="sb-item" data-page="reboque">🚛 Reboque e Guincho</div>
-      <div class="sb-item" data-page="fretes">🚚 Frete</div>
-      <div class="sb-item" data-page="chaveiro">🔑 Chaveiro</div>
-      <div class="sb-item" data-page="mecanico">🔧 Mecânico</div>
-    </div>
-    <div class="sb-div"></div>
-    <div class="sb-sec">
-      <div class="sb-lbl">Ferramentas</div>
+      <div class="sb-lbl">🛠️ Ferramentas</div>
       <div class="sb-item" data-page="garagem">🚗 Minha Garagem</div>
       <div class="sb-item" data-page="calculadoras">🧮 Calculadoras</div>
       <div class="sb-item" data-page="vistoria">🔍 Vistoria & Laudo</div>
       <div class="sb-item" data-page="documentacao">📋 Documentação</div>
-      <div class="sb-item sb-auth-only" id="sbPainelAnfitriao" data-page="painel-anfitriao" style="display:none">🗝️ Meu Painel de Aluguel</div>
-      <div class="sb-item sb-auth-only" id="sbMinhasReservas" data-page="minhas-reservas" style="display:none">📋 Minhas Reservas</div>
     </div>
     <div class="sb-div"></div>
+
+    <!-- IA -->
     <div class="sb-sec">
-      <div class="sb-lbl">Motor de IA</div>
+      <div class="sb-lbl">🤖 Motor de IA</div>
       <div class="sb-item" data-page="agentes">🤖 Agentes Quânticos</div>
-      <div class="sb-item" data-page="chat">💬 Chat Quântico</div>
-      <div class="sb-item" data-page="dashboard">📊 Dashboard</div>
+      <div class="sb-item" data-page="chat">💬 Chat com IA</div>
       <div class="sb-item" data-page="ultra-gps">🛣️ Ultra GPS</div>
     </div>
+    <div class="sb-div"></div>
+
+    <!-- ÁREA DO USUÁRIO — aparece conforme role -->
+    <div class="sb-sec" id="sbUserArea">
+      <div class="sb-lbl">👤 Minha Conta</div>
+      <div class="sb-item sb-auth-only" data-page="dashboard" id="sbDashboard" style="display:none">📊 Meu Dashboard</div>
+      <!-- Prestador (MECHANIC/SELLER) -->
+      <div class="sb-item sb-role-mechanic" data-page="painel-prestador" id="sbPainelPrestador" style="display:none">🛠️ Painel do Prestador</div>
+      <div class="sb-item sb-role-mechanic" data-page="carteira-prestador" id="sbCarteira" style="display:none">💳 Minha Carteira</div>
+      <!-- Parceiros -->
+      <div class="sb-item" data-page="monetizacao">🤝 Rede de Parceiros</div>
+      <div class="sb-item sb-role-mechanic" data-page="painel-prestador" style="display:none" id="sbMeuParceiro">⭐ Meu Perfil Parceiro</div>
+      <!-- Admin -->
+      <div class="sb-item sb-role-admin" data-page="admin-aprovacao" id="sbAdminAprov" style="display:none">✅ Aprovar Prestadores <span class="sb-badge r" id="sbPendingBadge" style="display:none">0</span></div>
+      <div class="sb-item sb-role-admin" data-page="painel-receita" id="sbPainelReceita" style="display:none">📊 Painel de Receita</div>
+    </div>
+
     <div class="sb-status">
       <div class="sbs-title">◈ MOTOR QUÂNTICO</div>
       <div class="sbs-row"><span>9 Agentes NEXUS</span><span class="sbs-on">● ATIVOS</span></div>
@@ -130,22 +153,27 @@
 <!-- MODAIS -->
 <div id="modals"></div>
 
-<!-- BOTTOM NAV (mobile) -->
+<!-- BOTTOM NAV (mobile) — 5 slots: Home · Alugar · SOS · Autos · Menu -->
 <nav id="bottom-nav">
   <div class="bn-wrap">
+    <!-- Início -->
     <button class="bn-item active" data-page="home">
-      <span class="bn-ico bn-ico-mark"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradNav" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradNav)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></span><span>Início</span>
+      <span class="bn-ico bn-ico-mark"><svg class="mobya-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><defs><linearGradient id="mobyaGradNav" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="var(--q3)"/><stop offset="100%" stop-color="var(--neon)"/></linearGradient></defs><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="url(#mobyaGradNav)" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M28,72 L28,30 L42,30 L50,52 L58,30 L72,30 L72,72 L62,72 L62,46 L54,72 L46,72 L38,46 L38,72 Z" fill="rgba(6,4,16,.94)"/></svg></span>
+      <span>Início</span>
     </button>
-    <button class="bn-item" data-page="classificados">
-      <span class="bn-ico">🚘</span><span>Autos</span>
+    <!-- Alugar (Turo) -->
+    <button class="bn-item" data-page="aluguel">
+      <span class="bn-ico">🗝️</span><span>Alugar</span>
     </button>
-    <button class="bn-item" data-page="chat">
-      <span class="bn-ico">💬</span><span>Chat IA</span>
-      <span class="bn-dot" id="bnDotChat"></span>
-    </button>
+    <!-- SOS — CTA central destacado -->
     <button class="bn-item bn-sos" data-page="emergencia">
       <span class="bn-ico">🚨</span><span>SOS</span>
     </button>
+    <!-- Comprar (Marketplace) -->
+    <button class="bn-item" data-page="classificados">
+      <span class="bn-ico">🚘</span><span>Comprar</span>
+    </button>
+    <!-- Menu (sidebar) -->
     <button class="bn-item" id="bnMenuBtn" onclick="toggleBnMenu()">
       <span class="bn-ico">☰</span><span>Menu</span>
     </button>
@@ -158,13 +186,11 @@
     API: location.hostname==='localhost'||location.hostname==='127.0.0.1'
       ? 'http://localhost:4000'
       : 'https://mobya.onrender.com',
-    VERSION: '5.2.0',  // patches 22/06/2026
-    // Opcional: defina um token público Mapbox (pk.eyJ...) para pular o gate de token no GPS Tracking.
-    // Sem isso, o usuário insere o próprio token uma vez e ele fica salvo no localStorage do navegador.
+    VERSION: '6.0.0',
     MAPBOX_TOKEN: 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw',
   };
 </script>
-<script src="js/api.js?v=20260621b"></script>
+<script src="js/api.js?v=20260624a"></script>
 <script src="js/auth.js?v=20260620b"></script>
 <script src="js/pages.js?v=20260621a"></script>
 <script src="js/home-premium.js?v=20260619e"></script>
@@ -181,16 +207,15 @@
 <script src="js/gps-tracking.js?v=1782185647"></script>
 <script>window.addEventListener('error',function(e){if(e.filename&&e.filename.indexOf('ultra-gps')>-1){alert('ULTRA GPS ERRO: '+e.message+' | linha '+e.lineno+':'+e.colno);}});</script>
 <script src="js/ultra-gps.js?v=1782185647"></script>
-<!-- home-chat ANTES de app.js para que HomeChat esteja disponível no init -->
 <script src="js/home-chat.js?v=20260620b"></script>
 <script src="js/garagem.js?v=20260621a"></script>
 <script src="js/dispatch-ui.js?v=20260622b"></script>
-<script src="js/app.js?v=20260621a"></script>
-  <script src="js/emergency-payment.js?v=20260621a"></script>
-  <script src="js/wallet-page.js?v=20260621a"></script>
-  <script src="js/rental-host.js?v=20260622b"></script>
-  <script src="js/rental-guest.js?v=20260622b"></script>
-  <script src="js/notifications.js?v=20260622a"></script>
-  <script src="js/notificacoes-page.js?v=20260622a"></script>
+<script src="js/app.js?v=20260624a"></script>
+<script src="js/emergency-payment.js?v=20260621a"></script>
+<script src="js/wallet-page.js?v=20260621a"></script>
+<script src="js/rental-host.js?v=20260622b"></script>
+<script src="js/rental-guest.js?v=20260622b"></script>
+<script src="js/notifications.js?v=20260622a"></script>
+<script src="js/notificacoes-page.js?v=20260622a"></script>
 </body>
 </html>
