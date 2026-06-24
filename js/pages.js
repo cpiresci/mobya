@@ -660,7 +660,17 @@ window.Pages = (() => {
         if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc || ''}`);
         const emergencyId = created?.data?.id || null;
         window.__mobyaPendingEmergencyId = emergencyId;
-        App.navigate('ultra-gps');
+        // sos_payment_gate_applied
+        // O backend cria a emergência com customerPaymentStatus=UNPAID.
+        // O dispatch só dispara após o pagamento PIX ser confirmado pelo
+        // webhook do MP. EmergencyPayment cuida do QR, polling e da
+        // navegação para ultra-gps após confirmação.
+        if (typeof EmergencyPayment !== 'undefined') {
+          EmergencyPayment.showPixPayment(emergencyId);
+        } else {
+          // Fallback: módulo não carregado, vai direto pro GPS
+          App.navigate('ultra-gps');
+        }
       } catch(e) {
         btn.disabled = false;
         btn.textContent = '🚨 Acionar Agora';

@@ -65,7 +65,16 @@ const BASE_PAGES = {
   seguros:       () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderSeguros()    : comingSoon('SEGUROS','🛡️')),
   'gps-tracking': () => { window.location.hash='#ultra-gps'; window.renderPage('ultra-gps'); },
   'ultra-gps':    () => { if(typeof UltraGPS!=='undefined'){ const s=window.__mobyaTrackingSessionId||null; window.__mobyaTrackingSessionId=null; UltraGPS.render(s); } },
-  financiamento: () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento() : comingSoon('FINANCIAMENTO','💰')),
+  financiamento:     () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderFinanciamento()           : comingSoon('FINANCIAMENTO','💰')),
+  consorcio:         () => (typeof PagesMon   !== 'undefined' ? PagesMon.renderConsorcio()               : comingSoon('CONSÓRCIOS','🤝')),
+  mecanico:          () => (typeof PagesExtra !== 'undefined' ? PagesExtra.renderMecanico()              : comingSoon('MECÂNICO','🔧')),
+  fretes:            () => (typeof PagesExtra !== 'undefined' && PagesExtra.renderFretes
+                              ? PagesExtra.renderFretes()
+                              : comingSoon('FRETES','🚚')),
+  'painel-anfitriao':() => (typeof RentalHost !== 'undefined' ? RentalHost.render()                     : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
+  'minhas-reservas': () => (typeof RentalGuest!== 'undefined' ? RentalGuest.render()                    : comingSoon('MINHAS RESERVAS','📋')),
+  'painel-prestador':() => (typeof Monetization!=='undefined' ? Monetization.renderProviderDashboard()  : comingSoon('PAINEL DO PRESTADOR','🛠️')),
+  'admin-aprovacao': () => (typeof AdminApproval!=='undefined'? AdminApproval.render()                   : comingSoon('APROVAÇÃO DE PRESTADORES','✅')),
 };
 
 window.renderPage = function(page) {
