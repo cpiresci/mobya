@@ -318,7 +318,7 @@ window.MobyaAuth = (() => {
         <div style="font-size:.73rem;color:var(--muted)">${u.email}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--q4);margin-top:2px">${u.role}</div>
       </div>
-      ${[['💬','Chat IA','chat'],['📋','Meus Anúncios','meus-anuncios'],['🚨','Emergências','emergencia']].map(([i,l,p])=>`
+      ${[['💬','Chat IA','chat'],['📋','Meus Anúncios','dashboard'],['🚨','Emergências','emergencia'],['💳','Carteira','carteira']].map(([i,l,p])=>`
         <button onclick="App.navigate('${p}');document.getElementById('userDrop')?.remove()" style="display:flex;align-items:center;gap:8px;width:100%;background:none;color:var(--muted);padding:8px 10px;border-radius:6px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;cursor:pointer;border:none;transition:all .15s" onmouseover="this.style.background='rgba(124,58,237,.1)';this.style.color='var(--text)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">${i} ${l}</button>`).join('')}
       <button onclick="MobyaAuth.logout()" style="display:flex;align-items:center;gap:8px;width:100%;background:none;color:var(--red);padding:8px 10px;border-radius:6px;font-family:'Space Grotesk',sans-serif;font-size:.82rem;cursor:pointer;border:none;margin-top:4px">🚪 Sair</button>`;
     document.body.appendChild(d);
