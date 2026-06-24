@@ -108,6 +108,9 @@ window.App = (() => {
     document.getElementById('header')?.classList.toggle('menu-open');
   }
   window.toggleMenu = toggleMenu;
+  // Fix: #bnMenuBtn (item "Menu" da bottom-nav mobile) chamava
+  // toggleBnMenu(), função que nunca existiu — menu não abria no celular.
+  window.toggleBnMenu = toggleMenu;
 
   function bindNavigation() {
     document.querySelectorAll('[data-page]').forEach(el => {
