@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Mobya · Ultra Map</title>
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
   :root {
@@ -372,8 +372,8 @@
   }
 
   /* Mapbox overrides */
-  .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
-  .mapboxgl-popup-content {
+  .maplibregl-ctrl-logo, .maplibregl-ctrl-attrib { display: none !important; }
+  .maplibregl-popup-content {
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
@@ -382,7 +382,7 @@
     font-family: var(--font);
     box-shadow: 0 8px 32px rgba(0,0,0,.6);
   }
-  .mapboxgl-popup-tip { display: none; }
+  .maplibregl-popup-tip { display: none; }
 
   /* Notification toast */
   #toast {
@@ -407,59 +407,7 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* Skeleton for no-token state */
-  #no-token {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: var(--bg);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-    padding: 32px;
-  }
-  #no-token.show { display: flex; }
-  .token-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    max-width: 340px;
-    width: 100%;
-  }
-  .token-card h2 { font-size: 18px; margin-bottom: 8px; }
-  .token-card p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
-  .token-input {
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: monospace;
-    font-size: 12px;
-    margin-bottom: 10px;
-  }
-  .token-input:focus { outline: none; border-color: var(--accent); }
-  .token-btn {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--accent2), var(--accent));
-    border: none;
-    color: #fff;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  .demo-note {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 10px;
-  }
+  /* MapLibre GL JS — sem token necessário */
 </style>
 </head>
 <body>
@@ -523,16 +471,7 @@
   <!-- Toast -->
   <div id="toast"></div>
 
-  <!-- No token fallback -->
-  <div id="no-token">
-    <div class="token-card">
-      <h2>🗺️ Token Mapbox</h2>
-      <p>Este componente usa Mapbox GL JS para renderização WebGL. Insira seu token público para ativar o mapa. Crie grátis em <strong>mapbox.com</strong>.</p>
-      <input class="token-input" id="token-input" placeholder="pk.eyJ1IjoiYWJj..." type="password">
-      <button class="token-btn" onclick="initWithToken()">Ativar mapa</button>
-      <div class="demo-note">Token fica só na memória da sessão — nunca salvo.</div>
-    </div>
-  </div>
+  <!-- MapLibre GL JS: sem overlay de token -->
 </div>
 
 <!-- BOTTOM PANEL -->
@@ -584,8 +523,7 @@ const EMERGENCY_ID  = _urlParams.get('emergency') || null;
 // ── Config (herda de window.MOBYA se disponível) ──────────────
 const API_BASE = (window.MOBYA?.API || 'https://mobya.onrender.com');
 const WS_BASE  = API_BASE.replace('https://', 'wss://').replace('http://', 'ws://');
-const MBX_TOKEN_KEY = 'mbx_token';
-const DEFAULT_MBX   = 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw';
+// MapLibre GL JS — sem token necessário
 
 // ── Estado ────────────────────────────────────────────────────
 let map           = null;
@@ -620,31 +558,15 @@ const HEATMAP_POINTS = [
 
 // ── INIT ──────────────────────────────────────────────────────
 function tryAutoInit() {
-  const token = sessionStorage.getItem(MBX_TOKEN_KEY) || DEFAULT_MBX;
-  if (token) {
-    initMap(token);
-  } else {
-    document.getElementById('no-token').classList.add('show');
-  }
+  initMap();
 }
 
-function initWithToken() {
-  const t = document.getElementById('token-input').value.trim();
-  if (!t.startsWith('pk.')) { showToast('⚠️ Token inválido — deve começar com pk.'); return; }
-  sessionStorage.setItem(MBX_TOKEN_KEY, t);
-  document.getElementById('no-token').classList.remove('show');
-  initMap(t);
-}
-
-function initMap(token) {
-  mapboxgl.accessToken = token;
-
-  // Centro inicial: SP (ajusta quando userPos chegar via socket)
+function initMap() {
   const center = [-46.6450, -23.5550];
 
-  map = new mapboxgl.Map({
+  map = new maplibregl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/dark-v11',
+    style: 'https://tiles.openfreemap.org/styles/dark',
     center,
     zoom: 14,
     pitch: 55,
@@ -653,18 +575,16 @@ function initMap(token) {
   });
 
   map.on('load', () => {
-  map.on('moveend', _scheduleNearbyRefresh);
-    apply3DBuildings();
+    map.on('moveend', _scheduleNearbyRefresh);
     addHeatmapLayer();
-    addClusterLayer(); // começa invisível, ativa no modo discover
+    addClusterLayer();
     showToast('🗺️ Ultra Map pronto — conectando...');
-    // Só conecta socket depois do mapa estar pronto
     connectSocket();
   });
 
   map.on('error', (e) => {
-    console.error('[UltraMap][Mapbox]', e);
-    showToast('⚠️ Erro Mapbox');
+    console.error('[UltraMap][MapLibre]', e);
+    showToast('⚠️ Erro ao carregar mapa');
   });
 }
 
@@ -817,7 +737,7 @@ function updateProviderMarker(lat, lng, name) {
       <div class="marker-ring" id="provider-ring"></div>
       <div class="provider-label">${name.split(' ')[0]}</div>
     `;
-    providerMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+    providerMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
       .setLngLat(lngLat)
       .addTo(map);
   } else {
@@ -847,7 +767,7 @@ function updateUserMarker(lat, lng, name) {
     const el = document.createElement('div');
     el.className = 'marker-user';
     el.innerHTML = '👤';
-    userMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+    userMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
       .setLngLat(lngLat)
       .addTo(map);
   } else {
@@ -949,7 +869,7 @@ function updateSessionStatus(status) {
 // ── FIT BOUNDS ────────────────────────────────────────────────
 function fitBounds() {
   if (!map || !providerPos || !userPos) return;
-  const b = new mapboxgl.LngLatBounds(providerPos, providerPos);
+  const b = new maplibregl.LngLatBounds(providerPos, providerPos);
   b.extend(userPos);
   map.fitBounds(b, { padding: 80, maxZoom: 16, duration: 600 });
 }
@@ -970,17 +890,7 @@ function updateConnectionBadge(state) {
 
 // ── 3D BUILDINGS ─────────────────────────────────────────────
 function apply3DBuildings() {
-  if (map.getLayer('3d-buildings')) return;
-  map.addLayer({
-    id: '3d-buildings', source: 'composite', 'source-layer': 'building',
-    filter: ['==', 'extrude', 'true'], type: 'fill-extrusion', minzoom: 12,
-    paint: {
-      'fill-extrusion-color': '#0d1424',
-      'fill-extrusion-height':  ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'height']],
-      'fill-extrusion-base':    ['interpolate', ['linear'], ['zoom'], 12, 0, 15, ['get', 'min_height']],
-      'fill-extrusion-opacity': 0.85,
-    },
-  });
+  // fonte 'composite' é Mapbox-only — pitch 3D continua funcionando
 }
 
 // ── HEATMAP ───────────────────────────────────────────────────
