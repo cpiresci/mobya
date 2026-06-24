@@ -64,6 +64,8 @@ window.API = (() => {
     mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
     update:  (id,d) => patch(`/emergency/${id}/status`, d),
     myOffers:()     => get('/emergency/my-offers'),
+    initiatePayment: (id)    => post(`/emergency/${id}/initiate-payment`, {}),
+    paymentStatus:   (id)    => get(`/emergency/${id}/payment-status`),
     nearby:  (lat, lng, opts={}) =>
       get(`/emergency/nearby?latitude=${lat}&longitude=${lng}` +
           `&radiusKm=${opts.radiusKm||50}` +

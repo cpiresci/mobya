@@ -687,6 +687,7 @@ window.UltraGPS = (() => {
 
   // ── Render ──
   async function render(sid){
+    stopWatchingLocation(); // P5: limpa watcher anterior antes de criar novo
     const main=document.getElementById('main'); if(!main)return;
     sessionProviderId=null; sessionQuoteId=null; _ratingPrompted=false;
     main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px - var(--bnh,0px));position:relative;overflow:hidden">
