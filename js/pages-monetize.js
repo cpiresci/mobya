@@ -343,8 +343,25 @@
   </div>
 
   <div class="px-card">
-    <div class="px-card-title">◈ COMISSÕES POR VERTICAL</div>
-    <div id="monRates" style="display:flex;flex-direction:column;gap:0">Carregando...</div>
+    <div class="px-card-title">◈ COMO VOCÊ GANHA COM A MOBYA</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:10px">
+        <div style="font-size:1.4rem;flex-shrink:0">📍</div>
+        <div><div style="font-weight:700;font-size:.88rem;color:#fff;margin-bottom:3px">Clientes por proximidade</div><div style="font-size:.78rem;color:var(--muted,#888)">Você aparece automaticamente para quem está perto e precisa do seu serviço agora.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px">
+        <div style="font-size:1.4rem;flex-shrink:0">💰</div>
+        <div><div style="font-weight:700;font-size:.88rem;color:#fff;margin-bottom:3px">Pagamento garantido via PIX</div><div style="font-size:.78rem;color:var(--muted,#888)">O valor é reservado antes do serviço e liberado para você assim que confirmado.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:10px">
+        <div style="font-size:1.4rem;flex-shrink:0">⭐</div>
+        <div><div style="font-weight:700;font-size:.88rem;color:#fff;margin-bottom:3px">Reputação que gera mais negócios</div><div style="font-size:.78rem;color:var(--muted,#888)">Avaliações positivas aumentam sua visibilidade no dispatch da plataforma.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:10px">
+        <div style="font-size:1.4rem;flex-shrink:0">🚨</div>
+        <div><div style="font-weight:700;font-size:.88rem;color:#fff;margin-bottom:3px">Emergências 24h com tarifa premium</div><div style="font-size:.78rem;color:var(--muted,#888)">Parceiros que atendem emergências recebem demandas com maior urgência e valor agregado.</div></div>
+      </div>
+    </div>
   </div>
 
   <div class="px-card">
@@ -389,7 +406,6 @@
     </div>
   </div>
 </div>`;
-    _loadMonRates();
   }
 
   async function _loadMonRates() {
