@@ -242,7 +242,102 @@
   }
 
   // ── AÇÕES ──────────────────────────────────────────────────
+
+  function renderMecanico() {
+    const el = main(); if (!el) return;
+    el.innerHTML = `
+<div class="px-extra">
+  <div class="px-hero px-hero--cyan">
+    <div class="px-hero-icon">🔧</div>
+    <div>
+      <div class="px-hero-title">MECANICO AUTOMOTIVO</div>
+      <div class="px-hero-sub">Diagnostico e reparo · Atendimento no local</div>
+    </div>
+    <div class="px-badge px-badge--live">● AO VIVO</div>
+  </div>
+  <button class="px-btn-sos" style="background:linear-gradient(135deg,#0e7490,#06b6d4);box-shadow:0 4px 20px rgba(6,182,212,.35)" onclick="PagesExtra.solicitarMecanico()">
+    🔧 SOLICITAR MECANICO AGORA
+  </button>
+  <div class="px-card">
+    <div class="px-card-title">◈ MECANICOS DISPONIVEIS</div>
+    <div class="px-grid3" id="mecDrivers">
+      <div class="px-driver"><div class="px-driver-avatar">🔧</div><div class="px-driver-name">Rafael M.</div><div class="px-driver-info">0,8 km · 6 min</div><div class="px-driver-rating">★ 4.9</div><div class="px-driver-status px-status-free">● Livre</div></div>
+      <div class="px-driver"><div class="px-driver-avatar">🔧</div><div class="px-driver-name">Bruno T.</div><div class="px-driver-info">1,9 km · 12 min</div><div class="px-driver-rating">★ 4.8</div><div class="px-driver-status px-status-free">● Livre</div></div>
+      <div class="px-driver px-driver--busy"><div class="px-driver-avatar">🔧</div><div class="px-driver-name">Andre S.</div><div class="px-driver-info">3,5 km · 22 min</div><div class="px-driver-rating">★ 4.7</div><div class="px-driver-status px-status-busy">● Ocupado</div></div>
+    </div>
+  </div>
+  <div class="px-card-title" style="margin:24px 0 12px">SERVICOS DISPONIVEIS</div>
+  <div class="px-grid2">
+    ${_serviceCard("🔧","Diagnostico Geral","Leitura de erros OBD + avaliacao","R$ 80","mecanico")}
+    ${_serviceCard("🛢️","Troca de Oleo","Oleo + filtro no local","R$ 120","mecanico")}
+    ${_serviceCard("🔋","Bateria","Teste e substituicao","R$ 150","mecanico")}
+    ${_serviceCard("💨","Pneu Furado","Troca ou remendo express","R$ 60","mecanico")}
+    ${_serviceCard("🌡️","Superaquecimento","Sistema de refrigeracao","R$ 100","mecanico")}
+    ${_serviceCard("⚡","Eletrica","Fusiveis, alternador, chicote","R$ 130","mecanico")}
+  </div>
+  ${_review("Carlos V.","⭐⭐⭐⭐⭐","Resolveram a pane do meu Civic em 40 minutos!","2h atras")}
+  ${_review("Ana P.","⭐⭐⭐⭐⭐","Diagnostico preciso e preco justo.","5h atras")}
+</div>`;
+  }
+
+
+  function renderFrete() {
+    const el = main(); if (!el) return;
+    el.innerHTML = `
+<div class="px-extra">
+  <div class="px-hero" style="background:linear-gradient(135deg,rgba(120,53,15,.25),rgba(251,191,36,.1));border:1px solid rgba(251,191,36,.3)">
+    <div class="px-hero-icon">🚚</div>
+    <div>
+      <div class="px-hero-title">FRETES E TRANSPORTES</div>
+      <div class="px-hero-sub">Mudancas, entregas e cargas · Todo o Brasil</div>
+    </div>
+    <div class="px-badge" style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);color:#fbbf24">● DISPONIVEL</div>
+  </div>
+  <div class="px-card">
+    <div class="px-card-title">◈ COTACAO RAPIDA</div>
+    <div class="px-form-row">
+      <div class="px-form-group"><label>Origem</label><input class="px-input" id="freteOrigem" placeholder="Cidade de origem" /></div>
+      <div class="px-form-group"><label>Destino</label><input class="px-input" id="freteDestino" placeholder="Cidade de destino" /></div>
+    </div>
+    <div class="px-form-row">
+      <div class="px-form-group"><label>Tipo de carga</label>
+        <select class="px-input" id="freteTipo">
+          <option value="">Selecione...</option>
+          <option value="mudanca">Mudanca residencial</option>
+          <option value="carga">Carga geral</option>
+          <option value="veiculo">Transporte de veiculo</option>
+          <option value="moto">Moto / Scooter</option>
+        </select>
+      </div>
+      <div class="px-form-group"><label>Peso estimado (kg)</label><input class="px-input" id="fretePeso" type="number" placeholder="Ex: 500" /></div>
+    </div>
+    <button class="px-btn" onclick="PagesExtra.cotarFrete()">🔍 SOLICITAR COTACAO</button>
+  </div>
+  <div class="px-card-title" style="margin:24px 0 12px">TIPOS DE FRETE</div>
+  <div class="px-grid2">
+    ${_serviceCard("📦","Carga Fracionada","Dividida com outros clientes","A partir de R$ 80","fretes")}
+    ${_serviceCard("🚛","Carga Fechada","Veiculo exclusivo","A partir de R$ 400","fretes")}
+    ${_serviceCard("🏠","Mudanca","Residencial e comercial","A partir de R$ 300","fretes")}
+    ${_serviceCard("🚗","Auto Transporte","Veiculos em cegonha","A partir de R$ 600","fretes")}
+  </div>
+  ${_review("Marcelo R.","⭐⭐⭐⭐⭐","Mudanca feita com cuidado e no prazo.","1 dia atras")}
+  ${_review("Leticia S.","⭐⭐⭐⭐⭐","Carro entregue sem um arranhao!","3 dias atras")}
+</div>`;
+  }
+
   const PagesExtra = {
+    solicitarMecanico() {
+      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
+      if (typeof Toast !== 'undefined') Toast.show('🔧 Mecanico acionado! Chegada em ate 30 minutos.', 'ok');
+    },
+    cotarFrete() {
+      const o = document.getElementById('freteOrigem')?.value?.trim();
+      const d = document.getElementById('freteDestino')?.value?.trim();
+      const t = document.getElementById('freteTipo')?.value;
+      if (!o || !d || !t) { if (typeof Toast !== 'undefined') Toast.show('Preencha origem, destino e tipo', 'err'); return; }
+      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando transportadoras...', 'info');
+      setTimeout(() => { if (typeof Toast !== 'undefined') Toast.show('✅ 8 transportadoras encontradas!', 'ok'); }, 1400);
+    },
     solicitarReboque() {
       if (!API.isAuth()) {
         MobyaAuth.showLogin(); return;
@@ -278,6 +373,8 @@
   // Expõe as páginas de render (eram privadas do closure e nunca chegavam
   // a app.js — por isso reboque/chaveiro/aluguel caíam no comingSoon).
   PagesExtra.renderReboque  = renderReboque;
+  PagesExtra.renderMecanico = renderMecanico;
+  PagesExtra.renderFrete    = renderFrete;
   PagesExtra.renderChaveiro = renderChaveiro;
   PagesExtra.renderAluguel  = renderAluguel;
 
