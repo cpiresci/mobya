@@ -321,7 +321,231 @@
 </div>`;
   }
 
+  // ══════════════════════════════════════════════════════════
+  // SEJA UM PARCEIRO (cadastro de provider/monetização)
+  // ══════════════════════════════════════════════════════════
+  let _categoriesCache = null;
+  async function renderMonetizacao() {
+    const el = main(); if (!el) return;
+    if (!API.isAuth()) {
+      window.App?.toast?.('Faça login para se cadastrar como parceiro.', 'warn');
+      window.MobyaAuth?.showLogin();
+      return;
+    }
+    el.innerHTML = `
+<div class="px-extra">
+  <div class="px-hero px-hero--purple">
+    <div class="px-hero-icon">🤝</div>
+    <div>
+      <div class="px-hero-title">SEJA UM PARCEIRO MOBYA</div>
+      <div class="px-hero-sub">Cadastre seu negócio e receba clientes pela plataforma</div>
+    </div>
+  </div>
 
+  <div class="px-card">
+    <div class="px-card-title">◈ COMISSÕES POR VERTICAL</div>
+    <div id="monRates" style="display:flex;flex-direction:column;gap:0">Carregando...</div>
+  </div>
+
+  <div class="px-card">
+    <div class="px-card-title">◈ CADASTRE SEU NEGÓCIO</div>
+    <div class="pm-form">
+      <div class="pm-field"><label>Nome do negócio *</label><input class="px-input" id="monName" placeholder="Ex: Auto Center Silva"></div>
+      <div class="pm-field">
+        <label>Vertical *</label>
+        <select class="px-input" id="monVertical" onchange="PagesMon.monUpdateCategories()">
+          <option value="">Selecione...</option>
+          <option value="SERVICE">Oficinas / Auto centers / Chaveiro</option>
+          <option value="LOGISTICS">Fretes / Reboque / Peças</option>
+          <option value="FLEET_RENTAL">Locadora de frota</option>
+          <option value="INSURANCE">Seguros</option>
+        </select>
+      </div>
+      <div class="pm-field" id="monCategoryWrap" style="display:none">
+        <label>Categoria</label>
+        <select class="px-input" id="monCategory"></select>
+      </div>
+      <div class="pm-field"><label>Cidade *</label><input class="px-input" id="monCity" placeholder="Ex: São Paulo"></div>
+      <div class="pm-field"><label>Estado (UF) *</label><input class="px-input" id="monState" placeholder="Ex: SP" maxlength="2"></div>
+      <div class="pm-field"><label>Telefone</label><input class="px-input" id="monPhone" placeholder="(00) 00000-0000"></div>
+      <div class="pm-field"><label>E-mail</label><input class="px-input" id="monEmail" placeholder="contato@negocio.com"></div>
+      <div class="pm-field"><label>CNPJ</label><input class="px-input" id="monCnpj" placeholder="00.000.000/0000-00"></div>
+      <div class="pm-field"><label>Descrição</label><input class="px-input" id="monDesc" placeholder="Breve descrição do negócio"></div>
+      <div class="pm-field">
+        <label>Latitude * <span style="font-size:.7rem">(use seu GPS)</span></label>
+        <input class="px-input" id="monLat" placeholder="Ex: -23.55052">
+      </div>
+      <div class="pm-field"><label>Longitude *</label><input class="px-input" id="monLng" placeholder="Ex: -46.633308"></div>
+      <div class="pm-field" style="flex-direction:row;align-items:center;gap:8px">
+        <input type="checkbox" id="monEmergency" style="width:auto">
+        <label style="margin:0">Atendo emergências 24h</label>
+      </div>
+    </div>
+    <button class="px-btn" onclick="PagesMon.monUseMyLocation()">📍 Usar minha localização atual</button>
+    <button class="px-btn" style="margin-top:8px" onclick="PagesMon.cadastrarParceiro()">🤝 ENVIAR CADASTRO</button>
+    <div style="font-size:.74rem;color:var(--muted,#888);margin-top:10px">
+      Seu cadastro entra como pendente e é revisado pela equipe MOBYA em até 48h.
+      Latitude/longitude são obrigatórias — sem elas o dispatch de proximidade não funciona.
+    </div>
+  </div>
+</div>`;
+    _loadMonRates();
+  }
+
+  async function _loadMonRates() {
+    const wrap = document.getElementById('monRates'); if (!wrap) return;
+    try {
+      const r = await API.get('/monetization/rates');
+      const rates = r.data?.verticals || [];
+      wrap.innerHTML = rates.map(v => `
+        <div class="pm-taxa-row"><span class="pm-taxa-banco">${v.desc}</span><span class="pm-taxa-val">${v.rate}</span></div>`).join('');
+      _categoriesCache = null;
+    } catch (e) {
+      wrap.innerHTML = `<div style="font-size:.8rem;color:var(--muted,#888)">Não foi possível carregar as taxas agora.</div>`;
+    }
+  }
+
+  async function monUpdateCategories() {
+    const vertical = document.getElementById('monVertical')?.value;
+    const wrap = document.getElementById('monCategoryWrap');
+    const sel = document.getElementById('monCategory');
+    if (!vertical || !wrap || !sel) { if (wrap) wrap.style.display = 'none'; return; }
+    try {
+      if (!_categoriesCache) {
+        const r = await API.get('/monetization/categories');
+        _categoriesCache = r.data || {};
+      }
+      const cats = _categoriesCache[vertical] || [];
+      if (!cats.length) { wrap.style.display = 'none'; return; }
+      sel.innerHTML = cats.map(c => `<option value="${c}">${c.replace(/_/g, ' ')}</option>`).join('');
+      wrap.style.display = 'flex';
+    } catch (e) { wrap.style.display = 'none'; }
+  }
+
+  function monUseMyLocation() {
+    if (!navigator.geolocation) { Toast?.show('Geolocalização não disponível neste navegador.', 'err'); return; }
+    Toast?.show('📍 Obtendo localização...', 'info');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.getElementById('monLat').value = pos.coords.latitude.toFixed(6);
+        document.getElementById('monLng').value = pos.coords.longitude.toFixed(6);
+        Toast?.show('📍 Localização capturada!', 'ok');
+      },
+      () => Toast?.show('Não foi possível obter sua localização. Preencha manualmente.', 'err'),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  async function cadastrarParceiro() {
+    const name = document.getElementById('monName')?.value.trim();
+    const vertical = document.getElementById('monVertical')?.value;
+    const city = document.getElementById('monCity')?.value.trim();
+    const state = document.getElementById('monState')?.value.trim().toUpperCase();
+    const latitude = document.getElementById('monLat')?.value;
+    const longitude = document.getElementById('monLng')?.value;
+    if (!name || !vertical || !city || !state) {
+      Toast?.show('Nome, vertical, cidade e estado são obrigatórios.', 'err'); return;
+    }
+    if (!latitude || !longitude) {
+      Toast?.show('Latitude e longitude são obrigatórias — use o botão de localização.', 'err'); return;
+    }
+    try {
+      await API.monetization.createProvider({
+        name, vertical, city, state, latitude, longitude,
+        category: document.getElementById('monCategory')?.value || undefined,
+        phone: document.getElementById('monPhone')?.value.trim() || undefined,
+        email: document.getElementById('monEmail')?.value.trim() || undefined,
+        cnpj: document.getElementById('monCnpj')?.value.trim() || undefined,
+        description: document.getElementById('monDesc')?.value.trim() || undefined,
+        emergency24h: !!document.getElementById('monEmergency')?.checked,
+      });
+      Toast?.show('🤝 Cadastro enviado! Aguardando aprovação em até 48h.', 'ok');
+      window.App?.navigate('dashboard');
+    } catch (e) {
+      Toast?.show(e.message || 'Não foi possível enviar o cadastro agora.', 'err');
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // PAINEL DE RECEITA (admin)
+  // ══════════════════════════════════════════════════════════
+  async function renderPainelReceita() {
+    const el = main(); if (!el) return;
+    el.innerHTML = `
+<div class="px-extra">
+  <div class="px-hero px-hero--purple">
+    <div class="px-hero-icon">📊</div>
+    <div>
+      <div class="px-hero-title">PAINEL DE RECEITA</div>
+      <div class="px-hero-sub">Visão consolidada de todas as fontes de monetização</div>
+    </div>
+  </div>
+  <div id="prBody"><div style="color:var(--muted,#888);font-size:.85rem;padding:12px 0">Carregando...</div></div>
+</div>`;
+    try {
+      const r = await API.monetization.dashboard();
+      const d = r.data;
+      const body = document.getElementById('prBody'); if (!body) return;
+      body.innerHTML = `
+        <div class="px-grid2" style="margin-bottom:16px">
+          ${_prMetric('💰', 'Receita bruta consolidada', fmtBRLpr(d.consolidated.grossRevenue))}
+          ${_prMetric('📈', 'Receita líquida consolidada', fmtBRLpr(d.consolidated.netRevenue))}
+          ${_prMetric('🏪', 'Parceiros ativos', `${d.providers.active} / ${d.providers.total}`)}
+          ${_prMetric('📋', 'Cotações totais', d.quotes.total)}
+        </div>
+
+        <div class="px-card-title" style="margin:20px 0 10px">RECEITA POR VERTICAL (marketplace)</div>
+        <div class="px-card">
+          <div class="pm-taxas">
+            ${d.verticals.length ? d.verticals.map(v => `
+              <div class="pm-taxa-row">
+                <span class="pm-taxa-banco">${v.vertical} <span class="pm-taxa-ano">(${v.deals} negócios · ${v.rate})</span></span>
+                <span class="pm-taxa-val">${fmtBRLpr(v.commission)}</span>
+              </div>`).join('') : '<div style="font-size:.82rem;color:var(--muted,#888)">Sem dados ainda.</div>'}
+          </div>
+        </div>
+
+        <div class="px-card-title" style="margin:20px 0 10px">EMERGÊNCIAS (reboque · mecânico · chaveiro)</div>
+        <div class="px-card">
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Volume bruto estimado</span><span class="pm-taxa-val">${fmtBRLpr(d.emergencyRevenue.grossVolume)}</span></div>
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Comissão MOBYA</span><span class="pm-taxa-val">${fmtBRLpr(d.emergencyRevenue.mobyaCommission)}</span></div>
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Pago aos prestadores</span><span class="pm-taxa-val">${fmtBRLpr(d.emergencyRevenue.providerNetPaid)}</span></div>
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Jobs concluídos</span><span class="pm-taxa-val">${d.emergencyRevenue.completedJobs}</span></div>
+          <div style="font-size:.72rem;color:var(--muted,#888);margin-top:8px">${d.emergencyRevenue.note}</div>
+        </div>
+
+        <div class="px-card-title" style="margin:20px 0 10px">ALUGUEL P2P</div>
+        <div class="px-card">
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Receita bruta MOBYA</span><span class="pm-taxa-val">${fmtBRLpr(d.rentalRevenue.mobyaGross)}</span></div>
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Lucro líquido MOBYA</span><span class="pm-taxa-val">${fmtBRLpr(d.rentalRevenue.mobyaNet)}</span></div>
+          <div class="pm-taxa-row"><span class="pm-taxa-banco">Reservas concluídas</span><span class="pm-taxa-val">${d.rentalRevenue.completedBookings}</span></div>
+          <div style="font-size:.72rem;color:var(--muted,#888);margin-top:8px">${d.rentalRevenue.note}</div>
+        </div>
+
+        <div class="px-card-title" style="margin:20px 0 10px">TOP 5 PARCEIROS</div>
+        <div class="px-card">
+          ${d.topProviders.length ? d.topProviders.map(p => `
+            <div class="pm-taxa-row">
+              <span class="pm-taxa-banco">${p.name} ${p.vertical ? '<span class="pm-taxa-ano">(' + p.vertical + ')</span>' : ''}</span>
+              <span class="pm-taxa-val">${fmtBRLpr(p.commission)} <span class="pm-taxa-ano">· ${p.deals}x</span></span>
+            </div>`).join('') : '<div style="font-size:.82rem;color:var(--muted,#888)">Sem dados ainda.</div>'}
+        </div>
+      `;
+    } catch (e) {
+      const body = document.getElementById('prBody');
+      if (body) body.innerHTML = `<div class="px-card" style="color:#ef4444;font-size:.85rem">${e.message || 'Não foi possível carregar o painel de receita agora.'}</div>`;
+    }
+  }
+
+  function fmtBRLpr(v) { return `R$ ${parseFloat(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`; }
+  function _prMetric(icon, label, value) {
+    return `
+    <div class="px-card" style="text-align:center">
+      <div style="font-size:1.6rem">${icon}</div>
+      <div style="font-size:.74rem;color:var(--muted,#888);margin:6px 0">${label}</div>
+      <div style="font-size:1.15rem;font-weight:700;color:#fff">${value}</div>
+    </div>`;
+  }
 
   const PagesMon = {
 
@@ -604,6 +828,11 @@
   PagesMon.renderSeguros       = renderSeguros;
   PagesMon.renderFinanciamento = renderFinanciamento;
   PagesMon.renderConsorcio     = renderConsorcio;
+  PagesMon.renderMonetizacao   = renderMonetizacao;
+  PagesMon.renderPainelReceita = renderPainelReceita;
+  PagesMon.monUpdateCategories = monUpdateCategories;
+  PagesMon.monUseMyLocation    = monUseMyLocation;
+  PagesMon.cadastrarParceiro   = cadastrarParceiro;
 
   // ══════════════════════════════════════════════════════════
   // CSS
@@ -614,6 +843,7 @@
   style.textContent = `
 .px-hero--green{background:linear-gradient(135deg,rgba(5,150,105,.25),rgba(16,185,129,.1));border:1px solid rgba(16,185,129,.3)}
 .px-hero--gold{background:linear-gradient(135deg,rgba(180,130,0,.25),rgba(245,158,11,.1));border:1px solid rgba(245,158,11,.3)}
+.px-hero--purple{background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(168,85,247,.1));border:1px solid rgba(168,85,247,.3)}
 .pm-form{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
 .pm-field{display:flex;flex-direction:column;gap:6px}
 .pm-field label{font-size:.78rem;color:var(--muted,#888)}
