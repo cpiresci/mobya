@@ -369,6 +369,30 @@ window.UltraGPS = (() => {
       const u=window.MobyaAuth?.getUser?.();
       if(!u||!['ADMIN','SUPER_ADMIN'].includes(u.role)){ Toast.show('Acesso restrito a administradores.','warn'); setMode('tracking'); return; }
       _loadNearbyReal(200); layers.heat=true; _addHeatmapLayer();
+
+      // Injetar controles admin no painel de tracking
+      const adminCtrl = document.getElementById('ultraProviderControls');
+      if (adminCtrl) {
+        const existing = document.getElementById('ultraAdminTools');
+        if (!existing) {
+          const div = document.createElement('div');
+          div.id = 'ultraAdminTools';
+          div.style.cssText = 'padding:6px 14px;background:rgba(139,92,246,.06);border-top:1px solid rgba(139,92,246,.2)';
+          div.innerHTML = `
+            <div style="font-size:.72rem;color:#c084fc;font-weight:600;margin-bottom:8px">⚙️ FERRAMENTAS ADMIN</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)"
+                onclick="UltraGPS.showSessionHistory()">
+                📜 Replay GPS
+              </button>
+              <button class="ai-btn" style="font-size:.75rem;padding:6px 12px;background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)"
+                onclick="UltraGPS.doMockPay(window.__mobyaPendingEmergencyId||prompt('Emergency ID:'))">
+                💳 Mock-Pay
+              </button>
+            </div>`;
+          adminCtrl.parentNode.insertBefore(div, adminCtrl);
+        }
+      }
     }
   }
   function toggle3D(){ layers.threeD=!layers.threeD; document.getElementById('ultra-btn-3d')?.classList.toggle('on',layers.threeD); if(map){ map.easeTo({pitch:layers.threeD?55:0,duration:500}); if(map.getLayer('ultra-3d-buildings'))map.setPaintProperty('ultra-3d-buildings','fill-extrusion-opacity',layers.threeD?0.85:0); } }
@@ -490,6 +514,7 @@ window.UltraGPS = (() => {
         <div style="display:flex;gap:6px;padding:6px 14px;background:var(--card-bg);border-top:1px solid var(--border)">
           <button class="ai-btn" style="flex:1" onclick="UltraGPS.doCall()">📞 Contato</button>
           <button class="ai-btn" style="flex:1" onclick="UltraGPS.doChat()">💬 Chat</button>
+          <button class="ai-btn" style="flex:1;background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.3)" onclick="UltraGPS.showSessionHistory()">📜 Histórico</button>
           <button class="ai-btn" style="flex:1;background:rgba(239,68,68,.18);color:#ef4444;border:1px solid rgba(239,68,68,.4)" onclick="UltraGPS.doSOS()">🚨 SOS</button>
         </div>
         <div style="background:var(--card-bg);border-top:1px solid var(--border)">
@@ -586,7 +611,107 @@ window.UltraGPS = (() => {
 
   async function navShare(){if(!navigator.geolocation){Toast.show('GPS não disponível.','warn');return;}navigator.geolocation.getCurrentPosition(async(pos)=>{const{latitude:lat,longitude:lng}=pos.coords;const url=`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;const text=`📍 Minha localização (Mobya): ${url}`;try{if(navigator.share){await navigator.share({title:'Minha localização — Mobya',text,url});}else{await navigator.clipboard.writeText(text);Toast.show('📋 Link copiado.','ok');}}catch(e){if(e?.name!=='AbortError'){try{await navigator.clipboard.writeText(text);Toast.show('📋 Link copiado.','ok');}catch{Toast.show('Não foi possível compartilhar.','error');}}}},()=>Toast.show('Não foi possível obter sua localização.','error'),{enableHighAccuracy:true,timeout:8000});}
 
+  // ── Histórico GPS (replay de pings) ──────────────────────────────────
+  // GET /tracking/sessions/:id/history — acessível a participantes da sessão.
+  // Abre um overlay scrollável com linha do tempo de cada ping: lat/lng,
+  // velocidade, precisão e timestamp. Também traça os pings no mapa se disponível.
+  async function showSessionHistory() {
+    if (!sessionId) { Toast.show('Sem sessão ativa para mostrar histórico.', 'warn'); return; }
+
+    // Remove overlay anterior se existir
+    document.getElementById('ultraHistoryOverlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ultraHistoryOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.82);display:flex;align-items:flex-end;justify-content:center;animation:dp-fadein .2s ease';
+    overlay.innerHTML = `
+      <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:75vh;display:flex;flex-direction:column;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #2a2a45">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;background:linear-gradient(90deg,#c084fc,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+            📜 HISTÓRICO GPS
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="ultraHistCount" style="font-family:monospace;font-size:.72rem;color:#9090b0"></span>
+            <button onclick="document.getElementById('ultraHistoryOverlay').remove()"
+              style="background:rgba(255,255,255,.08);border:1px solid #2a2a45;border-radius:8px;color:#ccc;padding:5px 12px;cursor:pointer;font-size:.8rem">✕ Fechar</button>
+          </div>
+        </div>
+        <div id="ultraHistBody" style="overflow-y:auto;padding:12px 16px;flex:1;font-family:'JetBrains Mono',monospace;font-size:.73rem;display:flex;flex-direction:column;gap:6px">
+          <div style="color:#9090b0;text-align:center;padding:24px">⏳ Carregando...</div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    try {
+      const r  = await API.tracking.sessionHistory(sessionId);
+      const { pings = [] } = r?.data || {};
+
+      const countEl = document.getElementById('ultraHistCount');
+      if (countEl) countEl.textContent = `${pings.length} pings`;
+
+      const body = document.getElementById('ultraHistBody');
+      if (!body) return;
+
+      if (!pings.length) {
+        body.innerHTML = '<div style="color:#9090b0;text-align:center;padding:24px">Nenhum ping registrado nesta sessão.</div>';
+        return;
+      }
+
+      const fmtTime = (iso) => {
+        const d = new Date(iso);
+        return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      };
+      const fmtCoord = (v) => Number(v).toFixed(6);
+
+      body.innerHTML = pings.map((p, i) => `
+        <div style="border:1px solid #2a2a45;border-radius:8px;padding:8px 10px;background:#15152b">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="color:#c084fc;font-weight:700">#${String(i + 1).padStart(3, '0')}</span>
+            <span style="color:#9090b0">${fmtTime(p.createdAt)}</span>
+          </div>
+          <div style="color:#00f5ff">${fmtCoord(p.latitude)}, ${fmtCoord(p.longitude)}</div>
+          <div style="display:flex;gap:14px;margin-top:3px;color:#9090b0">
+            ${p.speed    != null ? `<span>🚀 ${Number(p.speed).toFixed(1)} km/h</span>`  : ''}
+            ${p.accuracy != null ? `<span>🎯 ±${Math.round(p.accuracy)}m</span>`         : ''}
+            ${p.heading  != null ? `<span>🧭 ${Math.round(p.heading)}°</span>`           : ''}
+          </div>
+        </div>`).join('');
+
+      // Replay visual: traça pings como camada no mapa (se mapa disponível)
+      if (map && pings.length >= 2) {
+        const coords = pings.map(p => [Number(p.longitude), Number(p.latitude)]);
+        const srcId = 'ultra-history-trail';
+        if (map.getSource(srcId)) {
+          map.getSource(srcId).setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } });
+        } else {
+          map.addSource(srcId, { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } } });
+          map.addLayer({ id: srcId, type: 'line', source: srcId, paint: { 'line-color': '#c084fc', 'line-width': 2, 'line-opacity': 0.7, 'line-dasharray': [2, 2] } });
+        }
+        // Centraliza no primeiro ping
+        map.flyTo({ center: coords[0], zoom: 14 });
+        Toast.show(`📜 ${pings.length} pings traçados no mapa (roxo).`, 'ok');
+      }
+    } catch (e) {
+      const body = document.getElementById('ultraHistBody');
+      if (body) body.innerHTML = `<div style="color:#ef4444;text-align:center;padding:20px">❌ ${e?.message || 'Erro ao carregar histórico'}</div>`;
+    }
+  }
+
+  // ── Mock-Pay emergência (apenas ALLOW_MOCK_PAY=true no backend) ──────
+  // Aparece no painel admin do Ultra GPS quando há emergencyId pendente.
+  async function doMockPay(emergencyId) {
+    if (!emergencyId) { Toast.show('ID de emergência necessário.', 'warn'); return; }
+    if (!confirm(`Simular pagamento para emergência ${emergencyId.slice(0,8)}...?`)) return;
+    try {
+      const r = await API.emergency.mockPay(emergencyId);
+      Toast.show(r?.message || '✅ Pagamento simulado! Dispatch iniciado.', 'ok');
+    } catch (e) {
+      Toast.show(e?.message || 'Erro no mock-pay (ALLOW_MOCK_PAY ativo?)', 'error');
+    }
+  }
+
   return { render, openTracking, setMode, toggle3D, toggleHeat, toggleRoute, toggleCluster,
     setStatus, doCheckin, sendChatMessage, doCall, doChat, doSOS, startWatchingLocation, stopWatchingLocation,
-    navSearch, navShowHistory, navSelect, navStart, navStop, navToggleVoice, navShare };
-})();
+    navSearch, navShowHistory, navSelect, navStart, navStop, navToggleVoice, navShare,
+    showSessionHistory, doMockPay };

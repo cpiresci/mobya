@@ -72,6 +72,7 @@ window.API = (() => {
           `&radiusKm=${opts.radiusKm||50}` +
           (opts.vertical ? `&vertical=${opts.vertical}` : '')),
     dispatchStatus: (id) => get(`/emergency/${id}/dispatch-status`),
+    mockPay:        (id) => post(`/emergency/${id}/mock-pay`, {}),
   };
 
   const monetization = {
@@ -202,5 +203,9 @@ window.API = (() => {
     markAll:    ()     => patch('/notifications/read-all', {}),
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, notifications, pollEmergency, ping };
+  const tracking = {
+    sessionHistory: (id) => get(`/tracking/sessions/${id}/history`),
+  };
+
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, notifications, tracking, pollEmergency, ping };
 })();
