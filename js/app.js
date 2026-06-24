@@ -123,8 +123,9 @@ window.App = (() => {
     document.addEventListener('click', ev => {
       const sidebar = document.getElementById('sidebar');
       const btn = document.getElementById('btnMenu');
+      const bnBtn = document.getElementById('bnMenuBtn');
       if (!sidebar || !sidebar.classList.contains('open')) return;
-      if (sidebar.contains(ev.target) || ev.target === btn) return;
+      if (sidebar.contains(ev.target) || ev.target === btn || ev.target.closest?.('#btnMenu, #bnMenuBtn')) return;
       closeMenu();
     });
   }
