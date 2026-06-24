@@ -74,6 +74,10 @@ const BASE_PAGES = {
   'meus-anuncios':   () => App.navigate('dashboard'),  // alias → dashboard tem seção de anúncios
   notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),
   carteira:          () => (typeof WalletPage!=='undefined'        ? WalletPage.render()                 : comingSoon('CARTEIRA','💳')),
+  'ultra-gps':       () => (typeof UltraGPS  !=='undefined'        ? UltraGPS.render()                   : comingSoon('ULTRA GPS','🛣️')),
+  garagem:           () => (typeof Pages     !=='undefined' && Pages.renderGaragem ? Pages.renderGaragem() : comingSoon('MINHA GARAGEM','🚗')),
+  monetizacao:       () => (typeof PagesMon  !=='undefined' && PagesMon.renderMonetizacao ? PagesMon.renderMonetizacao() : comingSoon('SEJA UM PARCEIRO','🤝')),
+  'painel-receita':  () => (typeof PagesMon  !=='undefined' && PagesMon.renderPainelReceita ? PagesMon.renderPainelReceita() : comingSoon('PAINEL DE RECEITA','📊')),
 };
 
 window.renderPage = function(page) {
