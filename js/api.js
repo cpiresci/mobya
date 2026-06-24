@@ -135,6 +135,7 @@ window.API = (() => {
     confirmBooking:        (id)     => patch(`/rental/bookings/${id}/confirm`, {}),
     declineBooking:        (id,d)   => patch(`/rental/bookings/${id}/decline`, d||{}),
     checkinBooking:        (id)     => patch(`/rental/bookings/${id}/checkin`, {}),
+    checkinConfirmBooking: (id)     => patch(`/rental/bookings/${id}/checkin/confirm`, {}),
     checkoutBooking:       (id)     => patch(`/rental/bookings/${id}/checkout`, {}),
     cancelBooking:         (id,d)   => patch(`/rental/bookings/${id}/cancel`, d||{}),
     cancelPaidBooking:     (id,d)   => patch(`/rental/bookings/${id}/cancel-paid`, d||{}),
