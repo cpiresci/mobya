@@ -126,7 +126,10 @@ window.Monetization = (() => {
     completeQuote:     (id, d) => API.patch(`/monetization/quotes/${id}/complete`, d),
     insuranceSim:      (d)     => API.post('/monetization/insurance/simulate', d),
     logisticsQuote:    (d)     => API.post('/monetization/logistics/quote', d),
-    payCommission:     (id, d) => API.post(`/monetization/commissions/${id}/pay`, d),
+    // chargeCommission: gera PIX para o prestador pagar a comissão (usa /charge, não /pay)
+    // /pay é admin-only — use API.monetization.chargeCommission(id) no código de UI
+    chargeCommission: (id)    => API.post(`/monetization/commissions/${id}/charge`, {}),
+    getPayment:       (id)    => API.get(`/monetization/commissions/${id}/payment`),
   };
 
   // ═══════════════════════════════════════════════════════════

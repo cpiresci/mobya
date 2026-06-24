@@ -39,23 +39,27 @@ window.API = (() => {
   };
 
   const ai = {
-    agents:      ()  => get('/ai/agents'),
-    providers:   ()  => get('/ai/providers'),
-    chat:        (d) => post('/ai/chat',                 d),
-    diagnose:    (d) => post('/ai/diagnose',             d),
-    fraud:       (d) => post('/ai/fraud-analysis',       d),
-    insurance:   (d) => post('/ai/insurance-score',      d),
-    financing:   (d) => post('/ai/financing-simulation', d),
+    agents:        ()     => get('/ai/agents'),
+    providers:     ()     => get('/ai/providers'),
+    chat:          (d)    => post('/ai/chat',                 d),
+    diagnose:      (d)    => post('/ai/diagnose',             d),
+    fraud:         (d)    => post('/ai/fraud-analysis',       d),
+    insurance:     (d)    => post('/ai/insurance-score',      d),
+    financing:     (d)    => post('/ai/financing-simulation', d),
+    conversations: (p={}) => get(`/ai/conversations?${new URLSearchParams(p)}`),
+    conversation:  (id)   => get(`/ai/conversations/${id}`),
+    deleteConversation: (id) => del(`/ai/conversations/${id}`),
   };
 
   const listings = {
-    search:   (p={}) => get(`/listings?${new URLSearchParams(p)}`),
-    get:      (id)   => get(`/listings/${id}`),
-    create:   (d)    => post('/listings', d),
-    update:   (id,d) => put(`/listings/${id}`, d),
-    remove:   (id)   => del(`/listings/${id}`),
-    favorite: (id)   => post(`/listings/${id}/favorite`, {}),
-    mine:     (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
+    search:    (p={}) => get(`/listings?${new URLSearchParams(p)}`),
+    get:       (id)   => get(`/listings/${id}`),
+    create:    (d)    => post('/listings', d),
+    update:    (id,d) => put(`/listings/${id}`, d),
+    remove:    (id)   => del(`/listings/${id}`),
+    favorite:  (id)   => post(`/listings/${id}/favorite`, {}),
+    mine:      (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
+    favorites: (p={}) => get(`/listings/favorites?${new URLSearchParams(p)}`),
   };
 
   const emergency = {
