@@ -8,12 +8,11 @@ window.RentalGuest = (() => {
   function bookingCard(b){
     const sm=SM[b.status]||{};
     const host=b.host||{};
-    const canCancel=b.status==='PENDING'||b.status==='CONFIRMED';
+    const canCancel=b.status==='PENDING'||(b.status==='CONFIRMED'&&b.renterPaymentStatus!=='COMPLETED');
     const canCancelPaid=b.status==='ACTIVE';
     const canPay=b.status==='CONFIRMED'&&b.renterPaymentStatus!=='COMPLETED';
-    // Achado 5: locatário vê botão de confirmação quando o anfitrião já
-    // registrou o check-in mas a reserva ainda não virou ACTIVE.
-    const canConfirmCheckin=b.status==='CONFIRMED'&&!!b.checkinInitiatedAt&&b.renterPaymentStatus==='COMPLETED';
+    // Locatário confirma checkin: anfitrião registrou, pagamento feito, ainda em CONFIRMED
+    const canCheckinConfirm=b.status==='CONFIRMED'&&b.renterPaymentStatus==='COMPLETED'&&!!b.checkinInitiatedAt;
     return`<div id="gbcard-${esc(b.id)}" style="background:var(--s2);border:1px solid ${sm.border||'var(--border)'};border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${sm.border||'var(--border)'}'">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">🗝️</span><div><div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--neon)">RESERVA #${esc(b.id.slice(-6).toUpperCase())}</div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${fmtD(b.createdAt)}</div></div></div>
@@ -21,7 +20,7 @@ window.RentalGuest = (() => {
       </div>
       ${b.status==='PENDING'?`<div style="font-size:.72rem;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:8px 11px;color:var(--gold);font-family:'JetBrains Mono',monospace">⏳ Aguardando confirmação do anfitrião. Você receberá uma notificação.</div>`:''}
       ${b.status==='CONFIRMED'&&!b.checkinInitiatedAt?`<div style="font-size:.72rem;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:8px 11px;color:var(--neon);font-family:'JetBrains Mono',monospace">✅ Reserva confirmada! Dirija-se ao local na data do check-in.</div>`:''}
-      ${canConfirmCheckin?`<div style="font-size:.72rem;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.35);border-radius:6px;padding:8px 11px;color:var(--gold);font-family:'JetBrains Mono',monospace">🚗 Anfitrião registrou o check-in. Confirme para iniciar a locação.</div>`:''}
+      ${b.status==='CONFIRMED'&&b.checkinInitiatedAt&&b.renterPaymentStatus==='COMPLETED'?`<div style="font-size:.72rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:6px;padding:8px 11px;color:var(--green);font-family:'JetBrains Mono',monospace">🚗 O anfitrião registrou a entrega. Confirme a retirada para iniciar a locação.</div>`:''}
       ${b.status==='DECLINED'?`<div style="font-size:.72rem;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:6px;padding:8px 11px;color:var(--red);font-family:'JetBrains Mono',monospace">🚫 Recusado pelo anfitrião.${b.declineReason?' Motivo: '+esc(b.declineReason):''}</div>`:''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">RETIRADA</div><div style="font-family:'JetBrains Mono',monospace">${fmtD(b.startDate)}</div></div>
@@ -30,8 +29,8 @@ window.RentalGuest = (() => {
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">TOTAL</div><div style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${fmtBRL(b.renterTotalAmount)}</div></div>
       </div>
       ${host.name?`<div style="background:var(--s3);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:9px"><span style="font-size:1rem">🏠</span><div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1px">ANFITRIÃO</div><div style="font-size:.82rem;color:var(--text);font-weight:600">${esc(host.name)}</div>${host.phone?`<div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(host.phone)}</div>`:''}</div></div>`:''}
-      ${canConfirmCheckin?`<button onclick="RentalGuest.confirmCheckin('${esc(b.id)}')" id="btn-checkin-confirm-${esc(b.id)}" style="width:100%;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:.83rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">🚗 Confirmar Check-in</button>`:''}
       ${canPay?`<button onclick="RentalGuest.pay('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">💳 Pagar agora — ${fmtBRL(b.renterTotalAmount)}</button>`:''}
+      ${canCheckinConfirm?`<button onclick="RentalGuest.checkinConfirm('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">🚗 Confirmar Retirada do Veículo</button>`:''}
       ${canCancel?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar Reserva</button>`:''}
       ${canCancelPaid?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.76rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar e Solicitar Reembolso</button>`:''}
     </div>`;
@@ -101,18 +100,20 @@ window.RentalGuest = (() => {
     }
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '💳 Pagar agora'; }
   }
-  async function confirmCheckin(bookingId){
-    if(!window.confirm('Confirmar o check-in? A locação será iniciada.'))return;
-    const btn=document.getElementById('btn-checkin-confirm-'+bookingId);
+  async function checkinConfirm(bookingId){
+    if(!window.confirm('Confirmar que você retirou o veículo?\n\nIsso inicia oficialmente a locação.'))return;
+    const card=document.getElementById('gbcard-'+bookingId);
+    const btn=card?.querySelector('button[onclick*="checkinConfirm"]');
     if(btn){btn.disabled=true;btn.style.opacity='.6';btn.textContent='⟳ Confirmando...';}
     try{
-      await API.rental.confirmCheckinBooking(bookingId);
-      window.App?.toast('🚗 Check-in confirmado! Locação em andamento.','ok',4000);
+      await API.rental.checkinConfirmBooking(bookingId);
+      window.App?.toast('🚗 Check-in confirmado! Locação em andamento.','ok');
       await render();
     }catch(e){
       window.App?.toast(e?.message||'Erro ao confirmar check-in.','err');
-      if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='🚗 Confirmar Check-in';}
+      if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='🚗 Confirmar Retirada do Veículo';}
     }
   }
-  return{render,cancel,pay,confirmCheckin,cancelPaid:(id)=>cancel(id,'ACTIVE')};
+
+  return{render,cancel,pay,cancelPaid:(id)=>cancel(id,'ACTIVE'),checkinConfirm};
 })();

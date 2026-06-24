@@ -74,8 +74,10 @@ const BASE_PAGES = {
   'meus-anuncios':   () => App.navigate('dashboard'),  // alias → dashboard tem seção de anúncios
   notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),
   carteira:          () => (typeof WalletPage!=='undefined'        ? WalletPage.render()                 : comingSoon('CARTEIRA','💳')),
-  garagem:           () => (typeof Garagem    !== 'undefined' ? Garagem.render()   : comingSoon('MINHA GARAGEM','\U0001f697')),
-  'ultra-gps':       () => (typeof UltraGPS  !== 'undefined' ? UltraGPS.render()  : comingSoon('ULTRA GPS','\U0001f6e3\ufe0f')),
+  'ultra-gps':       () => (typeof UltraGPS  !=='undefined'        ? UltraGPS.render()                   : comingSoon('ULTRA GPS','🛣️')),
+  garagem:           () => (typeof Pages     !=='undefined' && Pages.renderGaragem ? Pages.renderGaragem() : comingSoon('MINHA GARAGEM','🚗')),
+  monetizacao:       () => (typeof PagesMon  !=='undefined' && PagesMon.renderMonetizacao ? PagesMon.renderMonetizacao() : comingSoon('SEJA UM PARCEIRO','🤝')),
+  'painel-receita':  () => (typeof PagesMon  !=='undefined' && PagesMon.renderPainelReceita ? PagesMon.renderPainelReceita() : comingSoon('PAINEL DE RECEITA','📊')),
 };
 
 window.renderPage = function(page) {
@@ -119,6 +121,11 @@ window.App = (() => {
   }
   window.toggleMenu = toggleMenu;
 
+  // Alias usado pelo botão "Menu" da bottom-nav (mobile). O botão era
+  // referenciado no HTML (onclick="toggleBnMenu()") mas a função nunca
+  // existia — todo clique lançava ReferenceError e nada acontecia.
+  window.toggleBnMenu = toggleMenu;
+
   function bindNavigation() {
     document.querySelectorAll('[data-page]').forEach(el => {
       el.addEventListener('click', ev => {
@@ -129,9 +136,16 @@ window.App = (() => {
     });
     document.addEventListener('click', ev => {
       const sidebar = document.getElementById('sidebar');
-      const btn = document.getElementById('btnMenu');
+      const btnDesktop = document.getElementById('btnMenu');
+      const btnMobile  = document.getElementById('bnMenuBtn');
       if (!sidebar || !sidebar.classList.contains('open')) return;
-      if (sidebar.contains(ev.target) || ev.target === btn) return;
+      // Usa closest() em vez de comparação estrita: os botões têm <span>
+      // internos (ícone + label), então ev.target quase sempre é o filho,
+      // não o <button> em si — a comparação estrita antiga deixava o
+      // listener de "clique fora" fechar o menu no mesmo clique que abria.
+      if (sidebar.contains(ev.target)) return;
+      if (btnDesktop && ev.target.closest('#btnMenu')) return;
+      if (btnMobile  && ev.target.closest('#bnMenuBtn')) return;
       closeMenu();
     });
   }
