@@ -207,5 +207,8 @@ window.API = (() => {
     sessionHistory: (id) => get(`/tracking/sessions/${id}/history`),
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, notifications, tracking, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, rental, notifications, tracking, pollEmergency, ping,
+    // Alias raiz — rating-modal.js chama API.rateProvider(...) diretamente
+    rateProvider: (id, d) => monetization.rateProvider(id, d),
+  };
 })();
