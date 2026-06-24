@@ -715,3 +715,4 @@ window.UltraGPS = (() => {
     setStatus, doCheckin, sendChatMessage, doCall, doChat, doSOS, startWatchingLocation, stopWatchingLocation,
     navSearch, navShowHistory, navSelect, navStart, navStop, navToggleVoice, navShare,
     showSessionHistory, doMockPay };
+})();
