@@ -22,7 +22,7 @@ window.MobyaAuth = (() => {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), timeoutMs);
         try {
-          const r = await fetch(window.MOBYA.API+'/api/v1/auth/refresh', { method:'POST', credentials:'include', signal: ctrl.signal });
+          const _rt=localStorage.getItem('mobya_rt'); const r = await fetch(window.MOBYA.API+'/api/v1/auth/refresh', { method:'POST', credentials:'include', signal: ctrl.signal, headers:{'Content-Type':'application/json'}, body: _rt ? JSON.stringify({refreshToken:_rt}) : undefined });
           clearTimeout(t);
           return r.ok ? await r.json().catch(() => null) : null;
         } catch { clearTimeout(t); return null; }
@@ -33,7 +33,7 @@ window.MobyaAuth = (() => {
         if (i > 0) await new Promise(r => setTimeout(r, 3000 * i));
         refreshed = await _tryRefresh(attempts[i]);
       }
-      if (refreshed?.data?.accessToken) API.setToken(refreshed.data.accessToken);
+      if (refreshed?.data?.accessToken){ API.setToken(refreshed.data.accessToken); if(refreshed.data.refreshToken) localStorage.setItem('mobya_rt', refreshed.data.refreshToken); }
       else { updateUI(null); return false; }
     }
     try {
@@ -186,7 +186,7 @@ window.MobyaAuth = (() => {
     if (btn) { btn.disabled=true; btn.innerHTML='<div class="pdot"></div>ENTRANDO...'; }
     try {
       const r = await API.auth.login({ email, password: pass });
-      API.setToken(r.data.accessToken);
+      API.setToken(r.data.accessToken); if(r.data.refreshToken) localStorage.setItem('mobya_rt', r.data.refreshToken);
       user = r.data.user;
       updateUI(user);
       closeModal();
