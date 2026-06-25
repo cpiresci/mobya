@@ -28,9 +28,9 @@ window.MobyaAuth = (() => {
         } catch { clearTimeout(t); return null; }
       };
       let refreshed = null;
-      const attempts = [8000, 15000, 25000];
+      const attempts = [8000, 15000, 25000, 30000];
       for (let i = 0; i < attempts.length && !refreshed?.data?.accessToken; i++) {
-        if (i > 0) await new Promise(r => setTimeout(r, 1200 * i));
+        if (i > 0) await new Promise(r => setTimeout(r, 3000 * i));
         refreshed = await _tryRefresh(attempts[i]);
       }
       if (refreshed?.data?.accessToken) API.setToken(refreshed.data.accessToken);
