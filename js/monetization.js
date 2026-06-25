@@ -1340,6 +1340,7 @@ window.Monetization = (() => {
               ${myProvider.status!=='ACTIVE'?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--gold);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:6px;padding:3px 9px">${myProvider.status==='PENDING'?'⏳ Aguardando aprovação':myProvider.status}</span>`:''}
               ${myProvider.latitude==null||myProvider.longitude==null?`<span style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--red);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:3px 9px">📍 SEM LOCALIZAÇÃO — você não recebe emergências assim</span>`:''}
               <button id="provLocationBtn" onclick="Monetization.updateMyLocation('${myProvider.id}')" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;background:var(--s2);border:1px solid var(--border);color:var(--neon);border-radius:6px;padding:4px 10px;cursor:pointer">📍 ${myProvider.latitude==null?'Definir':'Atualizar'} localização</button>
+              <button onclick="App.navigate('carteira')" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--green,#10b981);border-radius:6px;padding:4px 10px;cursor:pointer">💳 Carteira</button>
             </div>
             <div style="color:var(--muted);font-size:.84rem;margin-top:6px">${escHtml(myProvider.city)}/${escHtml(myProvider.state)} · Gerencie seus chamados · Aceite cotações · Acompanhe comissões</div>`;
         } else {

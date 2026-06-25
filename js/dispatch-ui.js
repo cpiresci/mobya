@@ -192,6 +192,44 @@ window.DispatchUI = (() => {
     document.getElementById('dispatch-overlay')?.remove();
   }
 
+  // ── Oferta via alarme full-screen (SOS real) ──────────────
+  // Usa window.SOSAlarm se o módulo js/sos-alarm.js estiver carregado;
+  // senão cai pro modal antigo (_showOffer) como fallback de segurança.
+  const typeLabelsFS = {
+    TOW:'🚛 Reboque', LOCKSMITH:'🔑 Chaveiro', FLAT_TIRE:'🔧 Pneu Furado',
+    BATTERY:'🔋 Bateria', FUEL:'⛽ Combustível', ACCIDENT:'🚨 Acidente',
+    OVERHEAT:'🌡️ Superaquecimento', FREIGHT:'📦 Frete',
+    MECHANIC:'🔩 Mecânico', OTHER:'🛠️ Outro',
+  };
+
+  function _showOfferFullScreen(offer) {
+    if (typeof window.SOSAlarm === 'undefined') {
+      _showOffer(offer); // fallback se sos-alarm.js não foi incluído na página
+      return;
+    }
+    currentOffer = offer;
+    const info = [];
+    if (offer.address) info.push({ label: '📍 Local', value: offer.address });
+    if (offer.estimatedCost) info.push({ label: '💰 Estimativa', value: `R$ ${Number(offer.estimatedCost).toFixed(2)}` });
+    if (offer.latitude && offer.longitude) {
+      info.push({ label: '🗺️ Coords', value: `${Number(offer.latitude).toFixed(5)}, ${Number(offer.longitude).toFixed(5)}` });
+    }
+
+    window.SOSAlarm.show({
+      mode: 'provider',
+      title: '⚡ NOVA OFERTA SOS',
+      subtitle: typeLabelsFS[offer.type] || offer.type,
+      info,
+      countdownMs: offer.timeoutMs || OFFER_TIMEOUT_MS,
+      onAccept: accept,
+      onReject: reject,
+      onTimeout: () => {
+        currentOffer = null;
+        if (typeof Toast !== 'undefined') Toast.show('⏱️ Tempo esgotado — oferta expirada.', 'warn');
+      },
+    });
+  }
+
   function _timeoutModal() {
     _clearModal();
     if (typeof Toast !== 'undefined') Toast.show('⏱️ Tempo esgotado — oferta expirada.', 'warn');
@@ -202,6 +240,7 @@ window.DispatchUI = (() => {
     if (!currentOffer) return;
     const { emergencyId } = currentOffer;
     _clearModal();
+    window.SOSAlarm?.hide();
     try {
       const r = await API.req('POST', `/emergency/${emergencyId}/accept-offer`);
       if (r?.success) {
@@ -222,6 +261,7 @@ window.DispatchUI = (() => {
     if (!currentOffer) return;
     const { emergencyId } = currentOffer;
     _clearModal();
+    window.SOSAlarm?.hide();
     try {
       await API.req('POST', `/emergency/${emergencyId}/reject-offer`);
       if (typeof Toast !== 'undefined') Toast.show('Oferta rejeitada.', 'info');
@@ -267,7 +307,7 @@ window.DispatchUI = (() => {
 
     dispatchSocket.on('dispatch_offer', (offer) => {
       console.log('[Dispatch] Oferta recebida:', offer);
-      _showOffer(offer);
+      _showOfferFullScreen(offer);
     });
 
     dispatchSocket.on('dispatch_timeout', ({ emergencyId }) => {
@@ -298,8 +338,11 @@ window.DispatchUI = (() => {
   // Para quando recebe status ACCEPTED ou EXPIRED ou ao sair da tela.
   let _statusPollTimer = null;
 
+  let _lastAlertedStatus = null;
+
   function startStatusPoll(emergencyId, containerEl) {
     stopStatusPoll();
+    _lastAlertedStatus = null;
 
     const STATUS_LABELS = {
       PENDING:  '⏳ Aguardando prestadores...',
@@ -347,6 +390,28 @@ window.DispatchUI = (() => {
             <div style="font-size:.68rem;color:var(--muted);text-align:right;margin-top:3px">${pct}% do tempo decorrido</div>` : ''}
             ${s.acceptedProvider ? `<div style="margin-top:8px;font-size:.8rem;color:#10b981">✅ ${s.acceptedProvider}</div>` : ''}
           </div>`;
+
+        // Dispara alarme full-screen pro cliente em transições importantes
+        // (só uma vez por status, via flag local pra não repetir a cada tick).
+        if (s.status !== _lastAlertedStatus && window.SOSAlarm) {
+          if (s.status === 'ACCEPTED') {
+            window.SOSAlarm.show({
+              mode: 'client-accepted',
+              title: '✅ PRESTADOR CONFIRMADO',
+              subtitle: 'Ajuda a caminho! Acompanhe pelo GPS.',
+              info: s.acceptedProvider ? [{ label: '🧑‍🔧 Prestador', value: s.acceptedProvider }] : [],
+              onClose: () => {},
+            });
+          } else if (s.status === 'EXPIRED' || s.status === 'FAILED') {
+            window.SOSAlarm.show({
+              mode: 'client-failed',
+              title: '⚠️ NENHUM PRESTADOR DISPONÍVEL',
+              subtitle: 'Não conseguimos confirmar um prestador a tempo.',
+              onRetry: () => { if (typeof App !== 'undefined') App.navigate('emergencia'); },
+            });
+          }
+          _lastAlertedStatus = s.status;
+        }
 
         // Para de pollar quando encerrado
         if (['ACCEPTED','EXPIRED','FAILED'].includes(s.status)) stopStatusPoll();

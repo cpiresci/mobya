@@ -347,7 +347,7 @@ window.Pages = (() => {
     const typeLabels = { SALE:'Venda', RENT:'Aluguel', PART:'Peça', SERVICE:'Serviço',
                          INSURANCE:'Seguro', FINANCING:'Financiamento' };
     return `
-      <div onclick="App.navigate('listing',l.id)" style="
+      <div onclick="App.navigate('listing','${l.id}')" style="
         background:var(--s2);border:1px solid var(--border);border-radius:12px;
         overflow:hidden;cursor:pointer;transition:all .18s"
         onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border2)'"
@@ -660,7 +660,17 @@ window.Pages = (() => {
         if (typeof Chat !== 'undefined') Chat.inject(`Tive ${label.toLowerCase()}. ${desc || ''}`);
         const emergencyId = created?.data?.id || null;
         window.__mobyaPendingEmergencyId = emergencyId;
-        App.navigate('ultra-gps');
+        // sos_payment_gate_applied
+        // O backend cria a emergência com customerPaymentStatus=UNPAID.
+        // O dispatch só dispara após o pagamento PIX ser confirmado pelo
+        // webhook do MP. EmergencyPayment cuida do QR, polling e da
+        // navegação para ultra-gps após confirmação.
+        if (typeof EmergencyPayment !== 'undefined') {
+          EmergencyPayment.showPixPayment(emergencyId);
+        } else {
+          // Fallback: módulo não carregado, vai direto pro GPS
+          App.navigate('ultra-gps');
+        }
       } catch(e) {
         btn.disabled = false;
         btn.textContent = '🚨 Acionar Agora';
@@ -673,6 +683,13 @@ window.Pages = (() => {
   // CALCULADORAS
   // ═══════════════════════════════════════════════════════════
   function renderCalculadoras() {
+  if (!document.getElementById('mb-split-css')) {
+    const _s = document.createElement('style');
+    _s.id = 'mb-split-css';
+    _s.textContent = '.mb-split{display:grid;grid-template-columns:340px 1fr;gap:20px}.mb-split--wide{grid-template-columns:380px 1fr;gap:24px;align-items:start}@media(max-width:720px){.mb-split,.mb-split--wide{grid-template-columns:1fr !important;gap:16px}}';
+    document.head.appendChild(_s);
+  }
+
     const el = main();
     if (!el) return;
     el.innerHTML = `
@@ -692,7 +709,7 @@ window.Pages = (() => {
 
       <!-- FIPE -->
       <div id="tab_fipe">
-        <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
+        <div class="mb-split">
           <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--gold);margin-bottom:16px">⬡ CALCULADORA FIPE</div>
@@ -725,7 +742,7 @@ window.Pages = (() => {
 
       <!-- CDC -->
       <div id="tab_cdc" style="display:none">
-        <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
+        <div class="mb-split">
           <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--q4);margin-bottom:16px">⬡ SIMULADOR CDC</div>
@@ -753,7 +770,7 @@ window.Pages = (() => {
 
       <!-- TCO -->
       <div id="tab_tco" style="display:none">
-        <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
+        <div class="mb-split">
           <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--green);margin-bottom:16px">⬡ CUSTO TOTAL (TCO)</div>
@@ -815,7 +832,7 @@ window.Pages = (() => {
           <strong style="color:var(--text)">vistoria cautelar presencial</strong>.
         </span>
       </div>
-      <div style="display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start">
+      <div class="mb-split mb-split--wide">
         <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:24px">
           <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
             color:var(--neon);margin-bottom:16px">⬡ DADOS DO VEÍCULO</div>

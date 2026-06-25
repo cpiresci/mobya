@@ -316,30 +316,24 @@ window.UltraGPS = (() => {
     sendChatMessage('📞 Solicito contato por telefone — pode me ligar ou informar um número?');
     Toast.show('📞 Pedido de contato enviado pelo chat da sessão.','ok');
   }
-  let _sosBeepTimer=null;
-  function _startSosAlarm(){
-    if(_sosBeepTimer)return;
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    function beep(){ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='square'; o.frequency.value=880; g.gain.value=0.3; o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{o.stop();},200); }
-    beep(); _sosBeepTimer=setInterval(beep,600);
-  }
-  function _stopSosAlarm(){ if(_sosBeepTimer){clearInterval(_sosBeepTimer);_sosBeepTimer=null;} }
-
   function doSOS(){
     if(!socket?.connected){ Toast.show('Sem conexão — SOS não pôde ser enviado. Tente novamente.','error'); return; }
     sendChatMessage('🚨 SOS — preciso de ajuda urgente agora!');
     const banner=document.getElementById('ultraSosBanner'); if(banner){ banner.classList.add('show'); setTimeout(()=>banner.classList.remove('show'),6000); }
     Toast.show('🚨 SOS enviado para a sessão.','error');
-    // alarme sonoro
-    try{ _startSosAlarm(); setTimeout(_stopSosAlarm, 8000); }catch(e){}
-    try{ if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]); }catch{}
-    // overlay full-screen com telefone direto
-    let ov=document.getElementById('ultraSosOverlay');
-    if(!ov){ ov=document.createElement('div'); ov.id='ultraSosOverlay'; document.body.appendChild(ov); }
-    const phoneLink=sessionProviderId?`<a href="tel:" id="ultraSosCall" style="display:inline-block;margin-top:10px;background:#fff;color:#ef4444;font-weight:800;padding:10px 22px;border-radius:30px;text-decoration:none;font-size:.9rem">📞 Ligar agora</a>`:'<div style="margin-top:10px;font-size:.8rem;opacity:.85">Responda pelo chat da sessão.</div>';
-    ov.innerHTML=`<div style="font-size:2.2rem">🚨</div><div style="font-weight:800;font-size:1.05rem;margin-top:6px">SOS enviado!</div>${phoneLink}<button onclick="document.getElementById('ultraSosOverlay').classList.remove('show');clearInterval(window._sosBeepTimer)" style="display:block;margin:16px auto 0;background:transparent;border:1px solid #fff;color:#fff;padding:6px 18px;border-radius:20px;font-size:.78rem">Fechar alarme</button>`;
-    ov.classList.add('show');
-    setTimeout(()=>ov.classList.remove('show'),12000);
+    // alarme full-screen oficial (sirene real, wake lock, vibração contínua)
+    try{
+      window.SOSAlarm?.show({
+        mode:'client-waiting',
+        title:'SOS enviado!',
+        subtitle: sessionProviderId
+          ? 'Aguardando resposta do prestador. Você pode ligar agora.'
+          : 'Responda pelo chat da sessão.',
+        info: sessionProviderId ? [{label:'Contato', value:'📞 Ligar agora'}] : [],
+        onClose: ()=>window.SOSAlarm?.hide()
+      });
+      setTimeout(()=>window.SOSAlarm?.hide(), 12000);
+    }catch(e){}
   }
 
   // ── Compartilhamento de localização ──
@@ -660,8 +654,6 @@ window.UltraGPS = (() => {
       @keyframes navOverspeed{from{opacity:1}to{opacity:.5}}
       #navETABadge{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#22d88f}
       #navDeviationBadge{display:none;font-size:.72rem;color:#f59e0b;font-family:'JetBrains Mono',monospace}
-      #ultraSosOverlay{position:fixed;inset:0;background:rgba(239,68,68,.97);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:9999;animation:ultraSosFlash 1s infinite}
-      #ultraSosOverlay.show{display:flex}
       @keyframes ultraSosFlash{0%,100%{background:rgba(239,68,68,.97)}50%{background:rgba(180,20,20,.97)}}
     `;
     document.head.appendChild(s);
@@ -687,6 +679,7 @@ window.UltraGPS = (() => {
 
   // ── Render ──
   async function render(sid){
+    stopWatchingLocation(); // P5: limpa watcher anterior antes de criar novo
     const main=document.getElementById('main'); if(!main)return;
     sessionProviderId=null; sessionQuoteId=null; _ratingPrompted=false;
     main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px - var(--bnh,0px));position:relative;overflow:hidden">
