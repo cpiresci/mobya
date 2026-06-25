@@ -23,7 +23,7 @@ window.UltraGPS = (() => {
   const HISTORY_KEY='mobya_nav_history', HISTORY_MAX=5;
 
   // Modo do mapa: tracking | discover | admin
-  let mode='tracking'; let _suppressMoveend=false;
+  let mode='tracking'; let _suppressMoveend=false; let _didInitialCenter=false;
   let layers={ heat:false, route:true, cluster:true };
 
   // ── Estilos de tile (MapLibre usa JSON style URL) ──
@@ -126,7 +126,7 @@ window.UltraGPS = (() => {
         {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
       );
     });
-    if(pos){ _suppressMoveend=true; map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>_loadNearbyRealAt(pos,radiusKm),850); return; }
+    if(pos){ if(!_didInitialCenter){ _didInitialCenter=true; _suppressMoveend=true; map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); } Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>_loadNearbyRealAt(pos,radiusKm),850); return; }
     Toast.show('🔍 Prestadores próximos (usando região padrão)','info');
     _loadNearbyRealAt(null,radiusKm);
   }
@@ -353,7 +353,7 @@ window.UltraGPS = (() => {
 
   // ── Modo do mapa ──
   function setMode(m){
-    mode=m;
+    mode=m; _didInitialCenter=false;
     document.querySelectorAll('.ultra-pill').forEach(p=>p.classList.toggle('active',p.dataset.mode===m));
     const trackingEls=document.getElementById('ultraTrackingPanel');
     if(trackingEls)trackingEls.style.display=m==='tracking'?'':'none';
