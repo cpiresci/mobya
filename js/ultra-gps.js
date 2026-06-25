@@ -181,6 +181,7 @@ window.UltraGPS = (() => {
     if(map.getSource(id)){ map.getSource(id).setData(data); }
     else{ map.addSource(id,{type:'geojson',data}); map.addLayer({id,type:'line',source:id,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':color||'#3b82f6','line-width':width||4,'line-opacity':opacity??.8,...(dash?{'line-dasharray':dash}:{})}}); }
   }
+  let _didInitialFit=false;
   function updateMarker(role,lat,lng,label){
     if(!map)return;
     const isP=role==='PROVIDER'; const e=isP?'🔧':'📍'; const isNew=!markers[role]; const lngLat=[lng,lat];
@@ -194,8 +195,8 @@ window.UltraGPS = (() => {
     if(isP)_pushTrail(lat,lng);
     if(markers.USER&&markers.PROVIDER){
       const pts=[markers.USER.getLngLat().toArray(),markers.PROVIDER.getLngLat().toArray()];
-      _setRouteLine(pts,{color:'#7c3aed',width:3,dash:[2,1.5],opacity:.6}); _fitBounds(pts);
-    } else { map.easeTo({center:lngLat,zoom:16,duration:600}); }
+      _setRouteLine(pts,{color:'#7c3aed',width:3,dash:[2,1.5],opacity:.6}); if(!_didInitialFit){ _didInitialFit=true; _fitBounds(pts); }
+    } else if(!_didInitialFit){ _didInitialFit=true; map.easeTo({center:lngLat,zoom:16,duration:600}); }
   }
   function drawRealRoute(geometry){ if(!map||!geometry?.length)return; _setRouteLine(geometry,{color:'#3b82f6',width:4,opacity:.8}); }
 
