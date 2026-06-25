@@ -1,6 +1,6 @@
 // ============================================================
 // MOBYA — pages-extra.js
-// Páginas: Reboque, Chaveiro, Aluguel
+// Páginas: Reboque, Chaveiro, Aluguel, Mecânico, Frete
 // Carregar APÓS app.js no index.html
 // ============================================================
 
@@ -167,6 +167,9 @@
   function renderAluguel() {
     const el = main(); if (!el) return;
     const hoje = new Date().toISOString().split('T')[0];
+    const amanha = new Date(); amanha.setDate(amanha.getDate() + 1);
+    const amanhaStr = amanha.toISOString().split('T')[0];
+
     el.innerHTML = `
 <div class="px-extra">
 
@@ -174,33 +177,33 @@
     <div class="px-hero-icon">🗝️</div>
     <div>
       <div class="px-hero-title">ALUGUEL DE VEÍCULOS</div>
-      <div class="px-hero-sub">12 veículos disponíveis agora · Retirada imediata</div>
+      <div class="px-hero-sub">Veículos verificados · Reserve em minutos</div>
     </div>
   </div>
 
-  <!-- BUSCA -->
+  <!-- BUSCA POR PERÍODO -->
   <div class="px-card">
-    <div class="px-card-title">◈ BUSCAR VEÍCULO</div>
+    <div class="px-card-title">◈ FILTRAR POR PERÍODO</div>
     <div class="px-form-row">
       <div class="px-form-group">
         <label>Retirada</label>
-        <input type="date" class="px-input" id="aluguelIn" value="${hoje}">
+        <input type="date" class="px-input" id="aluguelIn" value="${hoje}" min="${hoje}">
       </div>
       <div class="px-form-group">
         <label>Devolução</label>
-        <input type="date" class="px-input" id="aluguelOut">
+        <input type="date" class="px-input" id="aluguelOut" value="${amanhaStr}" min="${amanhaStr}">
       </div>
     </div>
-    <button class="px-btn" onclick="PagesExtra.buscarVeiculos()">🔍 BUSCAR</button>
+    <button class="px-btn" onclick="PagesExtra.buscarVeiculos()">🔍 VER DISPONÍVEIS</button>
   </div>
 
-  <!-- FROTA -->
-  <div class="px-card-title" style="margin:24px 0 12px">FROTA DISPONÍVEL</div>
+  <!-- FROTA REAL -->
+  <div class="px-card-title" style="margin:24px 0 12px">VEÍCULOS DISPONÍVEIS</div>
   <div id="aluguelFrota">
-    ${_carCard('Econômico','Hyundai HB20 ou similar','⭐ 4.8 · Manual · Ar','R$ 89/dia','🚗','cyan')}
-    ${_carCard('Intermediário','Toyota Corolla ou similar','⭐ 4.9 · Automático · Ar','R$ 149/dia','🚙','cyan')}
-    ${_carCard('SUV','Jeep Compass ou similar','⭐ 4.9 · Automático · 4x4','R$ 229/dia','🚐','cyan')}
-    ${_carCard('Pickup','Hilux ou similar','⭐ 4.7 · Automático · 4x4','R$ 299/dia','🛻','cyan')}
+    <div class="px-loading-state">
+      <div style="font-size:2rem;margin-bottom:8px">⟳</div>
+      Carregando veículos...
+    </div>
   </div>
 
   <!-- BENEFÍCIOS -->
@@ -209,40 +212,106 @@
     <div class="px-benefits">
       <div class="px-benefit">✅ Seguro básico</div>
       <div class="px-benefit">✅ Assistência 24h</div>
-      <div class="px-benefit">✅ KM livre</div>
       <div class="px-benefit">✅ Sem taxa de adesão</div>
       <div class="px-benefit">✅ Cancelamento grátis</div>
-      <div class="px-benefit">✅ Entrega no local</div>
+      <div class="px-benefit">✅ Pagamento seguro</div>
+      <div class="px-benefit">✅ Reserva instantânea</div>
     </div>
   </div>
 
 </div>`;
 
-    // Definir data mínima devolução
-    const outInput = document.getElementById('aluguelOut');
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-    outInput.value = tomorrow.toISOString().split('T')[0];
-    outInput.min = hoje;
+    // Carrega listings reais após renderizar o skeleton
+    _carregarListingsRent();
   }
 
-  function _carCard(cat, name, info, price, icon, color) {
+  async function _carregarListingsRent(startDate, endDate) {
+    const frota = document.getElementById('aluguelFrota');
+    if (!frota) return;
+
+    frota.innerHTML = `<div class="px-loading-state"><div style="font-size:2rem;margin-bottom:8px">⟳</div>Buscando veículos...</div>`;
+
+    try {
+      let listings = [];
+
+      if (startDate && endDate) {
+        // Busca configs sem conflito no período — retorna rentalVehicleConfig com listing embutido
+        const res = await API.rental.availableConfigs({ startDate, endDate, limit: 20 });
+        const configs = res?.data || [];
+        listings = configs.map(cfg => ({
+          id: cfg.listing?.id,
+          title: cfg.listing?.title,
+          description: cfg.listing?.description,
+          images: cfg.listing?.images || '[]',
+          city: cfg.listing?.city,
+          state: cfg.listing?.state,
+          vehicle: null,
+          _dailyRate: cfg.dailyRate,
+          _instantBook: cfg.instantBook,
+          _deposit: cfg.deposit,
+          _pickupAddress: cfg.pickupAddress,
+          _minDays: cfg.minRentalDays,
+        })).filter(l => l.id);
+      } else {
+        // Busca todos listings RENT ativos
+        const res = await API.listings.search({ type: 'RENT', limit: 20, sort: 'recent' });
+        listings = res?.data || [];
+      }
+
+      if (!listings.length) {
+        frota.innerHTML = `
+          <div class="px-empty-state">
+            <div style="font-size:2.4rem;margin-bottom:12px">🚗</div>
+            <div style="font-weight:600;color:#fff;margin-bottom:6px">Nenhum veículo disponível</div>
+            <div style="font-size:.82rem">${startDate ? 'Tente outras datas ou volte em breve.' : 'Novos veículos em breve.'}</div>
+          </div>`;
+        return;
+      }
+
+      frota.innerHTML = listings.map(l => _carCardReal(l)).join('');
+
+    } catch (e) {
+      frota.innerHTML = `
+        <div class="px-empty-state" style="color:#ef4444">
+          <div style="font-size:1.5rem;margin-bottom:8px">⚠️</div>
+          Erro ao carregar veículos. Tente novamente.
+        </div>`;
+      console.error('[Aluguel]', e);
+    }
+  }
+
+  function _carCardReal(l) {
+    const v = l.vehicle || {};
+    let imgs = [];
+    try { imgs = Array.isArray(l.images) ? l.images : JSON.parse(l.images || '[]'); } catch(_) {}
+    const thumb = imgs[0] || null;
+    const dailyRate = l._dailyRate || l.price || 0;
+    const instantBook = l._instantBook;
+    const cidade = l.city ? `${l.city}/${l.state}` : '';
+    const nomeVeiculo = v.brand ? `${v.brand} ${v.model} ${v.year || ''}`.trim() : l.title;
+    const pickup = l._pickupAddress ? l._pickupAddress : cidade;
+    const badge = instantBook ? '<span style="font-size:.7rem;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#10b981;padding:2px 7px;border-radius:10px;margin-left:6px">⚡ Instantâneo</span>' : '';
+
+    const thumbHtml = thumb
+      ? `<img src="${thumb}" alt="${nomeVeiculo}" style="width:80px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0">`
+      : `<div style="width:80px;height:60px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0">🚗</div>`;
+
     return `
-    <div class="px-car">
-      <div class="px-car-icon">${icon}</div>
+    <div class="px-car" style="cursor:pointer" onclick="App.navigate('listing','${l.id}')">
+      ${thumbHtml}
       <div class="px-car-info">
-        <div class="px-car-cat">${cat}</div>
-        <div class="px-car-name">${name}</div>
-        <div class="px-car-meta">${info}</div>
+        <div class="px-car-cat">${cidade}${badge}</div>
+        <div class="px-car-name">${nomeVeiculo}</div>
+        <div class="px-car-meta" style="margin-top:3px;font-size:.75rem;color:var(--muted,#888)">📍 ${pickup}</div>
       </div>
       <div class="px-car-right">
-        <div class="px-car-price">${price}</div>
-        <button class="px-btn px-btn--sm" onclick="PagesExtra.reservarCarro('${cat}')">Reservar</button>
+        <div class="px-car-price">${fmtBRL(dailyRate)}<span style="font-size:.7rem;color:var(--muted,#888)">/dia</span></div>
+        <button class="px-btn px-btn--sm" onclick="event.stopPropagation();App.navigate('listing','${l.id}')">Ver</button>
       </div>
     </div>`;
   }
 
-  // ── AÇÕES ──────────────────────────────────────────────────
-
+  // ── MECÂNICO ───────────────────────────────────────────────
   function renderMecanico() {
     const el = main(); if (!el) return;
     el.innerHTML = `
@@ -280,7 +349,7 @@
 </div>`;
   }
 
-
+  // ── FRETE ──────────────────────────────────────────────────
   function renderFrete() {
     const el = main(); if (!el) return;
     el.innerHTML = `
@@ -325,6 +394,7 @@
 </div>`;
   }
 
+  // ── AÇÕES ──────────────────────────────────────────────────
   const PagesExtra = {
     solicitarMecanico() {
       if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
@@ -339,44 +409,41 @@
       setTimeout(() => { if (typeof Toast !== 'undefined') Toast.show('✅ 8 transportadoras encontradas!', 'ok'); }, 1400);
     },
     solicitarReboque() {
-      if (!API.isAuth()) {
-        MobyaAuth.showLogin(); return;
-      }
+      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
       const t = document.getElementById('reboqueTracking');
       if (t) t.style.display = 'block';
       if (typeof Toast !== 'undefined') Toast.show('🚛 Motorista acionado! Acompanhe o rastreamento abaixo.','ok');
       t && t.scrollIntoView({behavior:'smooth'});
-      // Simula progresso
       setTimeout(()=>{ const s=document.getElementById('trStep2'); if(s){s.classList.add('px-track-done');s.textContent='✓ Motorista a caminho';} const s3=document.getElementById('trStep3'); if(s3)s3.classList.add('px-track-active'); }, 8000);
     },
     solicitarChaveiro() {
-      if (!API.isAuth()) {
-        MobyaAuth.showLogin(); return;
-      }
+      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
       if (typeof Toast !== 'undefined') Toast.show('🔑 Técnico acionado! Chegada em até 30 minutos.','ok');
     },
     buscarVeiculos() {
       const i = document.getElementById('aluguelIn')?.value;
       const o = document.getElementById('aluguelOut')?.value;
-      if (!i||!o||i>=o) { if(typeof Toast!=='undefined') Toast.show('Selecione datas válidas','err'); return; }
-      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando disponibilidade...','info');
-      setTimeout(()=>{ if(typeof Toast!=='undefined') Toast.show('✅ 12 veículos disponíveis no período!','ok'); },1200);
-    },
-    reservarCarro(cat) {
-      if (!API.isAuth()) {
-        MobyaAuth.showLogin(); return;
+      if (!i || !o || i >= o) {
+        if (typeof Toast !== 'undefined') Toast.show('Selecione datas válidas', 'err');
+        return;
       }
-      if (typeof Toast !== 'undefined') Toast.show(`🗝️ Reserva de ${cat} iniciada! Complete no checkout.`,'ok');
+      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando disponibilidade...', 'info');
+      _carregarListingsRent(i, o);
     },
+    reservarCarro(id) {
+      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
+      App.navigate('listing', id);
+    },
+
+    // render methods
+    renderReboque,
+    renderChaveiro,
+    renderAluguel,
+    renderMecanico,
+    renderFrete,
   };
+
   window.PagesExtra = PagesExtra;
-  // Expõe as páginas de render (eram privadas do closure e nunca chegavam
-  // a app.js — por isso reboque/chaveiro/aluguel caíam no comingSoon).
-  PagesExtra.renderReboque  = renderReboque;
-  PagesExtra.renderMecanico = renderMecanico;
-  PagesExtra.renderFrete    = renderFrete;
-  PagesExtra.renderChaveiro = renderChaveiro;
-  PagesExtra.renderAluguel  = renderAluguel;
 
   // ── CSS INJETADO ───────────────────────────────────────────
   const style = document.createElement('style');
@@ -432,25 +499,21 @@
 .px-input{background:var(--s1,rgba(255,255,255,.03));border:1px solid var(--border,rgba(255,255,255,.08));border-radius:8px;padding:10px 12px;color:#fff;font-size:.84rem;font-family:'Space Grotesk',sans-serif}
 .px-btn{background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:10px;padding:12px 20px;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;cursor:pointer;width:100%}
 .px-btn--sm{width:auto;padding:8px 14px;font-size:.82rem}
-.px-car{display:flex;align-items:center;gap:14px;background:var(--s2,rgba(255,255,255,.05));border:1px solid var(--border,rgba(255,255,255,.08));border-radius:12px;padding:14px;margin-bottom:10px}
+.px-car{display:flex;align-items:center;gap:14px;background:var(--s2,rgba(255,255,255,.05));border:1px solid var(--border,rgba(255,255,255,.08));border-radius:12px;padding:14px;margin-bottom:10px;transition:border-color .2s}
+.px-car:hover{border-color:rgba(6,182,212,.4)}
 .px-car-icon{font-size:2rem;flex-shrink:0}
-.px-car-info{flex:1}
+.px-car-info{flex:1;min-width:0}
 .px-car-cat{font-size:.72rem;color:var(--muted,#888);text-transform:uppercase;letter-spacing:1px}
-.px-car-name{font-weight:600;font-size:.88rem;color:#fff;margin:2px 0}
-.px-car-meta{font-size:.75rem;color:var(--muted,#888)}
+.px-car-name{font-weight:600;font-size:.88rem;color:#fff;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.px-car-meta{font-size:.75rem;color:var(--muted,#888);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .px-car-right{text-align:right;flex-shrink:0}
 .px-car-price{font-family:'JetBrains Mono',monospace;font-size:.88rem;color:#10b981;font-weight:700;margin-bottom:8px}
 .px-benefits{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .px-benefit{font-size:.82rem;color:var(--muted,#888);padding:8px 12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:8px}
+.px-loading-state{text-align:center;padding:32px;color:var(--muted,#888)}
+.px-empty-state{text-align:center;padding:40px;color:var(--muted,#888)}
 @media(max-width:480px){.px-form-row{grid-template-columns:1fr}.px-grid2{grid-template-columns:1fr 1fr}}
   `;
   document.head.appendChild(style);
-
-  // ── ROTEAMENTO ──────────────────────────────────────────────
-  // O roteamento real de reboque/chaveiro/aluguel é feito direto em
-  // BASE_PAGES (js/app.js), que chama PagesExtra.renderX(). O patch
-  // antigo sobrescrevia window.App.navigate, mas os cliques do menu
-  // (data-page) chamam a função `navigate` interna do app.js, não
-  // App.navigate — então o patch nunca era acionado. Removido.
 
 })();
