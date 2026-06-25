@@ -23,7 +23,7 @@ window.UltraGPS = (() => {
   const HISTORY_KEY='mobya_nav_history', HISTORY_MAX=5;
 
   // Modo do mapa: tracking | discover | admin
-  let mode='tracking';
+  let mode='tracking'; let _suppressMoveend=false;
   let layers={ heat:false, route:true, cluster:true };
 
   // ── Estilos de tile (MapLibre usa JSON style URL) ──
@@ -72,7 +72,7 @@ window.UltraGPS = (() => {
       });
       map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
       map.on('load',()=>{ _addHeatmapLayer(); _addClusterLayer(); resolve(map); });
-      map.on('moveend',()=>{ _scheduleNearbyRefresh(); });
+      map.on('moveend',()=>{ if(_suppressMoveend){_suppressMoveend=false;return;} _scheduleNearbyRefresh(); });
       map.on('error',(e)=>console.warn('[UltraGPS][MapLibre]',e?.error?.message||e));
     });
   }
@@ -126,7 +126,7 @@ window.UltraGPS = (() => {
         {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
       );
     });
-    if(pos){ map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>_loadNearbyRealAt(pos,radiusKm),850); return; }
+    if(pos){ _suppressMoveend=true; map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>_loadNearbyRealAt(pos,radiusKm),850); return; }
     Toast.show('🔍 Prestadores próximos (usando região padrão)','info');
     _loadNearbyRealAt(null,radiusKm);
   }
