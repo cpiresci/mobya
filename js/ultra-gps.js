@@ -682,6 +682,7 @@ window.UltraGPS = (() => {
     stopWatchingLocation(); // P5: limpa watcher anterior antes de criar novo
     const main=document.getElementById('main'); if(!main)return;
     sessionProviderId=null; sessionQuoteId=null; _ratingPrompted=false;
+    if(!sid&&!window.__mobyaPendingEmergencyId&&!sessionId){setTimeout(()=>{try{UltraGPS.setMode('discover');}catch(e){}},350);}
     main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px - var(--bnh,0px));position:relative;overflow:hidden">
       <div id="ultraSosBanner">🚨 SOS ATIVO — aguardando resposta</div>
       <div style="flex:none;padding:6px 14px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
