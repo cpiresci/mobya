@@ -126,7 +126,7 @@ window.UltraGPS = (() => {
         {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
       );
     });
-    if(pos){ if(!_didInitialCenter){ _didInitialCenter=true; _suppressMoveend=true; map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); } Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>_loadNearbyRealAt(pos,radiusKm),850); return; }
+    if(pos){ _suppressMoveend=true; if(!_didInitialCenter){ _didInitialCenter=true; } map.easeTo({center:[pos.lng,pos.lat],zoom:13,duration:800}); Toast.show('🔍 Prestadores próximos da sua localização','info'); setTimeout(()=>{ _suppressMoveend=false; _loadNearbyRealAt(pos,radiusKm); },900); return; }
     Toast.show('🔍 Prestadores próximos (usando região padrão)','info');
     _loadNearbyRealAt(null,radiusKm);
   }
