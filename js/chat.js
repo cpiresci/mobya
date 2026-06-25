@@ -124,6 +124,7 @@ window.Chat = (() => {
       // pendente ANTES do usuário clicar em "Acompanhar", para que o
       // GPSTracking._waitForProviderAccept saiba qual emergência aguardar.
       window.__mobyaPendingEmergencyId = action.emergencyId || null;
+      setTimeout(() => App.navigate('ultra-gps'), 1800);
       html = `
         <div class="action-card action-card--ok">
           <div class="action-card-icon">✅</div>

@@ -295,6 +295,8 @@ window.HomeChat = (() => {
 
     let html = '';
     if (action.type === 'EMERGENCY_CREATED') {
+      window.__mobyaPendingEmergencyId = action.emergencyId || null;
+      setTimeout(() => App.navigate('ultra-gps'), 1800);
       html = `
         <div class="action-card action-card--ok">
           <div class="action-card-icon">✅</div>

@@ -49,6 +49,7 @@ if (typeof Pages === "undefined") { console.error("[MOBYA] pages.js falhou"); wi
 const BASE_PAGES = {
   home:          () => Pages.renderHome(),
   classificados: () => Pages.renderClassificados(),
+  'comprar-carro': () => Pages.renderClassificados(),
   agentes:       () => Pages.renderAgentes(),
   emergencia:    () => Pages.renderEmergencia(),
   calculadoras:  () => Pages.renderCalculadoras(),

@@ -162,9 +162,9 @@ window.Monetization = (() => {
             <div style="font-size:1.8rem;margin-bottom:10px">${v.icon}</div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:2px;color:${v.color}">${v.label}</div>
             <div style="font-size:.73rem;color:var(--muted);margin:5px 0 10px;line-height:1.4">${v.desc}</div>
-            <div style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.65rem;
-              padding:3px 10px;border-radius:4px;background:rgba(0,0,0,.3);color:${v.color};border:1px solid ${v.border}">
-              Comissão MOBYA: ${v.rate}
+            <div style="display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:.65rem;
+              padding:3px 10px;border-radius:4px;background:rgba(0,0,0,.3);color:var(--green);border:1px solid rgba(0,255,136,.25)">
+              ✅ Parceiro Verificado · Sem taxa extra
             </div>
           </div>`).join('')}
       </div>

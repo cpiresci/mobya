@@ -113,7 +113,7 @@ window.UltraGPS = (() => {
   }
 
   let _nearbyDebounce=null;
-  function _scheduleNearbyRefresh(){ if(mode!=='discover')return; clearTimeout(_nearbyDebounce); _nearbyDebounce=setTimeout(()=>_loadNearbyReal(50),600); }
+  function _scheduleNearbyRefresh(){ if(mode!=='discover'||_suppressMoveRefresh)return; clearTimeout(_nearbyDebounce); _nearbyDebounce=setTimeout(()=>_loadNearbyReal(50),3000); }
 
   async function _loadNearbyReal(radiusKm){
     if(!map)return;
@@ -251,6 +251,7 @@ window.UltraGPS = (() => {
 
   function joinSession(sid){ sessionId=sid; trailPts=[]; _initialDistanceKm=null; _clearTrail(); if(!socket?.connected)return; socket.emit('join_session',{sessionId:sid}); }
   let _pendingPos=null;
+  let _suppressMoveRefresh=false;
   function _flushOwnPosition(){ if(_pendingPos&&myRole){ const{lat,lng}=_pendingPos; _pendingPos=null; updateMarker(myRole,lat,lng,'Você'); } }
   function startWatchingLocation(){
     if(!navigator.geolocation){ Toast.show('GPS não disponível.','warn'); return; }
@@ -258,7 +259,7 @@ window.UltraGPS = (() => {
       const{latitude:lat,longitude:lng,heading,speed,accuracy}=pos.coords;
       if(socket?.connected){ socket.emit('send_location',{lat,lng,heading,speed,accuracy}); }
       else{ const ping={lat,lng,heading,speed,accuracy,ts:Date.now()}; offlineBuffer.push(ping); if(offlineBuffer.length>50)offlineBuffer.shift(); _saveBuffer(offlineBuffer); }
-      if(myRole){ updateMarker(myRole,lat,lng,'Você'); } else { _pendingPos={lat,lng}; map&&map.easeTo({center:[lng,lat],zoom:16,duration:400}); }
+      if(myRole){ updateMarker(myRole,lat,lng,'Você'); } else { _pendingPos={lat,lng}; if(mode==='tracking') map&&map.easeTo({center:[lng,lat],zoom:16,duration:400}); }
       // alimenta posição para navegação turn-by-turn se ativa
       if(_navState.steps.length)_onNavPosition(pos);
     },(err)=>console.warn('[UltraGPS]',err.message),{enableHighAccuracy:true,maximumAge:3000,timeout:10000});
