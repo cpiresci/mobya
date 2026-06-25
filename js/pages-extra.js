@@ -395,10 +395,68 @@
   }
 
   // ── AÇÕES ──────────────────────────────────────────────────
+
+  function _haversineKm(la1,lo1,la2,lo2){const R=6371,dL=(la2-la1)*Math.PI/180,dl=(lo2-lo1)*Math.PI/180;const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
+  async function _solicitarServico({icon,label,taxaBase,taxaKm,comissao,emergencyType}){
+    if(!API.isAuth()){MobyaAuth.showLogin();return;}
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML=`<div style="background:var(--s2);border:1px solid var(--border);border-radius:16px;padding:26px;max-width:400px;width:100%">
+      <div style="font-size:1.8rem">${icon}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:3px;color:var(--neon);margin:6px 0 4px">${label.toUpperCase()}</div>
+      <div id="_sgps" style="font-size:.73rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:14px">📍 Capturando localização...</div>
+      <div id="_scot" style="display:none;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:.75rem;font-family:'JetBrains Mono',monospace"></div>
+      <textarea id="_sdesc" placeholder="Descreva o problema..." style="width:100%;box-sizing:border-box;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:.82rem;resize:vertical;min-height:64px;outline:none;margin-bottom:12px"></textarea>
+      <div style="display:flex;gap:10px">
+        <button id="_scancel" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">Cancelar</button>
+        <button id="_sconfirm" disabled style="flex:2;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;font-weight:700;cursor:pointer;opacity:.5">⟳ Aguardando GPS...</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const close=()=>ov.remove();
+    ov.querySelector('#_scancel').onclick=close;
+    ov.onclick=e=>{if(e.target===ov)close();};
+    const gpsEl=ov.querySelector('#_sgps'),cotEl=ov.querySelector('#_scot'),btn=ov.querySelector('#_sconfirm');
+    let coords=null,_eta=30,_total=taxaBase;
+    navigator.geolocation?.getCurrentPosition(pos=>{
+      coords={latitude:pos.coords.latitude,longitude:pos.coords.longitude};
+      const dist=1.5+Math.random()*5;
+      _eta=Math.round(dist*3+5);
+      _total=taxaBase+dist*taxaKm;
+      const comm=_total*comissao;
+      gpsEl.innerHTML=`✅ GPS ±${Math.round(pos.coords.accuracy)}m`;
+      cotEl.style.display='block';
+      cotEl.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div><div style="color:var(--muted);margin-bottom:2px">DISTÂNCIA</div><div style="color:var(--neon)">${dist.toFixed(1)} km</div></div>
+        <div><div style="color:var(--muted);margin-bottom:2px">CHEGADA</div><div style="color:var(--gold)">~${_eta} min</div></div>
+        <div><div style="color:var(--muted);margin-bottom:2px">TAXA BASE</div><div>R$ ${taxaBase.toFixed(2).replace('.',',')}</div></div>
+        <div><div style="color:var(--muted);margin-bottom:2px">DESLOCAMENTO</div><div>R$ ${(dist*taxaKm).toFixed(2).replace('.',',')}</div></div>
+        <div style="grid-column:1/-1"><div style="color:var(--muted);margin-bottom:2px">TOTAL ESTIMADO</div><div style="color:var(--green);font-size:.9rem;font-weight:700">R$ ${_total.toFixed(2).replace('.',',')}</div></div>
+      </div><div style="color:var(--muted);font-size:.68rem;margin-top:6px">* Preço final definido após avaliação presencial.</div>`;
+      btn.disabled=false;btn.style.opacity='1';
+      btn.textContent=`${icon} Acionar — R$ ${_total.toFixed(2).replace('.',',')}`;
+    },()=>{
+      gpsEl.innerHTML='⚠️ GPS indisponível';
+      btn.disabled=false;btn.style.opacity='1';btn.textContent=`${icon} Acionar ${label}`;
+    },{timeout:8000,enableHighAccuracy:true});
+    ov.querySelector('#_sconfirm').onclick=async()=>{
+      const desc=ov.querySelector('#_sdesc').value.trim();
+      btn.disabled=true;btn.style.opacity='.6';btn.textContent='⟳ Acionando...';
+      try{
+        await API.emergency.create({type:emergencyType,description:desc||label,...(coords||{})});
+        close();
+        App.toast(`${icon} ${label} acionado! Chegada em ~${_eta} min — R$ ${_total.toFixed(2).replace('.',',')}`, 'ok', 6000);
+        App.navigate('ultra-gps');
+      }catch(e){
+        btn.disabled=false;btn.style.opacity='1';btn.textContent=`${icon} Acionar ${label}`;
+        App.toast(e.message||'Erro ao acionar','err');
+      }
+    };
+  }
   const PagesExtra = {
-    solicitarMecanico() {
-      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
-      if (typeof Toast !== 'undefined') Toast.show('🔧 Mecanico acionado! Chegada em ate 30 minutos.', 'ok');
+    solicitarMecanico(){
+      _solicitarServico({icon:'🔧',label:'Mecânico',taxaBase:80,taxaKm:3,comissao:.18,emergencyType:'OTHER'});
     },
     cotarFrete() {
       const o = document.getElementById('freteOrigem')?.value?.trim();
@@ -408,17 +466,11 @@
       if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando transportadoras...', 'info');
       setTimeout(() => { if (typeof Toast !== 'undefined') Toast.show('✅ 8 transportadoras encontradas!', 'ok'); }, 1400);
     },
-    solicitarReboque() {
-      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
-      const t = document.getElementById('reboqueTracking');
-      if (t) t.style.display = 'block';
-      if (typeof Toast !== 'undefined') Toast.show('🚛 Motorista acionado! Acompanhe o rastreamento abaixo.','ok');
-      t && t.scrollIntoView({behavior:'smooth'});
-      setTimeout(()=>{ const s=document.getElementById('trStep2'); if(s){s.classList.add('px-track-done');s.textContent='✓ Motorista a caminho';} const s3=document.getElementById('trStep3'); if(s3)s3.classList.add('px-track-active'); }, 8000);
+    solicitarReboque(){
+      _solicitarServico({icon:'🚛',label:'Reboque',taxaBase:120,taxaKm:4,comissao:.18,emergencyType:'TOW'});
     },
-    solicitarChaveiro() {
-      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
-      if (typeof Toast !== 'undefined') Toast.show('🔑 Técnico acionado! Chegada em até 30 minutos.','ok');
+    solicitarChaveiro(){
+      _solicitarServico({icon:'🔑',label:'Chaveiro',taxaBase:80,taxaKm:2,comissao:.18,emergencyType:'LOCKSMITH'});
     },
     buscarVeiculos() {
       const i = document.getElementById('aluguelIn')?.value;
