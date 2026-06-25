@@ -17,7 +17,7 @@ window.RentalHost = (() => {
   let _tab = 'bookings';
 
   function setLoading(id,msg='&#x27f3; Carregando...'){const el=document.getElementById(id);if(el)el.innerHTML=`<div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:40px">${msg}</div>`;}
-  function setError(id,msg){const el=document.getElementById(id);if(el)el.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:20px;text-align:center"><div style="font-size:1.4rem;margin-bottom:8px">\u26a0\ufe0f</div><div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.78rem">${esc(msg)}</div></div>`;}
+  function setError(id,msg){const el=document.getElementById(id);if(el)el.innerHTML=`<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:20px;text-align:center"><div style="font-size:1.4rem;margin-bottom:8px">⚠️</div><div style="color:var(--red);font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:12px">${esc(msg)}</div><button onclick="RentalHost._switchTab(RentalHost._currentTab?.()||'bookings')" style="background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 18px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">↺ Tentar novamente</button></div>`;}
 
   function bookingCard(b){
     const sm=BSM[b.status]||{};
