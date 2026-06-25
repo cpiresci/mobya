@@ -6,35 +6,14 @@ window.API = (() => {
   const getToken  = ()  => _token;
   const isAuth    = ()  => !!_token;
 
-  let _refreshPromise = null;
-  async function _tryRefreshOnce() {
-    if (_refreshPromise) return _refreshPromise;
-    _refreshPromise = (async () => {
-      try {
-        const r = await fetch(`${base()}/api/v1/auth/refresh`, { method:'POST', credentials:'include' });
-        if (!r.ok) return null;
-        const data = await r.json().catch(() => null);
-        return data?.data?.accessToken || data?.accessToken || null;
-      } catch { return null; }
-      finally { setTimeout(() => { _refreshPromise = null; }, 0); }
-    })();
-    return _refreshPromise;
-  }
-
-  async function req(path, opts = {}, _isRetry = false) {
+  async function req(path, opts = {}) {
     const url = `${base()}/api/v1${path}`;
     const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
     if (_token) headers['Authorization'] = `Bearer ${_token}`;
     try {
       const res  = await fetch(url, { method: opts.method||'GET', headers, credentials:'include', body: opts.body ? JSON.stringify(opts.body) : undefined, signal: opts.signal });
       const data = await res.json().catch(() => ({}));
-      if (res.status === 401) {
-        if (!_isRetry) {
-          const newToken = await _tryRefreshOnce();
-          if (newToken) { setToken(newToken); return req(path, opts, true); }
-        }
-        setToken(null); window.dispatchEvent(new Event('mobya:logout')); throw { status:401, message:'Sessão expirada.' };
-      }
+      if (res.status === 401) { setToken(null); window.dispatchEvent(new Event('mobya:logout')); throw { status:401, message:'Sessão expirada.' }; }
       if (!res.ok) throw { status: res.status, message: data?.error?.message || 'Erro na requisição.', code: data?.error?.code };
       return data;
     } catch(e) {
@@ -158,7 +137,10 @@ window.API = (() => {
     confirmBooking:        (id)     => patch(`/rental/bookings/${id}/confirm`, {}),
     declineBooking:        (id,d)   => patch(`/rental/bookings/${id}/decline`, d||{}),
     checkinBooking:        (id,d)   => patch(`/rental/bookings/${id}/checkin`, d||{}),
-    confirmCheckinBooking: (id)     => patch(`/rental/bookings/${id}/checkin/confirm`, {}),
+    // Corrigido: antes se chamava confirmCheckinBooking mas rental-guest.js chamava
+    // checkinConfirmBooking — TypeError silencioso, botão de confirmar retirada nunca funcionou.
+    checkinConfirmBooking: (id,d)   => patch(`/rental/bookings/${id}/checkin/confirm`, d||{}),
+    checkoutInitiateBooking:(id,d)  => patch(`/rental/bookings/${id}/checkout/initiate`, d||{}),
     checkoutBooking:       (id)     => patch(`/rental/bookings/${id}/checkout`, {}),
     cancelBooking:         (id,d)   => patch(`/rental/bookings/${id}/cancel`, d||{}),
     cancelPaidBooking:     (id,d)   => patch(`/rental/bookings/${id}/cancel-paid`, d||{}),

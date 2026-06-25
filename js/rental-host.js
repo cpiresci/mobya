@@ -14,6 +14,41 @@ window.RentalHost = (() => {
   const fmtBRL= v => `R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const badge = s => { const m=BSM[s]||{label:s,color:'var(--muted)',bg:'rgba(0,0,0,.2)',border:'rgba(255,255,255,.1)',icon:'\u2022'}; return `<span style="font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:3px 9px;border-radius:4px;background:${m.bg};color:${m.color};border:1px solid ${m.border}">${m.icon} ${m.label}</span>`; };
 
+  // Mesmos helpers de js/rental-guest.js — geolocalização best-effort e captura/compressão de foto.
+  function _getCoords(){
+    return new Promise((resolve)=>{
+      if(!navigator.geolocation) return resolve({});
+      navigator.geolocation.getCurrentPosition(
+        (pos)=>resolve({lat:pos.coords.latitude,lng:pos.coords.longitude}),
+        ()=>resolve({}),
+        {timeout:6000,enableHighAccuracy:true}
+      );
+    });
+  }
+  function _capturePhoto(){
+    return new Promise((resolve,reject)=>{
+      const input=document.createElement('input');
+      input.type='file';input.accept='image/*';input.capture='environment';
+      input.onchange=()=>{
+        const file=input.files&&input.files[0];
+        if(!file) return reject(new Error('Nenhuma foto selecionada.'));
+        const img=new Image();
+        const reader=new FileReader();
+        reader.onload=()=>{img.onload=()=>{
+          const maxW=900;
+          const scale=Math.min(1,maxW/img.width);
+          const canvas=document.createElement('canvas');
+          canvas.width=img.width*scale;canvas.height=img.height*scale;
+          canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+          resolve(canvas.toDataURL('image/jpeg',0.7));
+        };img.onerror=()=>reject(new Error('Falha ao processar a foto.'));img.src=reader.result;};
+        reader.onerror=()=>reject(new Error('Falha ao ler a foto.'));
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    });
+  }
+
   let _tab = 'bookings';
 
   function setLoading(id,msg='&#x27f3; Carregando...'){const el=document.getElementById(id);if(el)el.innerHTML=`<div style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem;text-align:center;padding:40px">${msg}</div>`;}
@@ -27,7 +62,8 @@ window.RentalHost = (() => {
     const canConfirm=b.status==='PENDING';
     const canDecline=b.status==='PENDING';
     const canCheckin=b.status==='CONFIRMED'&&isPaid;
-    const canCheckout=b.status==='ACTIVE';
+    const canCheckout=b.status==='ACTIVE'&&!!b.checkoutInitiatedAt;
+    const checkoutWaitingRenter=b.status==='ACTIVE'&&!b.checkoutInitiatedAt;
     const canCancel=b.status==='ACTIVE';
     return `<div id="hbcard-${esc(b.id)}" style="background:var(--s2);border:1px solid ${sm.border||'var(--border)'};border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${sm.border||'var(--border)'}'">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -45,6 +81,8 @@ window.RentalHost = (() => {
       ${b.status==='PENDING'?`<div style="font-size:.72rem;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:8px 11px;color:var(--gold);font-family:'JetBrains Mono',monospace">\u23f3 Aguardando sua decis\u00e3o. Confirme ou recuse esta reserva.</div>`:''}
       ${b.status==='CONFIRMED'&&!isPaid?`<div style="font-size:.72rem;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:8px 11px;color:var(--neon);font-family:'JetBrains Mono',monospace">\u231b Reserva confirmada \u2014 aguardando pagamento do locat\u00e1rio.</div>`:''}
       ${b.status==='CONFIRMED'&&isPaid?`<div style="font-size:.72rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:6px;padding:8px 11px;color:var(--green);font-family:'JetBrains Mono',monospace">\u2705 Pago! Realize o check-in quando o locat\u00e1rio retirar o ve\u00edculo.</div>`:''}
+      ${checkoutWaitingRenter?`<div style="font-size:.72rem;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:8px 11px;color:var(--neon);font-family:'JetBrains Mono',monospace">\u23f3 Locação em curso. Aguardando o locatário registrar a devolução.</div>`:''}
+      ${canCheckout?`<div style="background:var(--s3);border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:6px"><div style="font-size:.68rem;color:var(--gold);font-family:'JetBrains Mono',monospace">\U0001f3c1 EVID\u00caNCIA DE DEVOLU\u00c7\u00c3O DO LOCAT\u00c1RIO</div>${b.checkoutPhotoUrl?`<img src="${esc(b.checkoutPhotoUrl)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"/>`:'<div style="font-size:.7rem;color:var(--muted)">Sem foto enviada.</div>'}${(b.checkoutLat&&b.checkoutLng)?`<a href="https://maps.google.com/?q=${b.checkoutLat},${b.checkoutLng}" target="_blank" style="font-size:.68rem;color:var(--neon);font-family:'JetBrains Mono',monospace">\U0001f4cd Ver localiza\u00e7\u00e3o no mapa</a>`:''}</div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${canConfirm?`<button onclick="RentalHost.confirmBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u2705 Confirmar</button>`:''}
         ${canDecline?`<button onclick="RentalHost.declineBooking('${esc(b.id)}')" style="flex:1;min-width:100px;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u2716 Recusar</button>`:''}
@@ -101,7 +139,7 @@ window.RentalHost = (() => {
     _loadTab();
   }
 
-  async function _loadTab(){if(_tab==='bookings')await _loadBookings();else await _loadConfigs();}
+  async function _loadTab(){if(_tab==='bookings'){await _loadBookings();_startPoll();}else{_stopPoll();await _loadConfigs();}}
 
   async function _loadBookings(){
     setLoading('rh-content');
@@ -135,7 +173,7 @@ window.RentalHost = (() => {
     try{
       if(action==='confirm')  {await API.rental.confirmBooking(id);App.toast('\u2705 Reserva confirmada!','ok');}
       else if(action==='decline') {await API.rental.declineBooking(id,opts);App.toast('Reserva recusada.','ok');}
-      else if(action==='checkin') {await API.rental.checkinBooking(id);App.toast('\U0001f697 Check-in realizado!','ok');}
+      else if(action==='checkin') {await API.rental.checkinBooking(id,opts);App.toast('\U0001f697 Check-in realizado!','ok');}
       else if(action==='checkout'){await API.rental.checkoutBooking(id);App.toast('\U0001f3c1 Check-out conclu\u00eddo!','ok');}
       else if(action==='cancel')  {await API.rental.cancelPaidBooking(id,opts);App.toast('Cancelamento registrado.','ok');}
       await _loadBookings();
@@ -147,9 +185,26 @@ window.RentalHost = (() => {
 
   async function confirmBooking(id){if(!window.confirm('Confirmar esta reserva?'))return;await _bookingAction(id,'confirm');}
   async function declineBooking(id){const r=window.prompt('Motivo da recusa (opcional):');if(r===null)return;await _bookingAction(id,'decline',{reason:r||undefined});}
-  async function checkinBooking(id){if(!window.confirm('Realizar check-in? Confirme que o locat\u00e1rio j\u00e1 retirou o ve\u00edculo.'))return;await _bookingAction(id,'checkin');}
-  async function checkoutBooking(id){if(!window.confirm('Realizar check-out? Confirme que o ve\u00edculo foi devolvido.'))return;await _bookingAction(id,'checkout');}
+  async function checkinBooking(id){
+    if(!window.confirm('Realizar check-in?\n\nVamos pedir uma foto do veículo e sua localização como comprovante de entrega.'))return;
+    const card=document.getElementById(`hbcard-${id}`);
+    const btn=card?.querySelector('button[onclick*="checkinBooking"]');
+    try{
+      if(btn){btn.disabled=true;btn.style.opacity='.6';btn.textContent='\U0001f4f7 Aguardando foto...';}
+      const photoUrl=await _capturePhoto();
+      const {lat,lng}=await _getCoords();
+      await _bookingAction(id,'checkin',{lat,lng,photoUrl});
+    }catch(e){
+      App.toast(e?.message||'Erro ao capturar foto.','err');
+      if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='\U0001f697 Check-in';}
+    }
+  }
+  async function checkoutBooking(id){if(!window.confirm('Realizar check-out? Confirme que o ve\u00edculo foi devolvido conforme a foto e localiza\u00e7\u00e3o enviadas pelo locat\u00e1rio.'))return;await _bookingAction(id,'checkout');}
   async function cancelBooking(id){if(!window.confirm('Cancelar esta reserva ativa?\n\nO locat\u00e1rio receber\u00e1 reembolso integral.'))return;await _bookingAction(id,'cancel',{reason:'Cancelado pelo anfitri\u00e3o.'});}
+
+  let _pollTimer=null;
+  function _startPoll(){_stopPoll();_pollTimer=setInterval(()=>{if(document.getElementById('rh-content')&&_tab==='bookings')_loadBookings();else _stopPoll();},30000);}
+  function _stopPoll(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
 
   async function toggleConfig(id,currentActive){
     try{
