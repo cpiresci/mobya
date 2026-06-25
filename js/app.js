@@ -1,3 +1,9 @@
+window.toggleBnMenu = function() {
+  alert('toggleBnMenu chamado!');
+  const s = document.getElementById('sidebar');
+  if (s) { s.classList.toggle('open'); alert('sidebar: ' + s.className); }
+  else { alert('sidebar NAO encontrado!'); }
+};
 // ============================================================
 // MOBYA — app.js (Quantum Engine v3.0)
 // ============================================================
