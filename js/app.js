@@ -1,9 +1,3 @@
-window.toggleBnMenu = function() {
-  alert('toggleBnMenu chamado!');
-  const s = document.getElementById('sidebar');
-  if (s) { s.classList.toggle('open'); alert('sidebar: ' + s.className); }
-  else { alert('sidebar NAO encontrado!'); }
-};
 // ============================================================
 // MOBYA — app.js (Quantum Engine v3.0)
 // ============================================================
@@ -180,16 +174,18 @@ window.App = (() => {
     }
 
     const initial = (location.hash || '#home').replace('#','') || 'home';
+    setLoadingProgress(60, 'Restaurando sessao...');
+
+    if (typeof MobyaAuth !== 'undefined') {
+      try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 3000))]); } catch {}
+    }
+
     setLoadingProgress(100, 'Pronto.');
     navigate(initial);
     setTimeout(hideLoadingScreen, 300);
 
-    // Auth e ping em background
     setTimeout(async () => {
       try { await Promise.race([API.ping(), new Promise(r => setTimeout(r, 8000))]); } catch {}
-      if (typeof MobyaAuth !== 'undefined') {
-        try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 8000))]); } catch {}
-      }
       if (typeof KeepAlive !== 'undefined') KeepAlive.init();
       else setInterval(() => API.ping().catch(() => {}), 60000);
     }, 200);
