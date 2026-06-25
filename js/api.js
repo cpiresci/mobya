@@ -6,14 +6,35 @@ window.API = (() => {
   const getToken  = ()  => _token;
   const isAuth    = ()  => !!_token;
 
-  async function req(path, opts = {}) {
+  let _refreshPromise = null;
+  async function _tryRefreshOnce() {
+    if (_refreshPromise) return _refreshPromise;
+    _refreshPromise = (async () => {
+      try {
+        const r = await fetch(`${base()}/api/v1/auth/refresh`, { method:'POST', credentials:'include' });
+        if (!r.ok) return null;
+        const data = await r.json().catch(() => null);
+        return data?.data?.accessToken || data?.accessToken || null;
+      } catch { return null; }
+      finally { setTimeout(() => { _refreshPromise = null; }, 0); }
+    })();
+    return _refreshPromise;
+  }
+
+  async function req(path, opts = {}, _isRetry = false) {
     const url = `${base()}/api/v1${path}`;
     const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
     if (_token) headers['Authorization'] = `Bearer ${_token}`;
     try {
       const res  = await fetch(url, { method: opts.method||'GET', headers, credentials:'include', body: opts.body ? JSON.stringify(opts.body) : undefined, signal: opts.signal });
       const data = await res.json().catch(() => ({}));
-      if (res.status === 401) { setToken(null); window.dispatchEvent(new Event('mobya:logout')); throw { status:401, message:'Sessão expirada.' }; }
+      if (res.status === 401) {
+        if (!_isRetry) {
+          const newToken = await _tryRefreshOnce();
+          if (newToken) { setToken(newToken); return req(path, opts, true); }
+        }
+        setToken(null); window.dispatchEvent(new Event('mobya:logout')); throw { status:401, message:'Sessão expirada.' };
+      }
       if (!res.ok) throw { status: res.status, message: data?.error?.message || 'Erro na requisição.', code: data?.error?.code };
       return data;
     } catch(e) {
