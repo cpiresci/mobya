@@ -160,7 +160,8 @@ window.App = (() => {
       if (typeof MobyaAuth !== 'undefined') {
         try { await Promise.race([MobyaAuth.init(), new Promise(r => setTimeout(r, 8000))]); } catch {}
       }
-      setInterval(() => API.ping().catch(() => {}), 60000);
+      if (typeof KeepAlive !== 'undefined') KeepAlive.init();
+      else setInterval(() => API.ping().catch(() => {}), 60000);
     }, 200);
   }
 
