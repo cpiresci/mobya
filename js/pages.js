@@ -1737,12 +1737,19 @@ window.Pages = (() => {
     if (descInput  && phs[type]) descInput.placeholder  = phs[type].desc;
   };
 
+  async function renderGaragem(...args) {
+    if (window.Garagem?.render) return window.Garagem.render(...args);
+    return '<div style="padding:40px;text-align:center;color:var(--muted)">Garagem indisponível.</div>';
+  }
+  window._renderGaragem = renderGaragem;
+
   return {
     renderHome,
     renderClassificados,
     renderListing,
     renderAgentes,
     renderEmergencia,
+    renderGaragem,
     renderCalculadoras,
     renderVistoria,
     renderDocumentacao,
