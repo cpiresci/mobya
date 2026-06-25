@@ -18,7 +18,21 @@ window.MobyaAuth = (() => {
     }
 
     if (!API.isAuth()) {
-      const refreshed = await fetch(window.MOBYA.API+'/api/v1/auth/refresh',{method:'POST',credentials:'include'}).then(r=>r.ok?r.json():null).catch(()=>null);
+      const _tryRefresh = async (timeoutMs) => {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeoutMs);
+        try {
+          const r = await fetch(window.MOBYA.API+'/api/v1/auth/refresh', { method:'POST', credentials:'include', signal: ctrl.signal });
+          clearTimeout(t);
+          return r.ok ? await r.json().catch(() => null) : null;
+        } catch { clearTimeout(t); return null; }
+      };
+      let refreshed = null;
+      const attempts = [8000, 15000, 25000];
+      for (let i = 0; i < attempts.length && !refreshed?.data?.accessToken; i++) {
+        if (i > 0) await new Promise(r => setTimeout(r, 1200 * i));
+        refreshed = await _tryRefresh(attempts[i]);
+      }
       if (refreshed?.data?.accessToken) API.setToken(refreshed.data.accessToken);
       else { updateUI(null); return false; }
     }

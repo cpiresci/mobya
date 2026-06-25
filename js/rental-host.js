@@ -93,6 +93,7 @@ window.RentalHost = (() => {
     _loadTab();
   }
 
+  function _currentTab(){return _tab;}
   function _switchTab(tab){
     _tab=tab;
     const main=document.getElementById('main');if(!main)return;
@@ -110,7 +111,8 @@ window.RentalHost = (() => {
       const el=document.getElementById('rh-content');if(!el)return;
       if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f3e0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhuma reserva recebida ainda.</div><button onclick="RentalHost._switchTab('configs')" style="background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f697 Cadastrar ve\u00edculo</button></div>`;return;}
       const order=['PENDING','CONFIRMED','ACTIVE','COMPLETED','DISPUTED','CANCELLED','DECLINED'];
-      list.sort((a,b)=>(order.indexOf(a.status)||99)-(order.indexOf(b.status)||99));
+      const _ix=s=>{const i=order.indexOf(s);return i===-1?99:i;};
+      list.sort((a,b)=>_ix(a.status)-_ix(b.status));
       el.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">${list.map(bookingCard).join('')}</div>`;
     }catch(e){setError('rh-content',e?.message||'Erro ao carregar reservas');}
   }
@@ -157,5 +159,5 @@ window.RentalHost = (() => {
     }catch(e){App.toast(e?.message||'Erro ao atualizar ve\u00edculo.','err');}
   }
 
-  return{render,_switchTab,confirmBooking,declineBooking,checkinBooking,checkoutBooking,cancelBooking,toggleConfig};
+  return{render,_switchTab,_currentTab,confirmBooking,declineBooking,checkinBooking,checkoutBooking,cancelBooking,toggleConfig};
 })();
