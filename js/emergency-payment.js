@@ -35,8 +35,10 @@ window.EmergencyPayment = (() => {
       }
 
       if (usedMock) {
-        _showModal({ loading: false, estimatedPrice: (r.data || r).estimatedPrice,
-          breakdown: null, qrCode: null, qrCodeBase64: null, emergencyId, idempotent: false });
+        const mockData = r.data || r;
+        const estimatedPrice = mockData.estimatedPrice || null;
+        _showModal({ loading: false, estimatedPrice, breakdown: null,
+          qrCode: null, qrCodeBase64: null, emergencyId, idempotent: false });
         setTimeout(() => _onPaymentConfirmed(), 1200);
         return;
       }
