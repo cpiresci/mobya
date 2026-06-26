@@ -133,13 +133,13 @@
         <div class="pm-field">
           <label>Combustível</label>
           <select class="px-input" id="gFuel">
-            <option value="">—</option><option>Flex</option><option>Gasolina</option><option>Etanol</option><option>Diesel</option><option>Elétrico</option><option>Híbrido</option>
+            <option value="">—</option><option value="FLEX">Flex</option><option value="GASOLINE">Gasolina</option><option value="ETHANOL">Etanol</option><option value="DIESEL">Diesel</option><option value="ELECTRIC">Elétrico</option><option value="HYBRID">Híbrido</option><option value="GNV">GNV</option>
           </select>
         </div>
         <div class="pm-field">
           <label>Câmbio</label>
           <select class="px-input" id="gTrans">
-            <option value="">—</option><option>Manual</option><option>Automático</option><option>CVT</option>
+            <option value="">—</option><option value="MANUAL">Manual</option><option value="AUTOMATIC">Automático</option><option value="CVT">CVT</option><option value="AUTOMATED">Automatizado</option>
           </select>
         </div>
       </div>
