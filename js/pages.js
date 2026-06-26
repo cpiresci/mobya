@@ -426,7 +426,11 @@ window.Pages = (() => {
     if (!title||!price||!city||!state||!desc) {
       App.toast('Preencha todos os campos obrigatórios.','warn'); return;
     }
-    if (btn) { btn.disabled=true; btn.style.opacity='.5'; }
+    const nFotos = (window._listingPhotos||[]).length;
+    if (btn) {
+      btn.disabled=true; btn.style.opacity='.6';
+      btn.textContent = nFotos > 0 ? `⟳ ENVIANDO ${nFotos} FOTO(S)…` : '⟳ PUBLICANDO…';
+    }
     try {
       const _imgs = window._listingPhotos || [];
       await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type, images: _imgs });
@@ -437,7 +441,7 @@ window.Pages = (() => {
     } catch(e) {
       App.toast(e.message||'Erro ao publicar.','err');
     } finally {
-      if (btn) { btn.disabled=false; btn.style.opacity='1'; }
+      if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.textContent='PUBLICAR ANÚNCIO'; }
     }
   };
 
