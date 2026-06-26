@@ -421,6 +421,11 @@ window.Pages = (() => {
       const l = r.data;
       const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
 
+      let rentalConfig = null;
+      if (l.type === 'RENT') {
+        try { const rc = await API.rental.getConfigByListing(l.id); rentalConfig = rc?.data || null; } catch {}
+      }
+      
       el.innerHTML = `
         <button onclick="App.navigate('classificados')" style="
           background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:20px">
@@ -459,7 +464,30 @@ window.Pages = (() => {
 
           <!-- SIDEBAR DO ANÚNCIO -->
           <div style="display:flex;flex-direction:column;gap:14px">
-            ${card(`
+            ${l.type==='RENT'?`
+              <div id="rentBlock" style="background:var(--s2);border:1px solid rgba(0,245,255,.25);border-radius:12px;padding:18px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--neon);letter-spacing:2px;margin-bottom:12px">🗝️ RESERVAR VEÍCULO</div>
+                ${rentalConfig?`
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--neon)">${fmtBRL(rentalConfig.dailyRate)}<span style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace">/diária</span></div>
+                    ${rentalConfig.instantBook?`<span style="font-size:.63rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:4px 8px;color:var(--neon);font-family:'JetBrains Mono',monospace">⚡ Instantânea</span>`:''}
+                  </div>
+                  <div style="font-size:.68rem;color:var(--muted);margin-bottom:12px;font-family:'JetBrains Mono',monospace">
+                    Disponível: ${rentalConfig.availableFrom?new Date(rentalConfig.availableFrom).toLocaleDateString('pt-BR'):'—'} a ${rentalConfig.availableTo?new Date(rentalConfig.availableTo).toLocaleDateString('pt-BR'):'—'}<br>
+                    Mín. ${rentalConfig.minDays||1} / Máx. ${rentalConfig.maxDays||30} diárias
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+                    <div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px">RETIRADA</label>
+                      <input type="date" id="rentStart" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem" onchange="_rentPreview('${escHtml(l.id)}')"></div>
+                    <div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px">DEVOLUÇÃO</label>
+                      <input type="date" id="rentEnd" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem" onchange="_rentPreview('${escHtml(l.id)}')"></div>
+                  </div>
+                  <div id="rentPreview" style="display:none;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:12px;font-size:.77rem;font-family:'JetBrains Mono',monospace"></div>
+                  <button id="rentBtn" onclick="_rentBook('${escHtml(l.id)}')" style="width:100%;background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:9px;padding:11px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🗝️ Reservar Agora</button>
+                  <div style="font-size:.65rem;color:var(--muted);text-align:center;margin-top:6px">Sem cobrança até confirmação do anfitrião</div>
+                `:`<div style="font-size:.78rem;color:var(--muted)">Configuração de aluguel não encontrada para este anúncio.</div>`}
+              </div>`
+            :card(`
               <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;
                 color:var(--muted);letter-spacing:2px;margin-bottom:12px">VENDEDOR</div>
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -1742,6 +1770,59 @@ window.Pages = (() => {
     return '<div style="padding:40px;text-align:center;color:var(--muted)">Garagem indisponível.</div>';
   }
   window._renderGaragem = renderGaragem;
+
+
+  async function _rentPreview(listingId) {
+    const s = document.getElementById('rentStart')?.value;
+    const e = document.getElementById('rentEnd')?.value;
+    const box  = document.getElementById('rentPreview');
+    if (!s || !e || !box) return;
+    if (new Date(e) <= new Date(s)) {
+      box.style.display='block';
+      box.innerHTML='<span style="color:var(--red)">⚠ Devolução deve ser após retirada</span>';
+      return;
+    }
+    box.style.display='block'; box.textContent='⟳ Calculando...';
+    try {
+      let cfgId = window.__rentCfgId;
+      if (!cfgId) {
+        const cfgRes = await API.rental.getConfigByListing(listingId);
+        cfgId = cfgRes?.data?.id;
+        window.__rentCfgId = cfgId;
+      }
+      if (!cfgId) { box.textContent='Config não encontrada.'; return; }
+      const prev = await API.rental.previewPrice({ configId:cfgId, startDate:s, endDate:e });
+      const d = prev?.data;
+      if (!d) { box.textContent='Erro ao calcular.'; return; }
+      const fmt = v=>`R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+      box.innerHTML=`<div>DIÁRIAS: ${d.days||'?'}</div>${d.deposit?`<div>Depósito: ${fmt(d.deposit)}</div>`:''
+        }${d.renterTotal?`<div style="color:var(--neon);font-weight:700">TOTAL: ${fmt(d.renterTotal)}</div>`:''}`;
+    } catch(err) { box.textContent=err?.message||'Erro.'; }
+  }
+  window._rentPreview = _rentPreview;
+  
+  async function _rentBook(listingId) {
+    if (!API.isAuth()) { window.App?.toast('Faça login para reservar.','warn'); window.MobyaAuth?.showLogin(); return; }
+    const s=document.getElementById('rentStart')?.value;
+    const e=document.getElementById('rentEnd')?.value;
+    const btn=document.getElementById('rentBtn');
+    if (!s||!e) { window.App?.toast('Selecione as datas.','warn'); return; }
+    if (new Date(e)<=new Date(s)) { window.App?.toast('Devolução deve ser após retirada.','warn'); return; }
+    if (!window.__rentCfgId) {
+      try { const r=await API.rental.getConfigByListing(listingId); window.__rentCfgId=r?.data?.id; } catch {}
+    }
+    if (!window.__rentCfgId) { window.App?.toast('Config não encontrada.','err'); return; }
+    if (btn) { btn.disabled=true; btn.textContent='⟳ Criando reserva...'; }
+    try {
+      await API.rental.createBooking({ configId:window.__rentCfgId, startDate:s, endDate:e });
+      window.App?.toast('✅ Reserva criada! Aguarde confirmação.','ok',5000);
+      window.App?.navigate('minhas-reservas');
+    } catch(err) {
+      window.App?.toast(err?.message||'Erro ao reservar.','err');
+      if (btn) { btn.disabled=false; btn.textContent='🗝️ Reservar Agora'; }
+    }
+  }
+  window._rentBook = _rentBook;
 
   return {
     renderHome,
