@@ -75,6 +75,7 @@
   }
 
   function _driverCards() {
+    setTimeout(_initProviders, 100);
     const drivers = [
       {name:'João Silva', dist:'1,2 km', eta:'8 min', rating:'4.9', status:'livre'},
       {name:'Pedro Lima', dist:'2,4 km', eta:'14 min', rating:'4.8', status:'livre'},
@@ -88,6 +89,31 @@
         <div class="px-driver-rating">★ ${d.rating}</div>
         <div class="px-driver-status ${d.status==='livre'?'px-status-free':'px-status-busy'}">${d.status==='livre'?'● Livre':'● Ocupado'}</div>
       </div>`).join('');
+  }
+
+
+  async function _loadNearbyProviders(containerEl, vertical, icon) {
+    if (!containerEl) return;
+    try {
+      let coords = {};
+      await new Promise(res => navigator.geolocation?.getCurrentPosition(p => { coords={latitude:p.coords.latitude,longitude:p.coords.longitude}; res(); }, ()=>res(), {timeout:5000}));
+      const r = await API.monetization.providers({ vertical, limit:6, ...coords });
+      const providers = r?.data || [];
+      if (!providers.length) { containerEl.innerHTML = '<div style="color:var(--muted,#888);font-size:.78rem;padding:8px;text-align:center">Nenhum prestador disponivel na sua regiao agora.</div>'; return; }
+      containerEl.innerHTML = providers.map(p => {
+        const rating = p.ratingAvg ? parseFloat(p.ratingAvg).toFixed(1) : null;
+        const dist = p.distanceKm ? parseFloat(p.distanceKm).toFixed(1)+' km' : null;
+        const busy = p.status === 'BUSY';
+        return '<div class="px-driver'+(busy?' px-driver--busy':'')+'"><div class="px-driver-avatar">'+icon+'</div><div class="px-driver-name">'+esc(p.name||'Prestador')+'</div>'+(dist?'<div class="px-driver-info">'+dist+'</div>':'')+(rating?'<div class="px-driver-rating">★ '+rating+'</div>':'')+'<div class="px-driver-status '+(busy?'px-status-busy':'px-status-free')+'">'+(busy?'● Ocupado':'● Livre')+'</div></div>';
+      }).join('');
+    } catch(e) { containerEl.innerHTML = '<div style="color:var(--muted,#888);font-size:.78rem;padding:8px">Erro ao carregar prestadores.</div>'; }
+  }
+
+  function _initProviders() {
+    const rebEl = document.getElementById('reboqueDrivers');
+    if (rebEl) _loadNearbyProviders(rebEl, 'TOWING', '🚛');
+    const mecEl = document.getElementById('mecDrivers');
+    if (mecEl) _loadNearbyProviders(mecEl, 'MECHANIC', '🔧');
   }
 
   function _serviceCard(icon, title, desc, price, page) {

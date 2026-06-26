@@ -84,6 +84,7 @@
       </div>
       <div class="g-vactions">
         <button class="px-btn px-btn--sm" onclick="Pages.gAddMaintenance('${v.id}')">🔧 Registrar manutenção</button>
+        <button class="px-btn px-btn--sm px-btn--rental" onclick="Pages.gAtivarAluguel('${v.id}')">🗝️ Disponibilizar para Aluguel</button>
         <button class="px-btn px-btn--sm px-btn--ghost" onclick="Pages.gRemove('${v.id}')">🗑️ Remover</button>
       </div>
       <div class="g-maint-title">Histórico de manutenção</div>
@@ -241,10 +242,26 @@
     }
   }
 
+
+  async function gAtivarAluguel(vehicleId) {
+    if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
+    try {
+      const r = await API.rental.myConfigs({ limit: 50 });
+      const configs = r?.data || [];
+      const jaAtivo = configs.find(c => c.vehicleId === vehicleId);
+      if (jaAtivo) {
+        if (confirm('Veiculo ja disponivel para aluguel. Ir para o Painel Anfitriao?')) App.navigate('painel-anfitriao');
+        return;
+      }
+    } catch(e) {}
+    window.__mobyaRentalVehicleId = vehicleId;
+    App.navigate('painel-anfitriao');
+    App.toast('Configure os detalhes do aluguel no painel abaixo.', 'info', 5000);
+  }
   // ── EXPÕE NO window.Pages (objeto já criado por pages.js) ────
   window.Pages = window.Pages || {};
   Object.assign(window.Pages, {
-    renderGaragem, gShowForm, gSaveVehicle, gToggle, gRemove, gAddMaintenance, gSaveMaintenance,
+    renderGaragem, gShowForm, gSaveVehicle, gToggle, gRemove, gAddMaintenance, gSaveMaintenance, gAtivarAluguel,
   });
 
   // ── CSS ───────────────────────────────────────────────────────
@@ -266,6 +283,7 @@
 .g-vgrid strong{font-size:.84rem;color:#fff}
 .g-vactions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .px-btn--ghost{background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--muted,#888)}
+.px-btn--rental{background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.35);color:#06b6d4}
 .g-maint-title{font-size:.8rem;font-weight:700;color:var(--muted,#888);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.5px}
 .g-maint-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.82rem;color:#fff}
 .g-maint-sub{font-size:.74rem;color:var(--muted,#888);margin-top:2px}

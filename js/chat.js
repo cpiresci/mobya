@@ -32,10 +32,12 @@ window.Chat = (() => {
           <div class="chat-info"><h4 id="chatName">${a.name}</h4><p id="chatDesc">${a.desc}</p></div>
           <div class="chat-status"><div class="q-dot"></div>ONLINE</div>
           <div class="provider-tag" id="chatProvider">–</div>
+          <button onclick="Chat.showHistory()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--muted,#888);border-radius:6px;padding:4px 8px;font-size:.75rem;cursor:pointer;margin-left:4px">📋</button>
         </div>
         <div class="agent-chips" id="agentChips">${chips}</div>
         <div class="sug-bar" id="sugBar">${sugs}</div>
         <div class="msgs" id="msgs"></div>
+        <button onclick="Chat.newConversation()" style="width:100%;padding:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--muted,#888);font-size:.75rem;cursor:pointer;margin-bottom:6px">✨ Nova conversa</button>
         <div class="chat-input-area">
           <textarea class="msg-input" id="msgInput" rows="1" placeholder="Pergunte qualquer coisa sobre veículos..." onkeydown="Chat.key(event)" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
           <button class="send-btn" id="sendBtn" onclick="Chat.send()">➤</button>
@@ -243,5 +245,60 @@ window.Chat = (() => {
     return g[id] || 'Como posso ajudar?';
   }
 
-  return { render, selectAgent, inject, key, send, retryWithLocation };
+
+  async function showHistory() {
+    if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:flex;align-items:flex-end;justify-content:center';
+    ov.innerHTML = '<div style="background:var(--s2,#1a1a2e);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column"><div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center"><span style="font-family:Bebas Neue,sans-serif;letter-spacing:2px">HISTORICO</span><button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer">x</button></div><div id="histList" style="overflow-y:auto;padding:16px;flex:1"><div style="color:#888;text-align:center;padding:20px">Carregando...</div></div></div>';
+    document.body.appendChild(ov);
+    ov.onclick = e => { if (e.target === ov) ov.remove(); };
+    try {
+      const r = await API.ai.conversations({ limit: 20 });
+      const convs = r?.data || [];
+      const el = document.getElementById('histList');
+      if (!el) return;
+      if (!convs.length) { el.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Nenhuma conversa salva ainda.</div>'; return; }
+      el.innerHTML = convs.map(c => {
+        const d = new Date(c.updatedAt||c.createdAt);
+        const dt = d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        const prev = escHtml((c.lastMessage||c.title||'Conversa').slice(0,80));
+        return '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer" onclick="Chat.loadConversation(''+c.id+'');document.querySelector('[style*=fixed][style*=9999]')?.remove()"><div style="font-size:.75rem;color:#888">'+dt+' · '+escHtml(c.agentType||'')+'</div><div style="font-size:.84rem;color:#fff;margin-top:4px">'+prev+'</div></div>';
+      }).join('');
+    } catch(e) {
+      const el = document.getElementById('histList');
+      if (el) el.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px">Erro ao carregar historico.</div>';
+    }
+  }
+
+  async function loadConversation(id) {
+    try {
+      const r = await API.ai.getConversation(id);
+      const conv = r?.data;
+      if (!conv) return;
+      conversationId = conv.id;
+      if (conv.agentType && AGENTS[conv.agentType.toLowerCase()]) agent = conv.agentType.toLowerCase();
+      const msgs = document.getElementById('msgs');
+      if (!msgs) return;
+      msgs.innerHTML = '';
+      history = [];
+      (conv.messages||[]).forEach(m => {
+        const u = m.role === 'user';
+        history.push({role:m.role,content:m.content});
+        addMsg(u?'user':'ai', u?'👤':(AGENTS[agent]?.orb||'⬡'), u?escHtml(m.content):fmt(m.content));
+      });
+      App.toast('Conversa carregada.','ok');
+    } catch(e) { App.toast(e?.message||'Erro ao carregar conversa.','err'); }
+  }
+
+  function newConversation() {
+    history = []; conversationId = null;
+    const msgs = document.getElementById('msgs');
+    if (msgs) msgs.innerHTML = '';
+    const a = AGENTS[agent];
+    addMsg('ai', a.orb, 'Ola! Sou o <strong>'+a.name+'</strong>. '+getGreeting(agent));
+    App.toast('Nova conversa iniciada.','ok');
+  }
+
+  return { render, selectAgent, inject, key, send, retryWithLocation, showHistory, loadConversation, newConversation };
 })();
