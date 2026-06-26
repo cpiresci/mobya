@@ -474,7 +474,7 @@ window.Pages = (() => {
                   </div>
                   <div style="font-size:.68rem;color:var(--muted);margin-bottom:12px;font-family:'JetBrains Mono',monospace">
                     Disponível: ${rentalConfig.availableFrom?new Date(rentalConfig.availableFrom).toLocaleDateString('pt-BR'):'—'} a ${rentalConfig.availableTo?new Date(rentalConfig.availableTo).toLocaleDateString('pt-BR'):'—'}<br>
-                    Mín. ${rentalConfig.minDays||1} / Máx. ${rentalConfig.maxDays||30} diárias
+                    Mín. ${rentalConfig.minRentalDays||1} / Máx. ${rentalConfig.maxRentalDays||30} diárias
                   </div>
                   <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
                     <div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px">RETIRADA</label>
