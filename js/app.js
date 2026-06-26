@@ -131,8 +131,26 @@ window.App = (() => {
   // existia — todo clique lançava ReferenceError e nada acontecia.
   window.toggleBnMenu = toggleMenu;
 
+  let _backPressedAt = 0;
   window.addEventListener('popstate', (e) => {
     const page = e.state?.page || (location.hash||'#home').replace('#','') || 'home';
+
+    // Se já está na home e aperta voltar — duplo toque para sair
+    if (page === 'home' || !e.state) {
+      const now = Date.now();
+      if (now - _backPressedAt < 2000) {
+        // segundo toque dentro de 2s — deixa o browser sair
+        return;
+      }
+      _backPressedAt = now;
+      // empurra home de volta pro histórico para interceptar próximo toque
+      history.pushState({ page: 'home' }, '', '#home');
+      Toast.show('Toque novamente para sair', 'info', 2000);
+      currentPage = 'home';
+      window.renderPage('home');
+      return;
+    }
+
     currentPage = page;
     window.renderPage(page);
   });
