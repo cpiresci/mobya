@@ -71,6 +71,7 @@ const BASE_PAGES = {
   'painel-anfitriao':() => (typeof RentalHost !== 'undefined' ? RentalHost.render()                     : comingSoon('PAINEL DO ANFITRIÃO','🗝️')),
   'minhas-reservas': () => (typeof RentalGuest!== 'undefined' ? RentalGuest.render()                    : comingSoon('MINHAS RESERVAS','📋')),
   'painel-prestador':() => (typeof Monetization!=='undefined' ? Monetization.renderProviderDashboard()  : comingSoon('PAINEL DO PRESTADOR','🛠️')),
+  'cadastro-parceiro':() => (typeof Monetization!=='undefined' ? Monetization.renderCadastroParceiro()   : comingSoon('CADASTRO DE PARCEIRO','🔧')),
   'admin-aprovacao': () => (typeof AdminApproval!=='undefined'? AdminApproval.render()                   : comingSoon('APROVAÇÃO DE PRESTADORES','✅')),
   'meus-anuncios':   () => App.navigate('dashboard'),  // alias → dashboard tem seção de anúncios
   notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),

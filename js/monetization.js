@@ -1150,10 +1150,56 @@ window.Monetization = (() => {
 
   return {
     filterByVertical,
+  function renderCadastroParceiro() {
+    const main = document.getElementById('main');
+    if (!main) return;
+    main.innerHTML = `
+      <div style="max-width:560px;margin:0 auto;padding:8px 0">
+        <div style="margin-bottom:24px">
+          <button onclick="App.navigate('home')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:0;margin-bottom:16px">← Voltar</button>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent">SEJA UM PARCEIRO</div>
+          <div style="color:var(--muted);font-size:.84rem;margin-top:4px">Integre seu negócio à rede MOBYA e receba chamados direto pelo app.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px">
+          ${[
+            {icon:'🔧',label:'Mecânicos'},
+            {icon:'🚛',label:'Guincho'},
+            {icon:'🔑',label:'Chaveiros'},
+            {icon:'🛡️',label:'Seguros'},
+            {icon:'🗝️',label:'Locadores'},
+            {icon:'🔍',label:'Vistoria'},
+          ].map(i=>`<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 8px;text-align:center">
+            <div style="font-size:1.4rem;margin-bottom:4px">${i.icon}</div>
+            <div style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${i.label}</div>
+          </div>`).join('')}
+        </div>
+
+        <div style="background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(0,212,255,.06));border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:16px 18px;margin-bottom:20px">
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.7">
+            ✅ Sem custo de adesão &nbsp;·&nbsp; ✅ Receba leads da sua região<br>
+            ✅ Comissão só sobre negócios fechados &nbsp;·&nbsp; ✅ Aprovação em até 48h
+          </div>
+        </div>
+
+        <button onclick="Monetization.showRegisterPartner()" style="
+          width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;
+          border:none;border-radius:12px;padding:14px;font-weight:700;font-size:.95rem;
+          cursor:pointer;font-family:'Space Grotesk',sans-serif;
+          box-shadow:0 0 24px rgba(16,185,129,.35);letter-spacing:.5px">
+          🔧 Preencher Cadastro Agora
+        </button>
+        <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:10px">
+          Após o envio, nossa equipe analisa e ativa seu perfil em até 48h.
+        </div>
+      </div>`;
+  }
+
     openQuoteModal,
     closeQuoteModal,
     submitQuote,
     showRegisterPartner,
+    renderCadastroParceiro,
     onVerticalChange,
     submitRegisterPartner,
     runInsuranceSim,
