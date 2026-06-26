@@ -46,7 +46,7 @@ window.RentalGuest = (() => {
   function bookingCard(b){
     const sm=SM[b.status]||{};
     const host=b.host||{};
-    const canCancel=b.status==='PENDING'||(b.status==='CONFIRMED'&&b.renterPaymentStatus!=='COMPLETED');
+    const canCancel=b.status==='PENDING'||(b.status==='CONFIRMED'&&!['COMPLETED','PROCESSING'].includes(b.renterPaymentStatus));
     const canCancelPaid=b.status==='ACTIVE';
     const canPay=b.status==='CONFIRMED'&&b.renterPaymentStatus!=='COMPLETED';
     // Locatário confirma checkin: anfitrião registrou, pagamento feito, ainda em CONFIRMED
