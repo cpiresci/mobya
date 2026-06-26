@@ -23,7 +23,13 @@ window.RentalGuest = (() => {
     return new Promise((resolve,reject)=>{
       const input=document.createElement('input');
       input.type='file';input.accept='image/*';input.capture='environment';
+      // Se o usuário fechar o picker sem escolher, o onchange não dispara.
+      // Usamos foco de volta na janela como sinal de cancelamento.
+      let _done=false;
+      const _onFocus=()=>{ setTimeout(()=>{ if(!_done){ _done=true; window.removeEventListener('focus',_onFocus); reject(new Error('Nenhuma foto selecionada.')); } },400); };
+      window.addEventListener('focus',_onFocus);
       input.onchange=()=>{
+        _done=true; window.removeEventListener('focus',_onFocus);
         const file=input.files&&input.files[0];
         if(!file) return reject(new Error('Nenhuma foto selecionada.'));
         const img=new Image();
