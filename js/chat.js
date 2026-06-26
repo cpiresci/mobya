@@ -250,7 +250,7 @@ window.Chat = (() => {
     if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:flex;align-items:flex-end;justify-content:center';
-    ov.innerHTML = '<div style="background:var(--s2,#1a1a2e);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column"><div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center"><span style="font-family:Bebas Neue,sans-serif;letter-spacing:2px">HISTORICO</span><button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer">x</button></div><div id="histList" style="overflow-y:auto;padding:16px;flex:1"><div style="color:#888;text-align:center;padding:20px">Carregando...</div></div></div>';
+    ov.innerHTML = `<div style="background:var(--s2,#1a1a2e);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column"><div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center"><span style="font-family:Bebas Neue,sans-serif;letter-spacing:2px">HISTORICO</span><button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer">x</button></div><div id="histList" style="overflow-y:auto;padding:16px;flex:1"><div style="color:#888;text-align:center;padding:20px">Carregando...</div></div></div>`;
     document.body.appendChild(ov);
     ov.onclick = e => { if (e.target === ov) ov.remove(); };
     try {
@@ -263,7 +263,7 @@ window.Chat = (() => {
         const d = new Date(c.updatedAt||c.createdAt);
         const dt = d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
         const prev = escHtml((c.lastMessage||c.title||'Conversa').slice(0,80));
-        return '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer" onclick="Chat.loadConversation(''+c.id+'');document.querySelector('[style*=fixed][style*=9999]')?.remove()"><div style="font-size:.75rem;color:#888">'+dt+' · '+escHtml(c.agentType||'')+'</div><div style="font-size:.84rem;color:#fff;margin-top:4px">'+prev+'</div></div>';
+        return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer" onclick="Chat.loadConversation('${c.id}');document.querySelector('[style*=fixed][style*=9999]')?.remove()"><div style="font-size:.75rem;color:#888">${dt} · ${escHtml(c.agentType||'')}</div><div style="font-size:.84rem;color:#fff;margin-top:4px">${prev}</div></div>`;
       }).join('');
     } catch(e) {
       const el = document.getElementById('histList');

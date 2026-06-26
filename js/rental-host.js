@@ -230,44 +230,44 @@ window.RentalHost = (() => {
     const overlay = document.createElement('div');
     overlay.id = 'rhConfigModal';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center';
-    overlay.innerHTML = '<div style="background:var(--s2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;position:relative">' +
-      '<button onclick="document.getElementById('rhConfigModal').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>' +
-      '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;margin-bottom:20px">🚗 CADASTRAR VEÍCULO</div>' +
-      '<div style="margin-bottom:14px">' +
-        '<label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">ANÚCIO (RENT) *</label>' +
-        '<select id="rhListingId" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">' +
-        listings.map(l => '<option value="' + l.id + '">' + (l.title||'').slice(0,50) + '</option>').join('') +
-        '</select>' +
-      '</div>' +
-      [['rh_dailyRate','Diária (R$/dia) *','number','150'],
+    overlay.innerHTML = `<div style="background:var(--s2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;position:relative">
+      <button onclick="document.getElementById('rhConfigModal').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;margin-bottom:20px">🚗 CADASTRAR VEÍCULO</div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">ANÚCIO (RENT) *</label>
+        <select id="rhListingId" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+        ${listings.map(l => `<option value="${l.id}">${(l.title||'').slice(0,50)}</option>`).join('')}
+        </select>
+      </div>
+      ${[['rh_dailyRate','Diária (R$/dia) *','number','150'],
        ['rh_minDays','Mín. dias','number','1'],
        ['rh_maxDays','Máx. dias','number','30'],
        ['rh_kmDay','KM incluso/dia','number','200'],
        ['rh_deposit','Depósito (R$)','number','0'],
        ['rh_pickup','Endereço de retirada','text','Rua, número - Bairro, Cidade'],
       ].map(([id,lbl,type,ph]) =>
-        '<div style="margin-bottom:12px">' +
-        '<label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">' + lbl.toUpperCase() + '</label>' +
-        '<input id="' + id + '" type="' + type + '" placeholder="' + ph + '" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">' +
-        '</div>'
-      ).join('') +
-      '<div style="margin-bottom:14px">' +
-        '<label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">PLANO DE PROTEÇÃO</label>' +
-        '<select id="rhPlan" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">' +
-        '<option value="BASIC">BASIC — 10% retido pela Mobya</option>' +
-        '<option value="STANDARD" selected>STANDARD — 15% retido</option>' +
-        '<option value="PREMIUM">PREMIUM — 25% retido</option>' +
-        '<option value="PREMIER">PREMIER — 35% retido</option>' +
-        '</select>' +
-      '</div>' +
-      '<div style="margin-bottom:18px;display:flex;align-items:center;gap:10px">' +
-        '<input type="checkbox" id="rhInstant" style="width:16px;height:16px;cursor:pointer">' +
-        '<label for="rhInstant" style="font-size:.82rem;color:var(--text);cursor:pointer">⚡ Reserva instantânea (sem aprovação manual)</label>' +
-      '</div>' +
-      '<button onclick="RentalHost._submitNewConfig()" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;border:none;cursor:pointer" id="rhConfigSubmit">' +
-        '💾 CADASTRAR' +
-      '</button>' +
-    '</div>';
+        `<div style="margin-bottom:12px">
+        <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">${lbl.toUpperCase()}</label>
+        <input id="${id}" type="${type}" placeholder="${ph}" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+        </div>`
+      ).join('')}
+      <div style="margin-bottom:14px">
+        <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">PLANO DE PROTEÇÃO</label>
+        <select id="rhPlan" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+        <option value="BASIC">BASIC — 10% retido pela Mobya</option>
+        <option value="STANDARD" selected>STANDARD — 15% retido</option>
+        <option value="PREMIUM">PREMIUM — 25% retido</option>
+        <option value="PREMIER">PREMIER — 35% retido</option>
+        </select>
+      </div>
+      <div style="margin-bottom:18px;display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="rhInstant" style="width:16px;height:16px;cursor:pointer">
+        <label for="rhInstant" style="font-size:.82rem;color:var(--text);cursor:pointer">⚡ Reserva instantânea (sem aprovação manual)</label>
+      </div>
+      <button onclick="RentalHost._submitNewConfig()" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;border:none;cursor:pointer" id="rhConfigSubmit">
+        💾 CADASTRAR
+      </button>
+    </div>`;
     document.body.appendChild(overlay);
   }
 
