@@ -717,6 +717,25 @@ window.Pages = (() => {
       btn.disabled = true;
       btn.textContent = 'Registrando…';
       try {
+        // Se ainda sem GPS, aguarda até 6s extras
+        if (!coords.latitude) {
+          if (geoStatus) geoStatus.innerHTML = '📡 Aguardando GPS...';
+          await new Promise((resolve) => {
+            const start = Date.now();
+            const check = setInterval(() => {
+              if (coords.latitude || Date.now() - start > 6000) {
+                clearInterval(check); resolve();
+              }
+            }, 300);
+          });
+        }
+        if (!coords.latitude) {
+          if (geoStatus) geoStatus.innerHTML = '⚠️ GPS indisponível — tente novamente';
+          btn.disabled = false;
+          btn.textContent = '🚨 Acionar Agora';
+          App.toast('GPS necessário para calcular o preço. Tente novamente.', 'warn');
+          return;
+        }
         const created = await API.emergency.create({ type, description: desc || label, ...coords });
         close();
         App.toast(`🚨 Emergência registrada! Buscando prestador próximo…`, 'ok');
