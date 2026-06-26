@@ -161,8 +161,8 @@ window.RentalHost = (() => {
       const r=await API.rental.myConfigs({limit:50});
       const list=r?.data||[];
       const el=document.getElementById('rh-content');if(!el)return;
-      if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f697</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhum ve\u00edculo cadastrado para aluguel.</div><button onclick="App.navigate('garagem')" style="background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f3ce\ufe0f Minha Garagem</button></div>`;return;}
-      el.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">${list.map(configCard).join('')}</div>`;
+      if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f697</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhum ve\u00edculo cadastrado para aluguel.</div><button onclick="RentalHost._showAddConfigModal()" style="background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f3ce\ufe0f Minha Garagem</button></div>`;return;}
+      el.innerHTML=`<button onclick="RentalHost._showAddConfigModal()" style="width:100%;margin-bottom:14px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(0,245,255,.1));border:1px dashed rgba(16,185,129,.4);color:var(--green);padding:11px;border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🚗 + Cadastrar novo veículo para aluguel</button><div style="display:flex;flex-direction:column;gap:14px">${list.map(configCard).join('')}</div>`;
     }catch(e){setError('rh-content',e?.message||'Erro ao carregar ve\u00edculos');}
   }
 
@@ -214,5 +214,97 @@ window.RentalHost = (() => {
     }catch(e){App.toast(e?.message||'Erro ao atualizar ve\u00edculo.','err');}
   }
 
-  return{render,_switchTab,_currentTab,confirmBooking,declineBooking,checkinBooking,checkoutBooking,cancelBooking,toggleConfig};
+
+  async function _showAddConfigModal() {
+    // Busca listings RENT do host para popular o select
+    let listings = [];
+    try {
+      const r = await API.listings.mine({ limit: 50 });
+      listings = (r?.data || []).filter(l => l.type === 'RENT');
+    } catch(e) {}
+    if (!listings.length) {
+      App.toast('Crie primeiro um anúncio do tipo ALUGUEL em Classificados.', 'warn');
+      App.navigate('dashboard');
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.id = 'rhConfigModal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = '<div style="background:var(--s2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;position:relative">' +
+      '<button onclick="document.getElementById('rhConfigModal').remove()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>' +
+      '<div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;margin-bottom:20px">🚗 CADASTRAR VEÍCULO</div>' +
+      '<div style="margin-bottom:14px">' +
+        '<label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">ANÚCIO (RENT) *</label>' +
+        '<select id="rhListingId" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">' +
+        listings.map(l => '<option value="' + l.id + '">' + (l.title||'').slice(0,50) + '</option>').join('') +
+        '</select>' +
+      '</div>' +
+      [['rh_dailyRate','Diária (R$/dia) *','number','150'],
+       ['rh_minDays','Mín. dias','number','1'],
+       ['rh_maxDays','Máx. dias','number','30'],
+       ['rh_kmDay','KM incluso/dia','number','200'],
+       ['rh_deposit','Depósito (R$)','number','0'],
+       ['rh_pickup','Endereço de retirada','text','Rua, número - Bairro, Cidade'],
+      ].map(([id,lbl,type,ph]) =>
+        '<div style="margin-bottom:12px">' +
+        '<label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">' + lbl.toUpperCase() + '</label>' +
+        '<input id="' + id + '" type="' + type + '" placeholder="' + ph + '" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">' +
+        '</div>'
+      ).join('') +
+      '<div style="margin-bottom:14px">' +
+        '<label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">PLANO DE PROTEÇÃO</label>' +
+        '<select id="rhPlan" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">' +
+        '<option value="BASIC">BASIC — 10% retido pela Mobya</option>' +
+        '<option value="STANDARD" selected>STANDARD — 15% retido</option>' +
+        '<option value="PREMIUM">PREMIUM — 25% retido</option>' +
+        '<option value="PREMIER">PREMIER — 35% retido</option>' +
+        '</select>' +
+      '</div>' +
+      '<div style="margin-bottom:18px;display:flex;align-items:center;gap:10px">' +
+        '<input type="checkbox" id="rhInstant" style="width:16px;height:16px;cursor:pointer">' +
+        '<label for="rhInstant" style="font-size:.82rem;color:var(--text);cursor:pointer">⚡ Reserva instantânea (sem aprovação manual)</label>' +
+      '</div>' +
+      '<button onclick="RentalHost._submitNewConfig()" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;border:none;cursor:pointer" id="rhConfigSubmit">' +
+        '💾 CADASTRAR' +
+      '</button>' +
+    '</div>';
+    document.body.appendChild(overlay);
+  }
+
+  async function _submitNewConfig() {
+    const btn = document.getElementById('rhConfigSubmit');
+    const listingId   = document.getElementById('rhListingId')?.value;
+    const dailyRate   = parseFloat(document.getElementById('rh_dailyRate')?.value || '0');
+    const minDays     = parseInt(document.getElementById('rh_minDays')?.value || '1');
+    const maxDays     = parseInt(document.getElementById('rh_maxDays')?.value || '30');
+    const kmDay       = parseInt(document.getElementById('rh_kmDay')?.value || '200');
+    const deposit     = parseFloat(document.getElementById('rh_deposit')?.value || '0');
+    const pickup      = document.getElementById('rh_pickup')?.value?.trim() || '';
+    const plan        = document.getElementById('rhPlan')?.value || 'STANDARD';
+    const instant     = document.getElementById('rhInstant')?.checked || false;
+    if (!listingId || !dailyRate) { App.toast('Preencha o anúncio e a diária.', 'warn'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+    try {
+      await API.rental.createConfig({
+        listingId,
+        dailyRate,
+        minRentalDays: minDays,
+        maxRentalDays: maxDays,
+        includedKmPerDay: kmDay,
+        deposit,
+        pickupAddress: pickup || null,
+        protectionPlan: plan,
+        instantBook: instant,
+        active: true,
+      });
+      document.getElementById('rhConfigModal')?.remove();
+      App.toast('🚗 Veículo cadastrado para aluguel!', 'ok');
+      await _loadConfigs();
+    } catch(e) {
+      App.toast(e?.message || 'Erro ao cadastrar.', 'err');
+      if (btn) { btn.disabled = false; btn.textContent = '💾 CADASTRAR'; }
+    }
+  }
+
+  return{render,_switchTab,_currentTab,confirmBooking,declineBooking,checkinBooking,checkoutBooking,cancelBooking,toggleConfig,_showAddConfigModal,_submitNewConfig};
 })();
