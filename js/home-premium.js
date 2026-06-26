@@ -474,18 +474,15 @@
           </div>
         </section>
 
-        <!-- NEXUS PROVIDERS STATUS -->
+        <!-- CTA PARCEIRO -->
         <section class="hp-sec">
-          <div class="hp-sec-hd">
-            <span class="hp-sec-ttl">⬡ STATUS DO MOTOR NEXUS</span>
-          </div>
-          <div class="hp-provs-scroll" id="hpProvidersScroll">
-            ${['SambaNova', 'Cerebras', 'Gemini', 'OpenRouter'].map(p => `
-              <div class="hp-prov">
-                <div class="hp-prov-ico" style="background:rgba(124,58,237,.18)">⬡</div>
-                <div class="hp-prov-n">${p}</div>
-                <div class="hp-prov-t" id="hpProv_${p.toLowerCase()}">verificando…</div>
-              </div>`).join('')}
+          <div style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(0,212,255,.08));border:1px solid rgba(124,58,237,.25);border-radius:16px;padding:24px 20px;text-align:center">
+            <div style="font-size:2rem;margin-bottom:10px">🔧</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;color:#fff;margin-bottom:6px">SEJA UM PARCEIRO MOBYA</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5">Mecânico, guincho, vistoriador ou locador?<br>Receba chamados direto pelo app com IA quântica.</div>
+            <button onclick="App.navigate('cadastro-parceiro')" style="background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;border:none;border-radius:10px;padding:12px 28px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;box-shadow:0 0 20px rgba(124,58,237,.35)">
+              Cadastrar meu negócio →
+            </button>
           </div>
         </section>
 
@@ -605,26 +602,7 @@
         }
       }
 
-      // Providers
-      const providers = provR?.data || [];
-      const statProv = document.getElementById('hpStatProviders');
-      /* agentes NEXUS fixo — nao sobrescrever */
-
-      providers.forEach(p => {
-        const elp = document.getElementById(`hpProv_${p.name.toLowerCase()}`);
-        if (elp) {
-          elp.textContent = p.configured ? '● Ativo' : '● Offline';
-          elp.style.color = p.configured ? 'var(--green)' : 'var(--muted)';
-        }
-      });
-      // Mark any not returned as offline (graceful)
-      ['sambanova', 'cerebras', 'gemini', 'openrouter'].forEach(name => {
-        const elp = document.getElementById(`hpProv_${name}`);
-        if (elp && elp.textContent === 'verificando…') {
-          elp.textContent = '● Offline';
-          elp.style.color = 'var(--muted)';
-        }
-      });
+      // providers status removido da home (movido para painel admin)
     }).catch(() => {
       const carsEl = document.getElementById('hpCarsScroll');
       if (carsEl) carsEl.innerHTML = `<div style="color:var(--muted);font-size:.82rem;padding:30px">Não foi possível carregar ofertas agora.</div>`;
