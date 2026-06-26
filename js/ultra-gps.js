@@ -623,6 +623,18 @@ window.UltraGPS = (() => {
   }
 
   // ── Estilos CSS ──
+  let _fullMap=false;
+  function toggleFullMap(){
+    _fullMap=!_fullMap;
+    const hb=document.getElementById('ultraHeaderBar');
+    const tp=document.getElementById('ultraTrackingPanel');
+    const btn=document.getElementById('ultra-btn-fullmap');
+    if(hb)hb.style.display=_fullMap?'none':'';
+    if(tp)tp.style.display=_fullMap?'none':'';
+    if(btn)btn.classList.toggle('on',_fullMap);
+    setTimeout(()=>{ try{map?.resize();}catch(_){} },260);
+  }
+
   function _injectStyles(){
     if(document.getElementById('ultra-gps-styles'))return;
     const s=document.createElement('style'); s.id='ultra-gps-styles';
@@ -657,6 +669,10 @@ window.UltraGPS = (() => {
       #navETABadge{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#22d88f}
       #navDeviationBadge{display:none;font-size:.72rem;color:#f59e0b;font-family:'JetBrains Mono',monospace}
       @keyframes ultraSosFlash{0%,100%{background:rgba(239,68,68,.97)}50%{background:rgba(180,20,20,.97)}}
+      .ultra-map-wrap::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:5;box-shadow:0 0 0 1px rgba(0,212,255,.35),inset 0 0 60px rgba(124,58,237,.16)}
+      .ultra-map-wrap::after{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,#00f5ff,transparent);animation:ultraScanTop 3s ease-in-out infinite;opacity:.6;z-index:6;pointer-events:none}
+      @keyframes ultraScanTop{0%,100%{opacity:.15;transform:scaleX(.3)}50%{opacity:.75;transform:scaleX(1)}}
+      #ultra-btn-fullmap.on{opacity:1;border-color:#00d4ff;background:rgba(0,212,255,.18)}
     `;
     document.head.appendChild(s);
   }
@@ -687,7 +703,7 @@ window.UltraGPS = (() => {
     if(!sid&&!window.__mobyaPendingEmergencyId&&!sessionId){setTimeout(()=>{try{UltraGPS.setMode('discover');}catch(e){}},350);}
     main.innerHTML=`<div style="display:flex;flex-direction:column;height:calc(100vh - 60px - var(--bnh,0px));position:relative;overflow:hidden">
       <div id="ultraSosBanner">🚨 SOS ATIVO — aguardando resposta</div>
-      <div style="flex:none;padding:6px 14px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div id="ultraHeaderBar" style="flex:none;padding:6px 14px;background:linear-gradient(135deg,var(--s2),var(--s3));border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div>
           <div id="ultraHeader">🛣️ ULTRA GPS</div>
           <div id="ultraSessionStatus" style="font-size:.82rem;margin-top:5px"><span style="color:var(--muted);font-family:monospace;font-size:.76rem">Conectando...</span></div>
@@ -702,7 +718,7 @@ window.UltraGPS = (() => {
           <div style="width:100%"><span id="ultraETA" style="font-family:monospace;font-size:.78rem"></span><div id="ultraProximityWrap"><div id="ultraProximityFill"></div></div></div>
         </div>
       </div>
-      <div style="flex:1;min-height:0;width:100%;position:relative">
+      <div class="ultra-map-wrap" style="flex:1;min-height:0;width:100%;position:relative">
         <div id="ultraMap" style="width:100%;height:100%"></div>
         <!-- Barra de busca de destino sobreposta ao mapa -->
         <div id="navSearchBar" style="position:absolute;top:10px;left:10px;right:10px;z-index:15;display:flex;gap:6px">
@@ -732,6 +748,7 @@ window.UltraGPS = (() => {
         </div>
         <!-- Botões de layer -->
         <div style="position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:10">
+          <div class="ultra-layer-btn" id="ultra-btn-fullmap" onclick="UltraGPS.toggleFullMap()" title="Maximizar mapa">⛶</div>
           <div class="ultra-layer-btn" id="ultra-btn-heat" onclick="UltraGPS.toggleHeat()" title="Heatmap">🔥</div>
           <div class="ultra-layer-btn on" id="ultra-btn-route" onclick="UltraGPS.toggleRoute()" title="Rota">🛣️</div>
           <div class="ultra-layer-btn on" id="ultra-btn-cluster" onclick="UltraGPS.toggleCluster()" title="Clusters">📍</div>
@@ -786,7 +803,7 @@ window.UltraGPS = (() => {
   async function createSession({quoteId,userId,vertical,address}){ const r=await API.req('POST','/tracking/sessions',{quoteId,userId,vertical,address}); return r.data; }
 
   return { render, openTracking, createSession, joinSession, setMode,
-    toggleHeat, toggleRoute, toggleCluster, cycleMapStyle,
+    toggleHeat, toggleRoute, toggleCluster, toggleFullMap, cycleMapStyle,
     setStatus, doCheckin, sendChatMessage, doCall, doChat, doSOS,
     startWatchingLocation, stopWatchingLocation,
     searchDestination, selectDestination, startNavigation, stopNavigation,

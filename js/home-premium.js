@@ -359,13 +359,6 @@
           </div>
         </section>
 
-        <!-- STATS -->
-        <div class="hp-stats">
-          <div class="hp-stat s1"><div class="hp-stat-v" id="hpStatListings">…</div><div class="hp-stat-l">Anúncios ativos</div></div>
-          <div class="hp-stat s2"><div class="hp-stat-v">9</div><div class="hp-stat-l">Agentes NEXUS</div></div>
-          <div class="hp-stat s3"><div class="hp-stat-v">&lt;15min</div><div class="hp-stat-l">Guincho médio</div></div>
-        </div>
-
         <!-- DESTAQUES — ofertas reais via API -->
         <section class="hp-sec">
           <div class="hp-sec-hd">
@@ -376,6 +369,13 @@
             ${'<div style="width:210px;height:220px;background:var(--s2);border:1px solid var(--border);border-radius:14px;flex-shrink:0;animation:pulse 2s infinite"></div>'.repeat(4)}
           </div>
         </section>
+
+        <!-- STATS -->
+        <div class="hp-stats">
+          <div class="hp-stat s1"><div class="hp-stat-v" id="hpStatListings">…</div><div class="hp-stat-l">Anúncios ativos</div></div>
+          <div class="hp-stat s2"><div class="hp-stat-v">9</div><div class="hp-stat-l">Agentes NEXUS</div></div>
+          <div class="hp-stat s3"><div class="hp-stat-v">&lt;15min</div><div class="hp-stat-l">Guincho médio</div></div>
+        </div>
 
         <!-- CATEGORIAS -->
         <section class="hp-sec">

@@ -203,8 +203,8 @@
   <div class="px-hero px-hero--cyan">
     <div class="px-hero-icon">🗝️</div>
     <div>
-      <div class="px-hero-title">ALUGUEL DE VEÍCULOS</div>
-      <div class="px-hero-sub">Veículos verificados · Reserve em minutos</div>
+      <div class="px-hero-title">ALUGUEL P2P DE VEÍCULOS</div>
+      <div class="px-hero-sub">Alugue direto do dono · Sem locadora · Reserve em minutos</div>
     </div>
   </div>
 
@@ -235,14 +235,14 @@
 
   <!-- BENEFÍCIOS -->
   <div class="px-card">
-    <div class="px-card-title">◈ INCLUÍDO NO ALUGUEL</div>
+    <div class="px-card-title">◈ POR QUE ALUGAR P2P NA MOBYA?</div>
     <div class="px-benefits">
-      <div class="px-benefit">✅ Seguro básico</div>
-      <div class="px-benefit">✅ Assistência 24h</div>
-      <div class="px-benefit">✅ Sem taxa de adesão</div>
-      <div class="px-benefit">✅ Cancelamento grátis</div>
-      <div class="px-benefit">✅ Pagamento seguro</div>
-      <div class="px-benefit">✅ Reserva instantânea</div>
+      <div class="px-benefit">🤝 Direto com o proprietário</div>
+      <div class="px-benefit">💸 Até 40% mais barato que locadoras</div>
+      <div class="px-benefit">✅ Proprietários verificados</div>
+      <div class="px-benefit">🛡️ Seguro integrado via parceiro</div>
+      <div class="px-benefit">⚡ Reserva instantânea disponível</div>
+      <div class="px-benefit">🔒 Pagamento seguro via plataforma</div>
     </div>
   </div>
 

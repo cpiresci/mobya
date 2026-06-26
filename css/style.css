@@ -275,7 +275,7 @@ body::after{
 /* ─── CHAT PANEL (página /chat) ──────────────────────────────── */
 .chat-panel{
   background:var(--s2);border:1px solid var(--border);border-radius:14px;
-  overflow:hidden;height:560px;max-height:calc(100dvh - var(--hh) - 40px);
+  overflow:hidden;height:calc(100dvh - var(--hh) - 40px);max-height:calc(100dvh - var(--hh) - 40px);
   display:flex;flex-direction:column;
 }
 .chat-head{
@@ -793,7 +793,7 @@ body::after{
 }
 @media(max-width:480px){
   .hero-h1{font-size:2rem}
-  .chat-panel{height:460px}
+  .chat-panel{height:calc(100dvh - var(--hh) - var(--bnh) - 20px)}
   .grid-auto{grid-template-columns:1fr 1fr}
   .qhome-title{font-size:2rem}
   .qhome-quick{grid-template-columns:repeat(4,1fr);gap:6px}
