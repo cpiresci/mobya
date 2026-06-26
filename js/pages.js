@@ -386,7 +386,7 @@ window.Pages = (() => {
     const title = document.getElementById('clTitle')?.value?.trim();
     const price = document.getElementById('clPrice')?.value;
     const city  = document.getElementById('clCity')?.value?.trim();
-    const state = document.getElementById('clState')?.value?.trim().toUpperCase();
+    const state = (document.getElementById('clState')?.value?.trim().toUpperCase()||'').slice(0,2);
     const desc  = document.getElementById('clDesc')?.value?.trim();
     const type  = document.getElementById('clTypeNew')?.value || 'SALE';
 
@@ -1718,7 +1718,6 @@ window.Pages = (() => {
             ['clTitle','Título *','text',''],
             ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0'],
             ['clCity','Cidade *','text','Ex: São Paulo'],
-            ['clState','Estado *','text','SP'],
           ].map(([id, lbl, type, ph]) => `
             <div style="margin-bottom:12px">
               <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
@@ -1727,6 +1726,15 @@ window.Pages = (() => {
                 width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
                 padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
             </div>`).join('')}
+          <div style="margin-bottom:12px">
+            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
+              letter-spacing:1px;display:block;margin-bottom:5px">ESTADO *</label>
+            <select id="clState" style="width:100%;background:var(--s3);border:1px solid var(--border);
+              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
+              <option value="">— Selecione —</option>
+              ${'AC,AL,AP,AM,BA,CE,DF,ES,GO,MA,MT,MS,MG,PA,PB,PR,PE,PI,RJ,RN,RS,RO,RR,SC,SP,SE,TO'.split(',').map(uf=>`<option value="${uf}">${uf}</option>`).join('')}
+            </select>
+          </div>
 
           <div style="margin-bottom:18px">
             <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
