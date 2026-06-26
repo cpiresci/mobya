@@ -9,6 +9,7 @@
   // ── UTILITÁRIOS ────────────────────────────────────────────
   const main = () => document.getElementById('main');
   const fmtBRL = v => `R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
+  const esc = t => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   // ── REBOQUE & GUINCHO ──────────────────────────────────────
   function renderReboque() {
@@ -292,17 +293,22 @@
     const pickup = l._pickupAddress ? l._pickupAddress : cidade;
     const badge = instantBook ? '<span style="font-size:.7rem;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#10b981;padding:2px 7px;border-radius:10px;margin-left:6px">⚡ Instantâneo</span>' : '';
 
-    const thumbHtml = thumb
-      ? `<img src="${thumb}" alt="${nomeVeiculo}" style="width:80px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0">`
+    const safeThumb = thumb ? esc(thumb) : null;
+    const safeNome = esc(nomeVeiculo);
+    const safePickup = esc(pickup);
+    const safeCidade = esc(cidade);
+
+    const thumbHtml = safeThumb
+      ? `<img src="${safeThumb}" alt="${safeNome}" style="width:80px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0">`
       : `<div style="width:80px;height:60px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0">🚗</div>`;
 
     return `
     <div class="px-car" style="cursor:pointer" onclick="App.navigate('listing','${l.id}')">
       ${thumbHtml}
       <div class="px-car-info">
-        <div class="px-car-cat">${cidade}${badge}</div>
-        <div class="px-car-name">${nomeVeiculo}</div>
-        <div class="px-car-meta" style="margin-top:3px;font-size:.75rem;color:var(--muted,#888)">📍 ${pickup}</div>
+        <div class="px-car-cat">${safeCidade}${badge}</div>
+        <div class="px-car-name">${safeNome}</div>
+        <div class="px-car-meta" style="margin-top:3px;font-size:.75rem;color:var(--muted,#888)">📍 ${safePickup}</div>
       </div>
       <div class="px-car-right">
         <div class="px-car-price">${fmtBRL(dailyRate)}<span style="font-size:.7rem;color:var(--muted,#888)">/dia</span></div>
@@ -381,6 +387,7 @@
       <div class="px-form-group"><label>Peso estimado (kg)</label><input class="px-input" id="fretePeso" type="number" placeholder="Ex: 500" /></div>
     </div>
     <button class="px-btn" onclick="PagesExtra.cotarFrete()">🔍 SOLICITAR COTACAO</button>
+    <div id="freteResultados" style="display:none;margin-top:14px"></div>
   </div>
   <div class="px-card-title" style="margin:24px 0 12px">TIPOS DE FRETE</div>
   <div class="px-grid2">
@@ -458,13 +465,34 @@
     solicitarMecanico(){
       _solicitarServico({icon:'🔧',label:'Mecânico',taxaBase:80,taxaKm:3,comissao:.18,emergencyType:'OTHER'});
     },
-    cotarFrete() {
+    async cotarFrete() {
       const o = document.getElementById('freteOrigem')?.value?.trim();
       const d = document.getElementById('freteDestino')?.value?.trim();
       const t = document.getElementById('freteTipo')?.value;
-      if (!o || !d || !t) { if (typeof Toast !== 'undefined') Toast.show('Preencha origem, destino e tipo', 'err'); return; }
-      if (typeof Toast !== 'undefined') Toast.show('🔍 Buscando transportadoras...', 'info');
-      setTimeout(() => { if (typeof Toast !== 'undefined') Toast.show('✅ 8 transportadoras encontradas!', 'ok'); }, 1400);
+      const peso = parseFloat(document.getElementById('fretePeso')?.value) || 0;
+      if (!o || !d || !t) { App.toast('Preencha origem, destino e tipo', 'err'); return; }
+      if (!API.isAuth()) { MobyaAuth.showLogin(); return; }
+      App.toast('🔍 Buscando transportadoras...', 'info');
+      const btn = document.querySelector('[onclick*="cotarFrete"]');
+      if (btn) { btn.disabled = true; btn.textContent = '⟳ Buscando...'; }
+      try {
+        const r = await API.monetization.quoteLogistics({ type: t, originCity: o, destinationCity: d, weight: peso || undefined });
+        const providers = r?.data?.providers || r?.data || [];
+        const resultsEl = document.getElementById('freteResultados');
+        if (resultsEl) {
+          if (!providers.length) {
+            resultsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted)">Nenhuma transportadora disponível para esta rota.</div>';
+          } else {
+            resultsEl.innerHTML = providers.map(p => '<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px"><div style="font-weight:700;color:#fff">' + esc(p.name||p.providerName||'Transportadora') + '</div>' + (p.estimatedDays ? '<div style="font-size:.78rem;color:var(--muted);margin:4px 0">⏱ ' + p.estimatedDays + ' dias úteis</div>' : '') + (p.price ? '<div style="font-family:JetBrains Mono,monospace;color:#10b981;font-weight:700">R$ ' + parseFloat(p.price).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</div>' : '') + '</div>').join('');
+          }
+          resultsEl.style.display = 'block';
+        }
+        App.toast('✅ ' + (providers.length || 'Resultado') + ' transportadora(s) encontrada(s)!', 'ok');
+      } catch(e) {
+        App.toast(e?.message || 'Erro ao buscar transportadoras', 'err');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🔍 SOLICITAR COTACAO'; }
+      }
     },
     solicitarReboque(){
       _solicitarServico({icon:'🚛',label:'Reboque',taxaBase:120,taxaKm:4,comissao:.18,emergencyType:'TOW'});

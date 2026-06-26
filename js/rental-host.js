@@ -145,7 +145,7 @@ window.RentalHost = (() => {
     setLoading('rh-content');
     try{
       const r=await API.rental.hostBookings({limit:50});
-      const list=r?.data?.bookings||r?.data||[];
+      const list=r?.data||[];
       const el=document.getElementById('rh-content');if(!el)return;
       if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f3e0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhuma reserva recebida ainda.</div><button onclick="RentalHost._switchTab('configs')" style="background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f697 Cadastrar ve\u00edculo</button></div>`;return;}
       const order=['PENDING','CONFIRMED','ACTIVE','COMPLETED','DISPUTED','CANCELLED','DECLINED'];
@@ -159,7 +159,7 @@ window.RentalHost = (() => {
     setLoading('rh-content');
     try{
       const r=await API.rental.myConfigs({limit:50});
-      const list=r?.data?.configs||r?.data||[];
+      const list=r?.data||[];
       const el=document.getElementById('rh-content');if(!el)return;
       if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f697</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhum ve\u00edculo cadastrado para aluguel.</div><button onclick="App.navigate('garagem')" style="background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f3ce\ufe0f Minha Garagem</button></div>`;return;}
       el.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">${list.map(configCard).join('')}</div>`;

@@ -1,5 +1,5 @@
 window.RentalGuest = (() => {
-  const SM={PENDING:{label:'Aguardando',color:'var(--gold)',bg:'rgba(251,191,36,.12)',border:'rgba(251,191,36,.3)',icon:'⏳'},CONFIRMED:{label:'Confirmado',color:'var(--neon)',bg:'rgba(0,245,255,.10)',border:'rgba(0,245,255,.3)',icon:'✅'},ACTIVE:{label:'Em curso',color:'var(--green)',bg:'rgba(16,185,129,.10)',border:'rgba(16,185,129,.3)',icon:'🚗'},COMPLETED:{label:'Concluído',color:'var(--muted)',bg:'rgba(100,116,139,.1)',border:'rgba(100,116,139,.3)',icon:'🏁'},CANCELLED:{label:'Cancelado',color:'var(--red)',bg:'rgba(239,68,68,.10)',border:'rgba(239,68,68,.3)',icon:'✖️'},DECLINED:{label:'Recusado',color:'var(--red)',bg:'rgba(239,68,68,.10)',border:'rgba(239,68,68,.3)',icon:'🚫'}};
+  const SM={PENDING:{label:'Aguardando',color:'var(--gold)',bg:'rgba(251,191,36,.12)',border:'rgba(251,191,36,.3)',icon:'⏳'},CONFIRMED:{label:'Confirmado',color:'var(--neon)',bg:'rgba(0,245,255,.10)',border:'rgba(0,245,255,.3)',icon:'✅'},ACTIVE:{label:'Em curso',color:'var(--green)',bg:'rgba(16,185,129,.10)',border:'rgba(16,185,129,.3)',icon:'🚗'},COMPLETED:{label:'Concluído',color:'var(--muted)',bg:'rgba(100,116,139,.1)',border:'rgba(100,116,139,.3)',icon:'🏁'},CANCELLED:{label:'Cancelado',color:'var(--red)',bg:'rgba(239,68,68,.10)',border:'rgba(239,68,68,.3)',icon:'✖️'},DECLINED:{label:'Recusado',color:'var(--red)',bg:'rgba(239,68,68,.10)',border:'rgba(239,68,68,.3)',icon:'🚫'},DISPUTED:{label:'Disputa',color:'#f97316',bg:'rgba(249,115,22,.10)',border:'rgba(249,115,22,.3)',icon:'⚠️'}};
   const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const fmtD=iso=>{if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
   const fmtBRL=v=>`R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -134,7 +134,7 @@ window.RentalGuest = (() => {
     const btn = card?.querySelector('button');
     if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = '⟳ Iniciando pagamento...'; }
     try {
-      const r = await API.req('POST', `/rental/bookings/${bookingId}/pay`);
+      const r = await API.rental.payBooking(bookingId);
       const url = r.data?.sandboxInitPoint || r.data?.initPoint;
       if (url) { window.location.href = url; return; }
       App.toast('Erro ao iniciar pagamento', 'err');

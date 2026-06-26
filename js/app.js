@@ -203,3 +203,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ls')?.remove();
   });
 });
+
+// ── SIDEBAR ROLES fallback (se admin-approval.js falhar no load) ──
+if (typeof window.updateSidebarRoles === 'undefined') {
+  window.updateSidebarRoles = function(user) {
+    const isMechanic = user && ['MECHANIC','INSURER','SELLER'].includes(user.role);
+    const isAdmin    = user && ['ADMIN','SUPER_ADMIN'].includes(user.role);
+    const isLoggedIn = !!user;
+    const sbP = document.getElementById('sbPainelPrestador');
+    if (sbP) sbP.style.display = (isMechanic || isAdmin) ? '' : 'none';
+    const sbC = document.getElementById('sbCarteira');
+    if (sbC) sbC.style.display = isLoggedIn ? '' : 'none';
+    const sbA = document.getElementById('sbAdminAprov');
+    if (sbA) sbA.style.display = isAdmin ? '' : 'none';
+    const sbR = document.getElementById('sbPainelReceita');
+    if (sbR) sbR.style.display = isAdmin ? '' : 'none';
+    const sbAnf = document.getElementById('sbPainelAnfitriao');
+    if (sbAnf) sbAnf.style.display = isLoggedIn ? '' : 'none';
+    const sbRes = document.getElementById('sbMinhasReservas');
+    if (sbRes) sbRes.style.display = isLoggedIn ? '' : 'none';
+  };
+}
+
