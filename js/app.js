@@ -105,7 +105,9 @@ window.App = (() => {
   function navigate(page, param) {
     currentPage = page;
     if (param !== undefined) window.__mobyaListingId = param;
-    history.replaceState(null, '', `#${page}`);
+    if (history.state?.page !== page) {
+      history.pushState({ page }, '', `#${page}`);
+    }
     closeMenu();
     window.renderPage(page);
   }
@@ -128,6 +130,12 @@ window.App = (() => {
   // referenciado no HTML (onclick="toggleBnMenu()") mas a função nunca
   // existia — todo clique lançava ReferenceError e nada acontecia.
   window.toggleBnMenu = toggleMenu;
+
+  window.addEventListener('popstate', (e) => {
+    const page = e.state?.page || (location.hash||'#home').replace('#','') || 'home';
+    currentPage = page;
+    window.renderPage(page);
+  });
 
   function bindNavigation() {
     document.querySelectorAll('[data-page]').forEach(el => {
