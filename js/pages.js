@@ -381,6 +381,39 @@ window.Pages = (() => {
       </div>`;
   }
 
+
+  function _compressPhoto(file) {
+    return new Promise((resolve, reject) => {
+      if (!file) return reject(new Error('Nenhuma foto.'));
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 900; let w = img.width, h = img.height;
+          if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h*MAX/w); w=MAX; } else { w=Math.round(w*MAX/h); h=MAX; } }
+          const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+          cv.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(cv.toDataURL('image/jpeg', 0.72));
+        };
+        img.onerror = () => reject(new Error('Falha ao processar foto.'));
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error('Falha ao ler foto.'));
+      reader.readAsDataURL(file);
+    });
+  }
+  function _pickListingPhoto() {
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type='file'; input.accept='image/*'; input.multiple=true;
+      input.onchange = async () => {
+        const files = Array.from(input.files||[]).slice(0,5);
+        if (!files.length) return resolve([]);
+        try { resolve(await Promise.all(files.map(_compressPhoto))); } catch(e) { resolve([]); }
+      };
+      input.click();
+    });
+  }
   submitListing = async function() {
     const btn   = document.getElementById('clSubmitBtn');
     const title = document.getElementById('clTitle')?.value?.trim();
@@ -395,7 +428,9 @@ window.Pages = (() => {
     }
     if (btn) { btn.disabled=true; btn.style.opacity='.5'; }
     try {
-      await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type });
+      const _imgs = window._listingPhotos || [];
+      await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type, images: _imgs });
+      window._listingPhotos = [];
       document.getElementById('createModal')?.remove();
       App.toast('✅ Anúncio publicado com sucesso!','ok');
       Pages.searchListings && Pages.searchListings();
@@ -1745,6 +1780,13 @@ window.Pages = (() => {
               padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical"></textarea>
           </div>
 
+          <div style="margin-bottom:18px">
+            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">FOTOS (ATÉ 5)</label>
+            <div id="clPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;min-height:0"></div>
+            <button type="button" onclick="Pages._addListingPhotos()" style="width:100%;background:var(--s3);border:1px dashed var(--border2);color:var(--muted);padding:10px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'JetBrains Mono',monospace">
+              📷 Adicionar fotos
+            </button>
+          </div>
           <button id="clSubmitBtn" onclick="Pages.submitListing()" style="
             width:100%;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
             padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;
@@ -1845,6 +1887,33 @@ window.Pages = (() => {
     renderDashboard,
     showCreateListing,
     submitListing,
+    _addListingPhotos: async function() {
+      window._listingPhotos = window._listingPhotos || [];
+      if (window._listingPhotos.length >= 5) { App.toast('Máximo 5 fotos.','warn'); return; }
+      try {
+        const urls = await _pickListingPhoto();
+        const available = 5 - window._listingPhotos.length;
+        window._listingPhotos = window._listingPhotos.concat(urls.slice(0, available));
+        const prev = document.getElementById('clPhotoPreview');
+        if (prev) prev.innerHTML = window._listingPhotos.map((u,i) =>
+          '<div style="position:relative;display:inline-block">' +
+          '<img src="'+u+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>' +
+          '<button onclick="Pages._removeListingPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1;padding:0">✕</button>' +
+          '</div>'
+        ).join('');
+        App.toast(window._listingPhotos.length + ' foto(s).','ok');
+      } catch(e) { App.toast(e.message||'Erro.','err'); }
+    },
+    _removeListingPhoto: function(i) {
+      window._listingPhotos = (window._listingPhotos||[]).filter((_,idx)=>idx!==i);
+      const prev = document.getElementById('clPhotoPreview');
+      if (prev) prev.innerHTML = (window._listingPhotos||[]).map((u,j) =>
+        '<div style="position:relative;display:inline-block">' +
+        '<img src="'+u+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>' +
+        '<button onclick="Pages._removeListingPhoto('+j+')" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1;padding:0">✕</button>' +
+        '</div>'
+      ).join('');
+    },
     searchListings,
     showCalcTab,
     openSOS,
