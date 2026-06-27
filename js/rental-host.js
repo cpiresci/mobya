@@ -2,10 +2,10 @@ window.RentalHost = (() => {
   const BSM = {
     PENDING:   { label:'Aguardando', color:'var(--gold)',  bg:'rgba(251,191,36,.12)', border:'rgba(251,191,36,.3)',   icon:'\u23f3' },
     CONFIRMED: { label:'Confirmado', color:'var(--neon)',  bg:'rgba(0,245,255,.10)',  border:'rgba(0,245,255,.3)',    icon:'\u2705' },
-    ACTIVE:    { label:'Em curso',   color:'var(--green)', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.3)',   icon:'\U0001f697' },
-    COMPLETED: { label:'Conclu\u00eddo',  color:'var(--muted)', bg:'rgba(100,116,139,.1)', border:'rgba(100,116,139,.3)', icon:'\U0001f3c1' },
+    ACTIVE:    { label:'Em curso',   color:'var(--green)', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.3)',   icon:'\u{1F697}' },
+    COMPLETED: { label:'Conclu\u00eddo',  color:'var(--muted)', bg:'rgba(100,116,139,.1)', border:'rgba(100,116,139,.3)', icon:'\u{1F3C1}' },
     CANCELLED: { label:'Cancelado',  color:'var(--red)',   bg:'rgba(239,68,68,.10)',  border:'rgba(239,68,68,.3)',   icon:'\u2716\ufe0f' },
-    DECLINED:  { label:'Recusado',   color:'var(--red)',   bg:'rgba(239,68,68,.10)',  border:'rgba(239,68,68,.3)',   icon:'\U0001f6ab' },
+    DECLINED:  { label:'Recusado',   color:'var(--red)',   bg:'rgba(239,68,68,.10)',  border:'rgba(239,68,68,.3)',   icon:'\u{1F6AB}' },
     DISPUTED:  { label:'Disputa',    color:'#f97316',      bg:'rgba(249,115,22,.10)', border:'rgba(249,115,22,.3)',  icon:'\u26a0\ufe0f' },
   };
 
@@ -67,27 +67,27 @@ window.RentalHost = (() => {
     const canCancel=b.status==='ACTIVE';
     return `<div id="hbcard-${esc(b.id)}" style="background:var(--s2);border:1px solid ${sm.border||'var(--border)'};border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,245,255,.25)'" onmouseout="this.style.borderColor='${sm.border||'var(--border)'}'">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">\U0001f3e0</span><div><div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--neon)">RESERVA #${esc(b.id.slice(-6).toUpperCase())}</div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${fmtD(b.createdAt)}</div></div></div>
-        <div style="display:flex;align-items:center;gap:6px">${isPaid?`<span style="font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:2px 8px;border-radius:4px;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)">\U0001f4b0 PAGO</span>`:''} ${badge(b.status)}</div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">\u{1F3E0}</span><div><div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--neon)">RESERVA #${esc(b.id.slice(-6).toUpperCase())}</div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${fmtD(b.createdAt)}</div></div></div>
+        <div style="display:flex;align-items:center;gap:6px">${isPaid?`<span style="font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:2px 8px;border-radius:4px;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)">\u{1F4B0} PAGO</span>`:''} ${badge(b.status)}</div>
       </div>
-      ${listing.title?`<div style="background:var(--s3);border-radius:7px;padding:8px 11px;font-size:.78rem;color:var(--text)">\U0001f697 <strong>${esc(listing.title)}</strong>${listing.city?` \u2014 ${esc(listing.city)}`:''}</div>`:''}
+      ${listing.title?`<div style="background:var(--s3);border-radius:7px;padding:8px 11px;font-size:.78rem;color:var(--text)">\u{1F697} <strong>${esc(listing.title)}</strong>${listing.city?` \u2014 ${esc(listing.city)}`:''}</div>`:''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">RETIRADA</div><div style="font-family:'JetBrains Mono',monospace">${fmtD(b.startDate)}</div></div>
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">DEVOLU\u00c7\u00c3O</div><div style="font-family:'JetBrains Mono',monospace">${fmtD(b.endDate)}</div></div>
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">DI\u00c1RIAS</div><div style="font-family:'JetBrains Mono',monospace;color:var(--neon)">${b.days||'?'}</div></div>
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">SEU REPASSE</div><div style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${fmtBRL(b.hostPayoutAmount)}</div></div>
       </div>
-      ${renter.name?`<div style="background:var(--s3);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:9px"><span style="font-size:1rem">\U0001f464</span><div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1px">LOCAT\u00c1RIO</div><div style="font-size:.82rem;color:var(--text);font-weight:600">${esc(renter.name)}</div>${renter.phone?`<div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(renter.phone)}</div>`:''}</div></div>`:''}
+      ${renter.name?`<div style="background:var(--s3);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:9px"><span style="font-size:1rem">\u{1F464}</span><div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1px">LOCAT\u00c1RIO</div><div style="font-size:.82rem;color:var(--text);font-weight:600">${esc(renter.name)}</div>${renter.phone?`<div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(renter.phone)}</div>`:''}</div></div>`:''}
       ${b.status==='PENDING'?`<div style="font-size:.72rem;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:8px 11px;color:var(--gold);font-family:'JetBrains Mono',monospace">\u23f3 Aguardando sua decis\u00e3o. Confirme ou recuse esta reserva.</div>`:''}
       ${b.status==='CONFIRMED'&&!isPaid?`<div style="font-size:.72rem;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:8px 11px;color:var(--neon);font-family:'JetBrains Mono',monospace">\u231b Reserva confirmada \u2014 aguardando pagamento do locat\u00e1rio.</div>`:''}
       ${b.status==='CONFIRMED'&&isPaid?`<div style="font-size:.72rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:6px;padding:8px 11px;color:var(--green);font-family:'JetBrains Mono',monospace">\u2705 Pago! Realize o check-in quando o locat\u00e1rio retirar o ve\u00edculo.</div>`:''}
       ${checkoutWaitingRenter?`<div style="font-size:.72rem;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:8px 11px;color:var(--neon);font-family:'JetBrains Mono',monospace">\u23f3 Locação em curso. Aguardando o locatário registrar a devolução.</div>`:''}
-      ${canCheckout?`<div style="background:var(--s3);border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:6px"><div style="font-size:.68rem;color:var(--gold);font-family:'JetBrains Mono',monospace">\U0001f3c1 EVID\u00caNCIA DE DEVOLU\u00c7\u00c3O DO LOCAT\u00c1RIO</div>${b.checkoutPhotoUrl?`<img src="${esc(b.checkoutPhotoUrl)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"/>`:'<div style="font-size:.7rem;color:var(--muted)">Sem foto enviada.</div>'}${(b.checkoutLat&&b.checkoutLng)?`<a href="https://maps.google.com/?q=${b.checkoutLat},${b.checkoutLng}" target="_blank" style="font-size:.68rem;color:var(--neon);font-family:'JetBrains Mono',monospace">\U0001f4cd Ver localiza\u00e7\u00e3o no mapa</a>`:''}</div>`:''}
+      ${canCheckout?`<div style="background:var(--s3);border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:6px"><div style="font-size:.68rem;color:var(--gold);font-family:'JetBrains Mono',monospace">\u{1F3C1} EVID\u00caNCIA DE DEVOLU\u00c7\u00c3O DO LOCAT\u00c1RIO</div>${b.checkoutPhotoUrl?`<img src="${esc(b.checkoutPhotoUrl)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"/>`:'<div style="font-size:.7rem;color:var(--muted)">Sem foto enviada.</div>'}${(b.checkoutLat&&b.checkoutLng)?`<a href="https://maps.google.com/?q=${b.checkoutLat},${b.checkoutLng}" target="_blank" style="font-size:.68rem;color:var(--neon);font-family:'JetBrains Mono',monospace">\u{1F4CD} Ver localiza\u00e7\u00e3o no mapa</a>`:''}</div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${canConfirm?`<button onclick="RentalHost.confirmBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u2705 Confirmar</button>`:''}
         ${canDecline?`<button onclick="RentalHost.declineBooking('${esc(b.id)}')" style="flex:1;min-width:100px;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u2716 Recusar</button>`:''}
-        ${canCheckin?`<button onclick="RentalHost.checkinBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f697 Check-in</button>`:''}
-        ${canCheckout?`<button onclick="RentalHost.checkoutBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f3c1 Check-out</button>`:''}
+        ${canCheckin?`<button onclick="RentalHost.checkinBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u{1F697} Check-in</button>`:''}
+        ${canCheckout?`<button onclick="RentalHost.checkoutBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u{1F3C1} Check-out</button>`:''}
         ${canCancel?`<button onclick="RentalHost.cancelBooking('${esc(b.id)}')" style="flex:1;min-width:100px;background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px;font-weight:600;font-size:.74rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u26a0\ufe0f Cancelar</button>`:''}
       </div>
     </div>`;
@@ -98,7 +98,7 @@ window.RentalHost = (() => {
     const fr=v=>v!=null?fmtBRL(v):'\u2014';
     return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">\U0001f697</span><div><div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;color:var(--neon)">${esc(listing.title||'Ve\u00edculo')}</div>${listing.city?`<div style="font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(listing.city)}${listing.state?', '+esc(listing.state):''}</div>`:''}</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">\u{1F697}</span><div><div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;color:var(--neon)">${esc(listing.title||'Ve\u00edculo')}</div>${listing.city?`<div style="font-size:.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(listing.city)}${listing.state?', '+esc(listing.state):''}</div>`:''}</div></div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:.63rem;padding:2px 9px;border-radius:4px;background:${cfg.active?'rgba(16,185,129,.12)':'rgba(239,68,68,.1)'};color:${cfg.active?'var(--green)':'var(--red)'};border:1px solid ${cfg.active?'rgba(16,185,129,.3)':'rgba(239,68,68,.3)'}">${cfg.active?'\u25cf ATIVO':'\u25cf INATIVO'}</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
@@ -115,8 +115,8 @@ window.RentalHost = (() => {
 
   function tabBar(){
     return `<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px">
-      <button onclick="RentalHost._switchTab('bookings')" style="flex:1;padding:10px;background:${_tab==='bookings'?'rgba(0,245,255,.12)':'transparent'};color:${_tab==='bookings'?'var(--neon)':'var(--muted)'};border:none;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;border-right:1px solid var(--border)">\U0001f4cb Reservas</button>
-      <button onclick="RentalHost._switchTab('configs')" style="flex:1;padding:10px;background:${_tab==='configs'?'rgba(16,185,129,.12)':'transparent'};color:${_tab==='configs'?'var(--green)':'var(--muted)'};border:none;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer">\U0001f697 Meus Ve\u00edculos</button>
+      <button onclick="RentalHost._switchTab('bookings')" style="flex:1;padding:10px;background:${_tab==='bookings'?'rgba(0,245,255,.12)':'transparent'};color:${_tab==='bookings'?'var(--neon)':'var(--muted)'};border:none;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;border-right:1px solid var(--border)">\u{1F4CB} Reservas</button>
+      <button onclick="RentalHost._switchTab('configs')" style="flex:1;padding:10px;background:${_tab==='configs'?'rgba(16,185,129,.12)':'transparent'};color:${_tab==='configs'?'var(--green)':'var(--muted)'};border:none;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer">\u{1F697} Meus Ve\u00edculos</button>
     </div>`;
   }
 
@@ -147,7 +147,7 @@ window.RentalHost = (() => {
       const r=await API.rental.hostBookings({limit:50});
       const list=r?.data||[];
       const el=document.getElementById('rh-content');if(!el)return;
-      if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f3e0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhuma reserva recebida ainda.</div><button onclick="RentalHost._switchTab('configs')" style="background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f697 Cadastrar ve\u00edculo</button></div>`;return;}
+      if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\u{1F3E0}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhuma reserva recebida ainda.</div><button onclick="RentalHost._switchTab('configs')" style="background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u{1F697} Cadastrar ve\u00edculo</button></div>`;return;}
       const order=['PENDING','CONFIRMED','ACTIVE','COMPLETED','DISPUTED','CANCELLED','DECLINED'];
       const _ix=s=>{const i=order.indexOf(s);return i===-1?99:i;};
       list.sort((a,b)=>_ix(a.status)-_ix(b.status));
@@ -161,7 +161,7 @@ window.RentalHost = (() => {
       const r=await API.rental.myConfigs({limit:50});
       const list=r?.data||[];
       const el=document.getElementById('rh-content');if(!el)return;
-      if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\U0001f697</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhum ve\u00edculo cadastrado para aluguel.</div><button onclick="RentalHost._showAddConfigModal()" style="background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\U0001f3ce\ufe0f Minha Garagem</button></div>`;return;}
+      if(!list.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:12px">\u{1F697}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-bottom:16px">Nenhum ve\u00edculo cadastrado para aluguel.</div><button onclick="RentalHost._showAddConfigModal()" style="background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u{1F3CE}\ufe0f Minha Garagem</button></div>`;return;}
       el.innerHTML=`<button onclick="RentalHost._showAddConfigModal()" style="width:100%;margin-bottom:14px;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(0,245,255,.1));border:1px dashed rgba(16,185,129,.4);color:var(--green);padding:11px;border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🚗 + Cadastrar novo veículo para aluguel</button><div style="display:flex;flex-direction:column;gap:14px">${list.map(configCard).join('')}</div>`;
     }catch(e){setError('rh-content',e?.message||'Erro ao carregar ve\u00edculos');}
   }
@@ -173,8 +173,8 @@ window.RentalHost = (() => {
     try{
       if(action==='confirm')  {await API.rental.confirmBooking(id);App.toast('\u2705 Reserva confirmada!','ok');}
       else if(action==='decline') {await API.rental.declineBooking(id,opts);App.toast('Reserva recusada.','ok');}
-      else if(action==='checkin') {await API.rental.checkinBooking(id,opts);App.toast('\U0001f697 Check-in realizado!','ok');}
-      else if(action==='checkout'){await API.rental.checkoutBooking(id);App.toast('\U0001f3c1 Check-out conclu\u00eddo!','ok');}
+      else if(action==='checkin') {await API.rental.checkinBooking(id,opts);App.toast('\u{1F697} Check-in realizado!','ok');}
+      else if(action==='checkout'){await API.rental.checkoutBooking(id);App.toast('\u{1F3C1} Check-out conclu\u00eddo!','ok');}
       else if(action==='cancel')  {await API.rental.cancelPaidBooking(id,opts);App.toast('Cancelamento registrado.','ok');}
       await _loadBookings();
     }catch(e){
@@ -190,13 +190,13 @@ window.RentalHost = (() => {
     const card=document.getElementById(`hbcard-${id}`);
     const btn=card?.querySelector('button[onclick*="checkinBooking"]');
     try{
-      if(btn){btn.disabled=true;btn.style.opacity='.6';btn.textContent='\U0001f4f7 Aguardando foto...';}
+      if(btn){btn.disabled=true;btn.style.opacity='.6';btn.textContent='\u{1F4F7} Aguardando foto...';}
       const photoUrl=await _capturePhoto();
       const {lat,lng}=await _getCoords();
       await _bookingAction(id,'checkin',{lat,lng,photoUrl});
     }catch(e){
       App.toast(e?.message||'Erro ao capturar foto.','err');
-      if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='\U0001f697 Check-in';}
+      if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='\u{1F697} Check-in';}
     }
   }
   async function checkoutBooking(id){if(!window.confirm('Realizar check-out? Confirme que o ve\u00edculo foi devolvido conforme a foto e localiza\u00e7\u00e3o enviadas pelo locat\u00e1rio.'))return;await _bookingAction(id,'checkout');}
