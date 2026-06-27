@@ -450,13 +450,25 @@ window.Monetization = (() => {
   };
 
   // ── MODAL CADASTRO DE PARCEIRO ────────────────────────────
+  function _ensureQuoteModal() {
+    let modal = document.getElementById('quoteModal');
+    if (modal) return modal;
+    // Modal não existe (página atual não é renderPartnersPage) — injeta no body
+    modal = document.createElement('div');
+    modal.id = 'quoteModal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center';
+    modal.innerHTML = '<div id="quoteContent" style="background:var(--s2);border:1px solid var(--border2);border-radius:16px;padding:32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;position:relative"></div>';
+    document.body.appendChild(modal);
+    return modal;
+  }
+
   function showRegisterPartner() {
     if (!API.isAuth()) {
       toast('Faça login para cadastrar seu negócio.', 'warn');
       window.MobyaAuth?.showLogin();
       return;
     }
-    const modal   = document.getElementById('quoteModal');
+    const modal   = _ensureQuoteModal();
     const content = document.getElementById('quoteContent');
     if (!modal || !content) return;
 
