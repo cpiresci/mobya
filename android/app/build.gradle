@@ -14,21 +14,16 @@ android {
         versionName "1.0.0"
     }
 
-    signingConfigs {
-        release {
-            def ksPath = System.getenv("KEYSTORE_PATH")
-            storeFile ksPath ? file(ksPath) : file("${projectDir}/keystore.jks")
-            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias System.getenv("KEY_ALIAS") ?: ""
-            keyPassword System.getenv("KEY_PASSWORD") ?: ""
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Assinatura passada via -P flags no CI (android.injected.signing.*)
+            // Para build local, remova o comentário abaixo e preencha:
+            // signingConfig signingConfigs.release
+        }
+        debug {
+            applicationIdSuffix ".debug"
         }
     }
 
