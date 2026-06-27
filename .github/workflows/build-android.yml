@@ -36,13 +36,15 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Decode Keystore
+        working-directory: android/app
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+          ls -la keystore.jks
 
       - name: Build Release AAB
         working-directory: android
         env:
-          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PATH: app/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -51,7 +53,7 @@ jobs:
       - name: Build Release APK
         working-directory: android
         env:
-          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PATH: app/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
