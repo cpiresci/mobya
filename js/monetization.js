@@ -1115,41 +1115,6 @@ window.Monetization = (() => {
     `;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // REGISTRO PÚBLICO DE PAGES
-  // Integra com o sistema de navegação do index.html existente
-  // ═══════════════════════════════════════════════════════════
-  const PAGES = {
-    'monetizacao':      renderPartnersPage,
-    'seguros-sim':      renderInsurancePage,
-    'painel-receita':   renderRevenueDashboard,
-  };
-
-  function init() {
-    // Intercepta o roteador de pages existente
-    const origRender = window.renderPage;
-    window.renderPage = function(page) {
-      if (PAGES[page]) {
-        // Atualiza sidebar ativo
-        document.querySelectorAll('.sb-item').forEach(el => {
-          el.classList.toggle('active', el.dataset.page === page);
-        });
-        document.querySelectorAll('.nb').forEach(el => {
-          el.classList.toggle('active', el.dataset.page === page);
-        });
-        PAGES[page]();
-      } else if (origRender) {
-        origRender(page);
-      }
-    };
-
-    // Expõe utilitários console.log('[MOBYA] 💰 Módulo de Monetização Quântica v1.0 carregado');
-  }
-
-  // Auto-init REMOVIDO — init() é chamado pelo App.init() em app.js
-
-  return {
-    filterByVertical,
   function renderCadastroParceiro() {
     const main = document.getElementById('main');
     if (!main) return;
@@ -1195,6 +1160,41 @@ window.Monetization = (() => {
       </div>`;
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // REGISTRO PÚBLICO DE PAGES
+  // Integra com o sistema de navegação do index.html existente
+  // ═══════════════════════════════════════════════════════════
+  const PAGES = {
+    'monetizacao':      renderPartnersPage,
+    'seguros-sim':      renderInsurancePage,
+    'painel-receita':   renderRevenueDashboard,
+  };
+
+  function init() {
+    // Intercepta o roteador de pages existente
+    const origRender = window.renderPage;
+    window.renderPage = function(page) {
+      if (PAGES[page]) {
+        // Atualiza sidebar ativo
+        document.querySelectorAll('.sb-item').forEach(el => {
+          el.classList.toggle('active', el.dataset.page === page);
+        });
+        document.querySelectorAll('.nb').forEach(el => {
+          el.classList.toggle('active', el.dataset.page === page);
+        });
+        PAGES[page]();
+      } else if (origRender) {
+        origRender(page);
+      }
+    };
+
+    // Expõe utilitários console.log('[MOBYA] 💰 Módulo de Monetização Quântica v1.0 carregado');
+  }
+
+  // Auto-init REMOVIDO — init() é chamado pelo App.init() em app.js
+
+  return {
+    filterByVertical,
     openQuoteModal,
     closeQuoteModal,
     submitQuote,
