@@ -382,6 +382,24 @@ window.Pages = (() => {
   }
 
 
+  const CLOUDINARY_CLOUD = 'dnvmunvag';
+  const CLOUDINARY_PRESET = 'mobya_unsigned';
+
+  function _uploadToCloudinary(blob) {
+    return new Promise((resolve, reject) => {
+      const fd = new FormData();
+      fd.append('file', blob);
+      fd.append('upload_preset', CLOUDINARY_PRESET);
+      fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(data => {
+          if (data.secure_url) resolve(data.secure_url);
+          else reject(new Error(data.error?.message || 'Falha no upload Cloudinary.'));
+        })
+        .catch(() => reject(new Error('Falha de rede no upload da foto.')));
+    });
+  }
+
   function _compressPhoto(file) {
     return new Promise((resolve, reject) => {
       if (!file) return reject(new Error('Nenhuma foto.'));
@@ -393,7 +411,10 @@ window.Pages = (() => {
           if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h*MAX/w); w=MAX; } else { w=Math.round(w*MAX/h); h=MAX; } }
           const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
           cv.getContext('2d').drawImage(img,0,0,w,h);
-          resolve(cv.toDataURL('image/jpeg', 0.72));
+          cv.toBlob(blob => {
+            if (!blob) return reject(new Error('Falha ao gerar imagem.'));
+            _uploadToCloudinary(blob).then(resolve).catch(reject);
+          }, 'image/jpeg', 0.72);
         };
         img.onerror = () => reject(new Error('Falha ao processar foto.'));
         img.src = reader.result;
