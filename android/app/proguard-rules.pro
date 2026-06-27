@@ -1,0 +1,2 @@
+-keep class br.com.mobya.app.** { *; }
+-keepattributes *Annotation*
