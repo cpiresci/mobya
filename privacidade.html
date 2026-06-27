@@ -1,386 +1,122 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Política de Privacidade — Wuzo</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --navy: #0a1628;
-      --navy-mid: #112240;
-      --navy-light: #1a3560;
-      --gold: #c9a84c;
-      --gold-light: #e2c97e;
-      --cream: #f5f0e8;
-      --text: #e8e4dc;
-      --text-muted: #9aabbf;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background-color: var(--navy);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 300;
-      line-height: 1.8;
-      min-height: 100vh;
-    }
-
-    /* Background texture */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(201,168,76,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(17,34,64,0.8) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Header */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10, 22, 40, 0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(201, 168, 76, 0.2);
-      padding: 18px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.04em;
-      text-decoration: none;
-    }
-
-    .logo span {
-      color: var(--text);
-      font-weight: 400;
-    }
-
-    .back-link {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-decoration: none;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: var(--gold); }
-
-    /* Hero */
-    .hero {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 80px 24px 60px;
-    }
-
-    .hero-tag {
-      display: inline-block;
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gold);
-      border: 1px solid rgba(201,168,76,0.4);
-      padding: 6px 18px;
-      border-radius: 2px;
-      margin-bottom: 28px;
-    }
-
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 600;
-      color: var(--cream);
-      line-height: 1.2;
-      margin-bottom: 16px;
-    }
-
-    .hero-date {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-    }
-
-    .gold-divider {
-      width: 60px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      margin: 32px auto;
-    }
-
-    /* Main content */
-    main {
-      position: relative;
-      z-index: 1;
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 0 24px 80px;
-    }
-
-    /* Section */
-    .section {
-      margin-bottom: 48px;
-      background: rgba(17, 34, 64, 0.5);
-      border: 1px solid rgba(201, 168, 76, 0.12);
-      border-radius: 4px;
-      padding: 36px 40px;
-      position: relative;
-      overflow: hidden;
-      animation: fadeUp 0.5s ease both;
-    }
-
-    .section::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px;
-      height: 100%;
-      background: linear-gradient(180deg, var(--gold), transparent);
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .section:nth-child(1) { animation-delay: 0.05s; }
-    .section:nth-child(2) { animation-delay: 0.10s; }
-    .section:nth-child(3) { animation-delay: 0.15s; }
-    .section:nth-child(4) { animation-delay: 0.20s; }
-    .section:nth-child(5) { animation-delay: 0.25s; }
-    .section:nth-child(6) { animation-delay: 0.30s; }
-    .section:nth-child(7) { animation-delay: 0.35s; }
-    .section:nth-child(8) { animation-delay: 0.40s; }
-    .section:nth-child(9) { animation-delay: 0.45s; }
-
-    .section-number {
-      font-size: 0.65rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 10px;
-      font-weight: 500;
-    }
-
-    .section h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: var(--cream);
-      margin-bottom: 20px;
-    }
-
-    .section p {
-      font-size: 0.92rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-
-    .section ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .section ul li {
-      font-size: 0.92rem;
-      color: var(--text-muted);
-      padding: 6px 0 6px 20px;
-      position: relative;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
-
-    .section ul li:last-child { border-bottom: none; }
-
-    .section ul li::before {
-      content: '—';
-      position: absolute;
-      left: 0;
-      color: var(--gold);
-      font-size: 0.75rem;
-    }
-
-    .highlight {
-      color: var(--gold-light);
-      font-weight: 500;
-    }
-
-    /* Contact box */
-    .contact-box {
-      background: rgba(201, 168, 76, 0.06);
-      border: 1px solid rgba(201, 168, 76, 0.25);
-      border-radius: 4px;
-      padding: 20px 24px;
-      margin-top: 16px;
-    }
-
-    .contact-box p {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      margin: 0;
-      line-height: 1.9;
-    }
-
-    .contact-box a {
-      color: var(--gold);
-      text-decoration: none;
-    }
-
-    .contact-box a:hover { text-decoration: underline; }
-
-    /* Footer */
-    footer {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 32px 24px;
-      border-top: 1px solid rgba(201, 168, 76, 0.1);
-    }
-
-    footer p {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-    }
-
-    footer a {
-      color: var(--gold);
-      text-decoration: none;
-    }
-
-    @media (max-width: 600px) {
-      header { padding: 16px 20px; }
-      .section { padding: 28px 22px; }
-      .hero { padding: 60px 20px 40px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidade — MOBYA</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #060410; color: #e2e8f0; line-height: 1.7; }
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+  header { text-align: center; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid #1e1b4b; }
+  .logo { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { color: #94a3b8; margin-top: 8px; }
+  .updated { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
+  h2 { color: #7c3aed; font-size: 1.1rem; margin: 32px 0 12px; padding-left: 12px; border-left: 3px solid #7c3aed; }
+  p { color: #cbd5e1; margin-bottom: 12px; }
+  ul { color: #cbd5e1; padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  a { color: #06b6d4; text-decoration: none; }
+  footer { text-align: center; margin-top: 60px; padding-top: 24px; border-top: 1px solid #1e1b4b; color: #64748b; font-size: 0.85rem; }
+</style>
 </head>
 <body>
-
+<div class="container">
   <header>
-    <a href="https://wuzo.com.br" class="logo">Wuzo<span>.</span></a>
-    <a href="https://wuzo.com.br" class="back-link">← Voltar ao site</a>
+    <div class="logo">MOBYA</div>
+    <div class="subtitle">Marketplace de Serviços Automotivos</div>
+    <div class="updated">Política de Privacidade — Atualizada em 27 de junho de 2026</div>
   </header>
 
-  <div class="hero">
-    <div class="hero-tag">Documento Legal</div>
-    <h1>Política de Privacidade</h1>
-    <p class="hero-date">Última atualização: 27 de abril de 2026</p>
-    <div class="gold-divider"></div>
-  </div>
+  <p>A MOBYA ("nós", "nosso") está comprometida com a proteção da sua privacidade. Esta Política de Privacidade descreve como coletamos, usamos e protegemos suas informações pessoais ao utilizar nosso aplicativo e site (mobya.com.br).</p>
 
-  <main>
+  <h2>1. Informações que Coletamos</h2>
+  <p>Coletamos as seguintes informações quando você usa o MOBYA:</p>
+  <ul>
+    <li><strong>Dados de cadastro:</strong> nome, e-mail e senha (armazenada com criptografia)</li>
+    <li><strong>Localização:</strong> GPS em tempo real para encontrar prestadores próximos e rastrear serviços</li>
+    <li><strong>Fotos e vídeos:</strong> imagens enviadas para documentar veículos, serviços e check-in/checkout de aluguéis</li>
+    <li><strong>Dados de pagamento:</strong> processados pelo Mercado Pago — não armazenamos dados de cartão</li>
+    <li><strong>Dados de uso:</strong> logs de acesso, tipo de dispositivo e interações com o app</li>
+  </ul>
 
-    <div class="section">
-      <div class="section-number">01</div>
-      <h2>Informações que Coletamos</h2>
-      <ul>
-        <li>E-mail e senha (cadastro e autenticação)</li>
-        <li>Ativos financeiros consultados — ações, criptomoedas, câmbio</li>
-        <li>Dados de uso — relatórios gerados e créditos utilizados</li>
-        <li>Endereço IP para personalização por região e idioma</li>
-      </ul>
-    </div>
+  <h2>2. Como Usamos suas Informações</h2>
+  <ul>
+    <li>Conectar clientes a prestadores de serviços automotivos</li>
+    <li>Processar pagamentos e emitir recibos</li>
+    <li>Exibir localização em tempo real durante prestação de serviços</li>
+    <li>Enviar notificações sobre status de pedidos</li>
+    <li>Melhorar a qualidade do serviço e prevenir fraudes</li>
+    <li>Cumprir obrigações legais e regulatórias</li>
+  </ul>
 
-    <div class="section">
-      <div class="section-number">02</div>
-      <h2>Como Usamos Suas Informações</h2>
-      <ul>
-        <li>Autenticar sua conta com segurança</li>
-        <li>Gerar análises financeiras personalizadas por IA</li>
-        <li>Processar pagamentos de créditos via Stripe</li>
-        <li>Adaptar idioma e contexto tributário por país</li>
-      </ul>
-    </div>
+  <h2>3. Compartilhamento de Dados</h2>
+  <p>Compartilhamos seus dados apenas nas seguintes situações:</p>
+  <ul>
+    <li><strong>Prestadores de serviço:</strong> seu nome e localização são compartilhados com o prestador que aceitar seu pedido</li>
+    <li><strong>Mercado Pago:</strong> para processamento seguro de pagamentos</li>
+    <li><strong>Autoridades:</strong> quando exigido por lei ou ordem judicial</li>
+  </ul>
+  <p>Não vendemos seus dados pessoais a terceiros.</p>
 
-    <div class="section">
-      <div class="section-number">03</div>
-      <h2>Compartilhamento de Dados</h2>
-      <p>Não vendemos seus dados. Compartilhamos apenas com:</p>
-      <ul>
-        <li><span class="highlight">Stripe</span> — processamento de pagamentos</li>
-        <li><span class="highlight">Provedores de IA</span> — geração de análises (dados não identificáveis)</li>
-        <li><span class="highlight">Autoridades legais</span> — somente se exigido por lei</li>
-      </ul>
-    </div>
+  <h2>4. Localização</h2>
+  <p>O app solicita acesso à sua localização (GPS) para:</p>
+  <ul>
+    <li>Encontrar prestadores de serviço próximos a você</li>
+    <li>Calcular distância e valor do serviço</li>
+    <li>Rastrear o prestador em tempo real durante o atendimento</li>
+    <li>Registrar localização no check-in/checkout de aluguéis de veículos</li>
+  </ul>
+  <p>Você pode desativar o GPS nas configurações do dispositivo, mas isso limitará funcionalidades do app.</p>
 
-    <div class="section">
-      <div class="section-number">04</div>
-      <h2>Segurança</h2>
-      <p>Seus dados são protegidos por múltiplas camadas de segurança:</p>
-      <ul>
-        <li>Senhas criptografadas com bcrypt</li>
-        <li>Comunicação via HTTPS / TLS</li>
-        <li>Autenticação por token JWT</li>
-        <li>Servidores em ambiente seguro e monitorado</li>
-      </ul>
-    </div>
+  <h2>5. Câmera e Fotos</h2>
+  <p>O acesso à câmera é utilizado para:</p>
+  <ul>
+    <li>Fotografar veículos no início e fim de aluguéis (check-in/checkout)</li>
+    <li>Documentar serviços realizados</li>
+    <li>Foto de perfil do usuário</li>
+  </ul>
 
-    <div class="section">
-      <div class="section-number">05</div>
-      <h2>Seus Direitos</h2>
-      <p>Você pode a qualquer momento:</p>
-      <ul>
-        <li>Solicitar acesso aos seus dados pessoais</li>
-        <li>Solicitar correção ou exclusão da sua conta</li>
-        <li>Revogar o consentimento de uso dos dados</li>
-      </ul>
-      <div class="contact-box">
-        <p>Para exercer esses direitos, entre em contato:<br>
-        <a href="mailto:contato@wuzo.com.br">contato@wuzo.com.br</a></p>
-      </div>
-    </div>
+  <h2>6. Segurança dos Dados</h2>
+  <p>Adotamos medidas técnicas e organizacionais para proteger seus dados:</p>
+  <ul>
+    <li>Comunicação criptografada via HTTPS/TLS</li>
+    <li>Senhas armazenadas com hash bcrypt</li>
+    <li>Acesso restrito a dados pessoais</li>
+    <li>Banco de dados em ambiente seguro</li>
+  </ul>
 
-    <div class="section">
-      <div class="section-number">06</div>
-      <h2>Retenção de Dados</h2>
-      <ul>
-        <li>Dados mantidos enquanto sua conta estiver ativa</li>
-        <li>Relatórios em cache armazenados por até 72 horas</li>
-        <li>Após exclusão da conta, dados removidos em até 30 dias</li>
-      </ul>
-    </div>
+  <h2>7. Seus Direitos (LGPD)</h2>
+  <p>Conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018), você tem direito a:</p>
+  <ul>
+    <li>Acessar seus dados pessoais</li>
+    <li>Corrigir dados incompletos ou incorretos</li>
+    <li>Solicitar exclusão dos seus dados</li>
+    <li>Revogar consentimento a qualquer momento</li>
+    <li>Portabilidade dos dados</li>
+  </ul>
+  <p>Para exercer seus direitos, entre em contato: <a href="mailto:contato@mobya.com.br">contato@mobya.com.br</a></p>
 
-    <div class="section">
-      <div class="section-number">07</div>
-      <h2>Menores de Idade</h2>
-      <p>O Wuzo é destinado exclusivamente a maiores de 18 anos. Não coletamos dados de menores de forma intencional. Caso identificarmos tal situação, os dados serão imediatamente removidos.</p>
-    </div>
+  <h2>8. Retenção de Dados</h2>
+  <p>Mantemos seus dados pelo tempo necessário para prestação dos serviços e cumprimento de obrigações legais. Após exclusão da conta, os dados são removidos em até 30 dias, exceto quando exigida retenção por lei.</p>
 
-    <div class="section">
-      <div class="section-number">08</div>
-      <h2>Alterações nesta Política</h2>
-      <p>Notificaremos sobre mudanças relevantes por e-mail ou por aviso dentro do aplicativo. O uso continuado do Wuzo após as alterações implica concordância com a nova política.</p>
-    </div>
+  <h2>9. Menores de Idade</h2>
+  <p>O MOBYA não é destinado a menores de 18 anos. Não coletamos intencionalmente dados de menores. Se identificarmos cadastro de menor, excluiremos os dados imediatamente.</p>
 
-    <div class="section">
-      <div class="section-number">09</div>
-      <h2>Contato</h2>
-      <div class="contact-box">
-        <p>
-          <span class="highlight">Wuzo — Análise Financeira com IA</span><br>
-          E-mail: <a href="mailto:contato@wuzo.com.br">contato@wuzo.com.br</a><br>
-          Site: <a href="https://wuzo.com.br">wuzo.com.br</a>
-        </p>
-      </div>
-    </div>
+  <h2>10. Alterações nesta Política</h2>
+  <p>Podemos atualizar esta política periodicamente. Notificaremos sobre mudanças significativas pelo app ou e-mail. O uso continuado do MOBYA após as alterações implica aceitação da nova política.</p>
 
-  </main>
+  <h2>11. Contato</h2>
+  <p>Dúvidas sobre esta política ou sobre seus dados:</p>
+  <ul>
+    <li>E-mail: <a href="mailto:contato@mobya.com.br">contato@mobya.com.br</a></li>
+    <li>Site: <a href="https://mobya.com.br">mobya.com.br</a></li>
+  </ul>
 
   <footer>
-    <p>&copy; 2026 Wuzo. Todos os direitos reservados. &nbsp;|&nbsp; <a href="https://wuzo.com.br">wuzo.com.br</a></p>
+    © 2026 MOBYA — Todos os direitos reservados<br>
+    CNPJ: a definir · São Paulo, Brasil
   </footer>
-
+</div>
 </body>
 </html>
