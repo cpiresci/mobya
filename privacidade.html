@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidade — Wuzo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0a1628;
+      --navy-mid: #112240;
+      --navy-light: #1a3560;
+      --gold: #c9a84c;
+      --gold-light: #e2c97e;
+      --cream: #f5f0e8;
+      --text: #e8e4dc;
+      --text-muted: #9aabbf;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--navy);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+      min-height: 100vh;
+    }
+
+    /* Background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(201,168,76,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(17,34,64,0.8) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 22, 40, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+      text-decoration: none;
+    }
+
+    .logo span {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .back-link {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--gold); }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 80px 24px 60px;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid rgba(201,168,76,0.4);
+      padding: 6px 18px;
+      border-radius: 2px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 600;
+      color: var(--cream);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .hero-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+
+    .gold-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 32px auto;
+    }
+
+    /* Main content */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 48px;
+      background: rgba(17, 34, 64, 0.5);
+      border: 1px solid rgba(201, 168, 76, 0.12);
+      border-radius: 4px;
+      padding: 36px 40px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--gold), transparent);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .section:nth-child(1) { animation-delay: 0.05s; }
+    .section:nth-child(2) { animation-delay: 0.10s; }
+    .section:nth-child(3) { animation-delay: 0.15s; }
+    .section:nth-child(4) { animation-delay: 0.20s; }
+    .section:nth-child(5) { animation-delay: 0.25s; }
+    .section:nth-child(6) { animation-delay: 0.30s; }
+    .section:nth-child(7) { animation-delay: 0.35s; }
+    .section:nth-child(8) { animation-delay: 0.40s; }
+    .section:nth-child(9) { animation-delay: 0.45s; }
+
+    .section-number {
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--cream);
+      margin-bottom: 20px;
+    }
+
+    .section p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .section ul li {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      padding: 6px 0 6px 20px;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .section ul li:last-child { border-bottom: none; }
+
+    .section ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-size: 0.75rem;
+    }
+
+    .highlight {
+      color: var(--gold-light);
+      font-weight: 500;
+    }
+
+    /* Contact box */
+    .contact-box {
+      background: rgba(201, 168, 76, 0.06);
+      border: 1px solid rgba(201, 168, 76, 0.25);
+      border-radius: 4px;
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+
+    .contact-box p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.9;
+    }
+
+    .contact-box a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    .contact-box a:hover { text-decoration: underline; }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid rgba(201, 168, 76, 0.1);
+    }
+
+    footer p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    footer a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 16px 20px; }
+      .section { padding: 28px 22px; }
+      .hero { padding: 60px 20px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="https://wuzo.com.br" class="logo">Wuzo<span>.</span></a>
+    <a href="https://wuzo.com.br" class="back-link">← Voltar ao site</a>
+  </header>
+
+  <div class="hero">
+    <div class="hero-tag">Documento Legal</div>
+    <h1>Política de Privacidade</h1>
+    <p class="hero-date">Última atualização: 27 de abril de 2026</p>
+    <div class="gold-divider"></div>
+  </div>
+
+  <main>
+
+    <div class="section">
+      <div class="section-number">01</div>
+      <h2>Informações que Coletamos</h2>
+      <ul>
+        <li>E-mail e senha (cadastro e autenticação)</li>
+        <li>Ativos financeiros consultados — ações, criptomoedas, câmbio</li>
+        <li>Dados de uso — relatórios gerados e créditos utilizados</li>
+        <li>Endereço IP para personalização por região e idioma</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-number">02</div>
+      <h2>Como Usamos Suas Informações</h2>
+      <ul>
+        <li>Autenticar sua conta com segurança</li>
+        <li>Gerar análises financeiras personalizadas por IA</li>
+        <li>Processar pagamentos de créditos via Stripe</li>
+        <li>Adaptar idioma e contexto tributário por país</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-number">03</div>
+      <h2>Compartilhamento de Dados</h2>
+      <p>Não vendemos seus dados. Compartilhamos apenas com:</p>
+      <ul>
+        <li><span class="highlight">Stripe</span> — processamento de pagamentos</li>
+        <li><span class="highlight">Provedores de IA</span> — geração de análises (dados não identificáveis)</li>
+        <li><span class="highlight">Autoridades legais</span> — somente se exigido por lei</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-number">04</div>
+      <h2>Segurança</h2>
+      <p>Seus dados são protegidos por múltiplas camadas de segurança:</p>
+      <ul>
+        <li>Senhas criptografadas com bcrypt</li>
+        <li>Comunicação via HTTPS / TLS</li>
+        <li>Autenticação por token JWT</li>
+        <li>Servidores em ambiente seguro e monitorado</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-number">05</div>
+      <h2>Seus Direitos</h2>
+      <p>Você pode a qualquer momento:</p>
+      <ul>
+        <li>Solicitar acesso aos seus dados pessoais</li>
+        <li>Solicitar correção ou exclusão da sua conta</li>
+        <li>Revogar o consentimento de uso dos dados</li>
+      </ul>
+      <div class="contact-box">
+        <p>Para exercer esses direitos, entre em contato:<br>
+        <a href="mailto:contato@wuzo.com.br">contato@wuzo.com.br</a></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-number">06</div>
+      <h2>Retenção de Dados</h2>
+      <ul>
+        <li>Dados mantidos enquanto sua conta estiver ativa</li>
+        <li>Relatórios em cache armazenados por até 72 horas</li>
+        <li>Após exclusão da conta, dados removidos em até 30 dias</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-number">07</div>
+      <h2>Menores de Idade</h2>
+      <p>O Wuzo é destinado exclusivamente a maiores de 18 anos. Não coletamos dados de menores de forma intencional. Caso identificarmos tal situação, os dados serão imediatamente removidos.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-number">08</div>
+      <h2>Alterações nesta Política</h2>
+      <p>Notificaremos sobre mudanças relevantes por e-mail ou por aviso dentro do aplicativo. O uso continuado do Wuzo após as alterações implica concordância com a nova política.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-number">09</div>
+      <h2>Contato</h2>
+      <div class="contact-box">
+        <p>
+          <span class="highlight">Wuzo — Análise Financeira com IA</span><br>
+          E-mail: <a href="mailto:contato@wuzo.com.br">contato@wuzo.com.br</a><br>
+          Site: <a href="https://wuzo.com.br">wuzo.com.br</a>
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Wuzo. Todos os direitos reservados. &nbsp;|&nbsp; <a href="https://wuzo.com.br">wuzo.com.br</a></p>
+  </footer>
+
+</body>
+</html>
