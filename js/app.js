@@ -73,6 +73,7 @@ const BASE_PAGES = {
   'painel-prestador':() => (typeof Monetization!=='undefined' ? Monetization.renderProviderDashboard()  : comingSoon('PAINEL DO PRESTADOR','🛠️')),
   'cadastro-parceiro':() => (typeof Monetization!=='undefined' ? Monetization.renderCadastroParceiro()   : comingSoon('CADASTRO DE PARCEIRO','🔧')),
   'admin-aprovacao': () => (typeof AdminApproval!=='undefined'? AdminApproval.render()                   : comingSoon('APROVAÇÃO DE PRESTADORES','✅')),
+  'admin-anuncios':  () => (typeof AdminApproval!=='undefined'? AdminApproval.renderListings()            : comingSoon('APROVAÇÃO DE ANÚNCIOS','🚗')),
   'meus-anuncios':   () => App.navigate('dashboard'),  // alias → dashboard tem seção de anúncios
   notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),
   carteira:          () => (typeof WalletPage!=='undefined'        ? WalletPage.render()                 : comingSoon('CARTEIRA','💳')),
