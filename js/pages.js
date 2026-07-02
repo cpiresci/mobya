@@ -195,6 +195,13 @@ window.Pages = (() => {
 
   function listingMiniCard(l) {
     const imgs = parseImages(l.images);
+    const STATUS_BADGE = {
+      PENDING_REVIEW: { label:'⏳ Em análise', bg:'rgba(245,158,11,.15)', color:'#f59e0b' },
+      ACTIVE:         { label:'✅ Ativo',       bg:'rgba(16,185,129,.15)', color:'#10b981' },
+      REJECTED:       { label:'❌ Rejeitado',   bg:'rgba(239,68,68,.15)',  color:'#ef4444' },
+      PAUSED:         { label:'⏸️ Pausado',     bg:'rgba(148,163,184,.15)',color:'#94a3b8' },
+    };
+    const badge = STATUS_BADGE[l.status];
     return `
       <div onclick="App.navigate('listing','${l.id}')" style="
         background:var(--s2);border:1px solid var(--border);border-radius:10px;
@@ -208,7 +215,10 @@ window.Pages = (() => {
             : `<span style="font-size:1.6rem">🚗</span>`}
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(l.title)}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(l.title)}</div>
+            ${badge?`<span style="flex-shrink:0;font-size:.6rem;padding:2px 6px;border-radius:4px;background:${badge.bg};color:${badge.color};white-space:nowrap">${badge.label}</span>`:''}
+          </div>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--q4);margin:2px 0">${fmtBRL(l.price)}</div>
           <div style="font-size:.7rem;color:var(--muted)">${l.city}/${l.state} · ${ago(l.createdAt)}</div>
         </div>
