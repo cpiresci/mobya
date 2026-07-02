@@ -18,6 +18,13 @@ window.Pages = (() => {
     return `${Math.round(s/86400)}d atrás`;
   };
   const escHtml = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // images vem do backend como array já parseado (campo Prisma Json), mas dados antigos
+  // podem ter ficado salvos como string JSON — trata os dois casos.
+  const parseImages = images => {
+    if (Array.isArray(images)) return images;
+    if (typeof images === 'string') { try { return JSON.parse(images||'[]'); } catch { return []; } }
+    return [];
+  };
   const main    = () => document.getElementById('main');
 
   function pageHeader(title, subtitle, gradient='var(--q3),var(--neon)') {
@@ -187,7 +194,7 @@ window.Pages = (() => {
   }
 
   function listingMiniCard(l) {
-    const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
+    const imgs = parseImages(l.images);
     return `
       <div onclick="App.navigate('listing','${l.id}')" style="
         background:var(--s2);border:1px solid var(--border);border-radius:10px;
@@ -341,7 +348,7 @@ window.Pages = (() => {
   };
 
   function listingCard(l) {
-    const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
+    const imgs = parseImages(l.images);
     const typeColors = { SALE:'var(--q4)', RENT:'var(--neon)', PART:'var(--gold)',
                          SERVICE:'var(--green)', INSURANCE:'var(--green)', FINANCING:'var(--orange)' };
     const typeLabels = { SALE:'Venda', RENT:'Aluguel', PART:'Peça', SERVICE:'Serviço',
@@ -439,7 +446,7 @@ window.Pages = (() => {
     const btn   = document.getElementById('clSubmitBtn');
     const title = document.getElementById('clTitle')?.value?.trim();
     const price = document.getElementById('clPrice')?.value;
-    const city  = document.getElementById('clCityNew')?.value?.trim();
+    const city  = document.getElementById('clCity')?.value?.trim();
     const state = (document.getElementById('clState')?.value?.trim().toUpperCase()||'').slice(0,2);
     const desc  = document.getElementById('clDesc')?.value?.trim();
     const type  = document.getElementById('clTypeNew')?.value || 'SALE';
@@ -479,7 +486,7 @@ window.Pages = (() => {
     try {
       const r = await API.listings.get(id);
       const l = r.data;
-      const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
+      const imgs = parseImages(l.images);
 
       let rentalConfig = null;
       if (l.type === 'RENT') {
@@ -1458,7 +1465,7 @@ window.Pages = (() => {
   };
 
   function partCard(l) {
-    const imgs = (() => { try { return JSON.parse(l.images || '[]'); } catch { return []; } })();
+    const imgs = parseImages(l.images);
     return `
       <div onclick="App.navigate('listing',${JSON.stringify(l.id)})" style="
         background:var(--s2);border:1px solid var(--border);border-radius:12px;
@@ -1796,7 +1803,7 @@ window.Pages = (() => {
           ${[
             ['clTitle','Título *','text',''],
             ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0'],
-            ['clCityNew','Cidade *','text','Ex: São Paulo'],
+            ['clCity','Cidade *','text','Ex: São Paulo'],
           ].map(([id, lbl, type, ph]) => `
             <div style="margin-bottom:12px">
               <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
