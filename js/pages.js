@@ -347,7 +347,7 @@ window.Pages = (() => {
     const typeLabels = { SALE:'Venda', RENT:'Aluguel', PART:'Peça', SERVICE:'Serviço',
                          INSURANCE:'Seguro', FINANCING:'Financiamento' };
     return `
-      <div onclick="App.navigate('listing','${l.id}')" style="
+      <div onclick="App.navigate('listing',l.id)" style="
         background:var(--s2);border:1px solid var(--border);border-radius:12px;
         overflow:hidden;cursor:pointer;transition:all .18s"
         onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--border2)'"
@@ -381,88 +381,28 @@ window.Pages = (() => {
       </div>`;
   }
 
-
-  const CLOUDINARY_CLOUD = 'dnvmunvag';
-  const CLOUDINARY_PRESET = 'mobya_unsigned';
-
-  function _uploadToCloudinary(blob) {
-    return new Promise((resolve, reject) => {
-      const fd = new FormData();
-      fd.append('file', blob);
-      fd.append('upload_preset', CLOUDINARY_PRESET);
-      fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method:'POST', body:fd })
-        .then(r => r.json())
-        .then(data => {
-          if (data.secure_url) resolve(data.secure_url);
-          else reject(new Error(data.error?.message || 'Falha no upload Cloudinary.'));
-        })
-        .catch(() => reject(new Error('Falha de rede no upload da foto.')));
-    });
-  }
-
-  function _compressPhoto(file) {
-    return new Promise((resolve, reject) => {
-      if (!file) return reject(new Error('Nenhuma foto.'));
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const MAX = 900; let w = img.width, h = img.height;
-          if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h*MAX/w); w=MAX; } else { w=Math.round(w*MAX/h); h=MAX; } }
-          const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
-          cv.getContext('2d').drawImage(img,0,0,w,h);
-          cv.toBlob(blob => {
-            if (!blob) return reject(new Error('Falha ao gerar imagem.'));
-            _uploadToCloudinary(blob).then(resolve).catch(reject);
-          }, 'image/jpeg', 0.72);
-        };
-        img.onerror = () => reject(new Error('Falha ao processar foto.'));
-        img.src = reader.result;
-      };
-      reader.onerror = () => reject(new Error('Falha ao ler foto.'));
-      reader.readAsDataURL(file);
-    });
-  }
-  function _pickListingPhoto() {
-    return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type='file'; input.accept='image/*'; input.multiple=true;
-      input.onchange = async () => {
-        const files = Array.from(input.files||[]).slice(0,5);
-        if (!files.length) return resolve([]);
-        try { resolve(await Promise.all(files.map(_compressPhoto))); } catch(e) { resolve([]); }
-      };
-      input.click();
-    });
-  }
   submitListing = async function() {
     const btn   = document.getElementById('clSubmitBtn');
     const title = document.getElementById('clTitle')?.value?.trim();
     const price = document.getElementById('clPrice')?.value;
     const city  = document.getElementById('clCity')?.value?.trim();
-    const state = (document.getElementById('clState')?.value?.trim().toUpperCase()||'').slice(0,2);
+    const state = document.getElementById('clState')?.value?.trim().toUpperCase();
     const desc  = document.getElementById('clDesc')?.value?.trim();
     const type  = document.getElementById('clTypeNew')?.value || 'SALE';
 
     if (!title||!price||!city||!state||!desc) {
       App.toast('Preencha todos os campos obrigatórios.','warn'); return;
     }
-    const nFotos = (window._listingPhotos||[]).length;
-    if (btn) {
-      btn.disabled=true; btn.style.opacity='.6';
-      btn.textContent = nFotos > 0 ? `⟳ ENVIANDO ${nFotos} FOTO(S)…` : '⟳ PUBLICANDO…';
-    }
+    if (btn) { btn.disabled=true; btn.style.opacity='.5'; }
     try {
-      const _imgs = window._listingPhotos || [];
-      await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type, images: _imgs });
-      window._listingPhotos = [];
+      await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type });
       document.getElementById('createModal')?.remove();
       App.toast('✅ Anúncio publicado com sucesso!','ok');
       Pages.searchListings && Pages.searchListings();
     } catch(e) {
       App.toast(e.message||'Erro ao publicar.','err');
     } finally {
-      if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.textContent='PUBLICAR ANÚNCIO'; }
+      if (btn) { btn.disabled=false; btn.style.opacity='1'; }
     }
   };
 
@@ -481,11 +421,6 @@ window.Pages = (() => {
       const l = r.data;
       const imgs = (() => { try { return JSON.parse(l.images||'[]'); } catch { return []; } })();
 
-      let rentalConfig = null;
-      if (l.type === 'RENT') {
-        try { const rc = await API.rental.getConfigByListing(l.id); rentalConfig = rc?.data || null; } catch {}
-      }
-      
       el.innerHTML = `
         <button onclick="App.navigate('classificados')" style="
           background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:20px">
@@ -524,30 +459,7 @@ window.Pages = (() => {
 
           <!-- SIDEBAR DO ANÚNCIO -->
           <div style="display:flex;flex-direction:column;gap:14px">
-            ${l.type==='RENT'?`
-              <div id="rentBlock" style="background:var(--s2);border:1px solid rgba(0,245,255,.25);border-radius:12px;padding:18px">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--neon);letter-spacing:2px;margin-bottom:12px">🗝️ RESERVAR VEÍCULO</div>
-                ${rentalConfig?`
-                  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
-                    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--neon)">${fmtBRL(rentalConfig.dailyRate)}<span style="font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace">/diária</span></div>
-                    ${rentalConfig.instantBook?`<span style="font-size:.63rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);border-radius:6px;padding:4px 8px;color:var(--neon);font-family:'JetBrains Mono',monospace">⚡ Instantânea</span>`:''}
-                  </div>
-                  <div style="font-size:.68rem;color:var(--muted);margin-bottom:12px;font-family:'JetBrains Mono',monospace">
-                    Disponível: ${rentalConfig.availableFrom?new Date(rentalConfig.availableFrom).toLocaleDateString('pt-BR'):'—'} a ${rentalConfig.availableTo?new Date(rentalConfig.availableTo).toLocaleDateString('pt-BR'):'—'}<br>
-                    Mín. ${rentalConfig.minRentalDays||1} / Máx. ${rentalConfig.maxRentalDays||30} diárias
-                  </div>
-                  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
-                    <div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px">RETIRADA</label>
-                      <input type="date" id="rentStart" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem" onchange="_rentPreview('${escHtml(l.id)}')"></div>
-                    <div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px">DEVOLUÇÃO</label>
-                      <input type="date" id="rentEnd" style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem" onchange="_rentPreview('${escHtml(l.id)}')"></div>
-                  </div>
-                  <div id="rentPreview" style="display:none;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:12px;font-size:.77rem;font-family:'JetBrains Mono',monospace"></div>
-                  <button id="rentBtn" onclick="_rentBook('${escHtml(l.id)}')" style="width:100%;background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:9px;padding:11px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">🗝️ Reservar Agora</button>
-                  <div style="font-size:.65rem;color:var(--muted);text-align:center;margin-top:6px">Sem cobrança até confirmação do anfitrião</div>
-                `:`<div style="font-size:.78rem;color:var(--muted)">Configuração de aluguel não encontrada para este anúncio.</div>`}
-              </div>`
-            :card(`
+            ${card(`
               <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;
                 color:var(--muted);letter-spacing:2px;margin-bottom:12px">VENDEDOR</div>
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -742,25 +654,6 @@ window.Pages = (() => {
       btn.disabled = true;
       btn.textContent = 'Registrando…';
       try {
-        // Se ainda sem GPS, aguarda até 6s extras
-        if (!coords.latitude) {
-          if (geoStatus) geoStatus.innerHTML = '📡 Aguardando GPS...';
-          await new Promise((resolve) => {
-            const start = Date.now();
-            const check = setInterval(() => {
-              if (coords.latitude || Date.now() - start > 6000) {
-                clearInterval(check); resolve();
-              }
-            }, 300);
-          });
-        }
-        if (!coords.latitude) {
-          if (geoStatus) geoStatus.innerHTML = '⚠️ GPS indisponível — tente novamente';
-          btn.disabled = false;
-          btn.textContent = '🚨 Acionar Agora';
-          App.toast('GPS necessário para calcular o preço. Tente novamente.', 'warn');
-          return;
-        }
         const created = await API.emergency.create({ type, description: desc || label, ...coords });
         close();
         App.toast(`🚨 Emergência registrada! Buscando prestador próximo…`, 'ok');
@@ -790,13 +683,6 @@ window.Pages = (() => {
   // CALCULADORAS
   // ═══════════════════════════════════════════════════════════
   function renderCalculadoras() {
-  if (!document.getElementById('mb-split-css')) {
-    const _s = document.createElement('style');
-    _s.id = 'mb-split-css';
-    _s.textContent = '.mb-split{display:grid;grid-template-columns:340px 1fr;gap:20px}.mb-split--wide{grid-template-columns:380px 1fr;gap:24px;align-items:start}@media(max-width:720px){.mb-split,.mb-split--wide{grid-template-columns:1fr !important;gap:16px}}';
-    document.head.appendChild(_s);
-  }
-
     const el = main();
     if (!el) return;
     el.innerHTML = `
@@ -816,7 +702,7 @@ window.Pages = (() => {
 
       <!-- FIPE -->
       <div id="tab_fipe">
-        <div class="mb-split">
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
           <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--gold);margin-bottom:16px">⬡ CALCULADORA FIPE</div>
@@ -849,7 +735,7 @@ window.Pages = (() => {
 
       <!-- CDC -->
       <div id="tab_cdc" style="display:none">
-        <div class="mb-split">
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
           <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--q4);margin-bottom:16px">⬡ SIMULADOR CDC</div>
@@ -877,7 +763,7 @@ window.Pages = (() => {
 
       <!-- TCO -->
       <div id="tab_tco" style="display:none">
-        <div class="mb-split">
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:20px">
           <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--green);margin-bottom:16px">⬡ CUSTO TOTAL (TCO)</div>
@@ -939,7 +825,7 @@ window.Pages = (() => {
           <strong style="color:var(--text)">vistoria cautelar presencial</strong>.
         </span>
       </div>
-      <div class="mb-split mb-split--wide">
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start">
         <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:24px">
           <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
             color:var(--neon);margin-bottom:16px">⬡ DADOS DO VEÍCULO</div>
@@ -1797,6 +1683,7 @@ window.Pages = (() => {
             ['clTitle','Título *','text',''],
             ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0'],
             ['clCity','Cidade *','text','Ex: São Paulo'],
+            ['clState','Estado *','text','SP'],
           ].map(([id, lbl, type, ph]) => `
             <div style="margin-bottom:12px">
               <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
@@ -1805,15 +1692,6 @@ window.Pages = (() => {
                 width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
                 padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
             </div>`).join('')}
-          <div style="margin-bottom:12px">
-            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
-              letter-spacing:1px;display:block;margin-bottom:5px">ESTADO *</label>
-            <select id="clState" style="width:100%;background:var(--s3);border:1px solid var(--border);
-              color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
-              <option value="">— Selecione —</option>
-              ${'AC,AL,AP,AM,BA,CE,DF,ES,GO,MA,MT,MS,MG,PA,PB,PR,PE,PI,RJ,RN,RS,RO,RR,SC,SP,SE,TO'.split(',').map(uf=>`<option value="${uf}">${uf}</option>`).join('')}
-            </select>
-          </div>
 
           <div style="margin-bottom:18px">
             <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
@@ -1824,13 +1702,6 @@ window.Pages = (() => {
               padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical"></textarea>
           </div>
 
-          <div style="margin-bottom:18px">
-            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">FOTOS (ATÉ 5)</label>
-            <div id="clPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;min-height:0"></div>
-            <button type="button" onclick="Pages._addListingPhotos()" style="width:100%;background:var(--s3);border:1px dashed var(--border2);color:var(--muted);padding:10px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'JetBrains Mono',monospace">
-              📷 Adicionar fotos
-            </button>
-          </div>
           <button id="clSubmitBtn" onclick="Pages.submitListing()" style="
             width:100%;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
             padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;
@@ -1859,105 +1730,18 @@ window.Pages = (() => {
     if (descInput  && phs[type]) descInput.placeholder  = phs[type].desc;
   };
 
-  async function renderGaragem(...args) {
-    if (window.Garagem?.render) return window.Garagem.render(...args);
-    return '<div style="padding:40px;text-align:center;color:var(--muted)">Garagem indisponível.</div>';
-  }
-  window._renderGaragem = renderGaragem;
-
-
-  async function _rentPreview(listingId) {
-    const s = document.getElementById('rentStart')?.value;
-    const e = document.getElementById('rentEnd')?.value;
-    const box  = document.getElementById('rentPreview');
-    if (!s || !e || !box) return;
-    if (new Date(e) <= new Date(s)) {
-      box.style.display='block';
-      box.innerHTML='<span style="color:var(--red)">⚠ Devolução deve ser após retirada</span>';
-      return;
-    }
-    box.style.display='block'; box.textContent='⟳ Calculando...';
-    try {
-      let cfgId = window.__rentCfgId;
-      if (!cfgId) {
-        const cfgRes = await API.rental.getConfigByListing(listingId);
-        cfgId = cfgRes?.data?.id;
-        window.__rentCfgId = cfgId;
-      }
-      if (!cfgId) { box.textContent='Config não encontrada.'; return; }
-      const prev = await API.rental.previewPrice({ configId:cfgId, startDate:s, endDate:e });
-      const d = prev?.data;
-      if (!d) { box.textContent='Erro ao calcular.'; return; }
-      const fmt = v=>`R$ ${parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-      box.innerHTML=`<div>DIÁRIAS: ${d.days||'?'}</div>${d.deposit?`<div>Depósito: ${fmt(d.deposit)}</div>`:''
-        }${d.renterTotal?`<div style="color:var(--neon);font-weight:700">TOTAL: ${fmt(d.renterTotal)}</div>`:''}`;
-    } catch(err) { box.textContent=err?.message||'Erro.'; }
-  }
-  window._rentPreview = _rentPreview;
-  
-  async function _rentBook(listingId) {
-    if (!API.isAuth()) { window.App?.toast('Faça login para reservar.','warn'); window.MobyaAuth?.showLogin(); return; }
-    const s=document.getElementById('rentStart')?.value;
-    const e=document.getElementById('rentEnd')?.value;
-    const btn=document.getElementById('rentBtn');
-    if (!s||!e) { window.App?.toast('Selecione as datas.','warn'); return; }
-    if (new Date(e)<=new Date(s)) { window.App?.toast('Devolução deve ser após retirada.','warn'); return; }
-    if (!window.__rentCfgId) {
-      try { const r=await API.rental.getConfigByListing(listingId); window.__rentCfgId=r?.data?.id; } catch {}
-    }
-    if (!window.__rentCfgId) { window.App?.toast('Config não encontrada.','err'); return; }
-    if (btn) { btn.disabled=true; btn.textContent='⟳ Criando reserva...'; }
-    try {
-      await API.rental.createBooking({ configId:window.__rentCfgId, startDate:s, endDate:e });
-      window.App?.toast('✅ Reserva criada! Aguarde confirmação.','ok',5000);
-      window.App?.navigate('minhas-reservas');
-    } catch(err) {
-      window.App?.toast(err?.message||'Erro ao reservar.','err');
-      if (btn) { btn.disabled=false; btn.textContent='🗝️ Reservar Agora'; }
-    }
-  }
-  window._rentBook = _rentBook;
-
   return {
     renderHome,
     renderClassificados,
     renderListing,
     renderAgentes,
     renderEmergencia,
-    renderGaragem,
     renderCalculadoras,
     renderVistoria,
     renderDocumentacao,
     renderDashboard,
     showCreateListing,
     submitListing,
-    _addListingPhotos: async function() {
-      window._listingPhotos = window._listingPhotos || [];
-      if (window._listingPhotos.length >= 5) { App.toast('Máximo 5 fotos.','warn'); return; }
-      try {
-        const urls = await _pickListingPhoto();
-        const available = 5 - window._listingPhotos.length;
-        window._listingPhotos = window._listingPhotos.concat(urls.slice(0, available));
-        const prev = document.getElementById('clPhotoPreview');
-        if (prev) prev.innerHTML = window._listingPhotos.map((u,i) =>
-          '<div style="position:relative;display:inline-block">' +
-          '<img src="'+u+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>' +
-          '<button onclick="Pages._removeListingPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1;padding:0">✕</button>' +
-          '</div>'
-        ).join('');
-        App.toast(window._listingPhotos.length + ' foto(s).','ok');
-      } catch(e) { App.toast(e.message||'Erro.','err'); }
-    },
-    _removeListingPhoto: function(i) {
-      window._listingPhotos = (window._listingPhotos||[]).filter((_,idx)=>idx!==i);
-      const prev = document.getElementById('clPhotoPreview');
-      if (prev) prev.innerHTML = (window._listingPhotos||[]).map((u,j) =>
-        '<div style="position:relative;display:inline-block">' +
-        '<img src="'+u+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>' +
-        '<button onclick="Pages._removeListingPhoto('+j+')" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1;padding:0">✕</button>' +
-        '</div>'
-      ).join('');
-    },
     searchListings,
     showCalcTab,
     openSOS,
