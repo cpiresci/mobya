@@ -456,7 +456,7 @@ window.Pages = (() => {
     const btn   = document.getElementById('clSubmitBtn');
     const title = document.getElementById('clTitle')?.value?.trim();
     const price = document.getElementById('clPrice')?.value;
-    const city  = document.getElementById('clCity')?.value?.trim();
+    const city  = document.getElementById('clCityNew')?.value?.trim();
     const state = (document.getElementById('clState')?.value?.trim().toUpperCase()||'').slice(0,2);
     const desc  = document.getElementById('clDesc')?.value?.trim();
     const type  = document.getElementById('clTypeNew')?.value || 'SALE';
@@ -1813,7 +1813,7 @@ window.Pages = (() => {
           ${[
             ['clTitle','Título *','text',''],
             ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0'],
-            ['clCity','Cidade *','text','Ex: São Paulo'],
+            ['clCityNew','Cidade *','text','Ex: São Paulo'],
           ].map(([id, lbl, type, ph]) => `
             <div style="margin-bottom:12px">
               <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
