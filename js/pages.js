@@ -209,10 +209,12 @@ window.Pages = (() => {
         onmouseover="this.style.borderColor='var(--border2)'"
         onmouseout="this.style.borderColor='var(--border)'">
         <div style="width:72px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;
-          background:var(--s3);display:flex;align-items:center;justify-content:center">
+          background:var(--s3);display:flex;align-items:center;justify-content:center;position:relative">
           ${imgs[0]
             ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
             : `<span style="font-size:1.6rem">🚗</span>`}
+          ${imgs.length>1?`<span style="position:absolute;bottom:2px;right:2px;font-family:'JetBrains Mono',monospace;
+            font-size:.5rem;padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.75);color:#fff">📷${imgs.length}</span>`:''}
         </div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
@@ -382,6 +384,8 @@ window.Pages = (() => {
             font-family:'JetBrains Mono',monospace;font-size:.55rem;padding:3px 7px;border-radius:4px;
             background:rgba(16,185,129,.2);color:var(--green);border:1px solid rgba(16,185,129,.3)">
             ⬡ IA ${l.aiQualityScore}</span>` : ''}
+          ${window.ListingGallery ? ListingGallery.cardDots(imgs) : ''}
+          ${window.ListingGallery ? ListingGallery.cardBadge(imgs) : ''}
         </div>
         <div style="padding:14px">
           <div style="font-weight:600;font-size:.88rem;margin-bottom:4px;
@@ -424,14 +428,14 @@ window.Pages = (() => {
       reader.onload = () => {
         const img = new Image();
         img.onload = () => {
-          const MAX = 900; let w = img.width, h = img.height;
+          const MAX = 1280; let w = img.width, h = img.height;
           if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h*MAX/w); w=MAX; } else { w=Math.round(w*MAX/h); h=MAX; } }
           const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
           cv.getContext('2d').drawImage(img,0,0,w,h);
           cv.toBlob(blob => {
             if (!blob) return reject(new Error('Falha ao gerar imagem.'));
             _uploadToCloudinary(blob).then(resolve).catch(reject);
-          }, 'image/jpeg', 0.72);
+          }, 'image/jpeg', 0.82);
         };
         img.onerror = () => reject(new Error('Falha ao processar foto.'));
         img.src = reader.result;
@@ -440,12 +444,14 @@ window.Pages = (() => {
       reader.readAsDataURL(file);
     });
   }
-  function _pickListingPhoto() {
+  const LISTING_MAX_PHOTOS = 10;
+
+  function _pickListingPhoto(limit) {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type='file'; input.accept='image/*'; input.multiple=true;
       input.onchange = async () => {
-        const files = Array.from(input.files||[]).slice(0,5);
+        const files = Array.from(input.files||[]).slice(0, Math.max(0, limit));
         if (!files.length) return resolve([]);
         try { resolve(await Promise.all(files.map(_compressPhoto))); } catch(e) { resolve([]); }
       };
@@ -509,12 +515,13 @@ window.Pages = (() => {
           ← Voltar aos classificados</button>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px;align-items:start">
           <div>
-            <!-- Imagens -->
-            <div style="border-radius:12px;overflow:hidden;background:var(--s3);
-              height:320px;margin-bottom:16px;display:flex;align-items:center;justify-content:center">
-              ${imgs[0]?`<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
-                       :`<span style="font-size:4rem">🚗</span>`}
-            </div>
+            <!-- Imagens — Galeria Quântica Premium -->
+            ${window.ListingGallery ? ListingGallery.render(imgs, l.id) : `
+              <div style="border-radius:12px;overflow:hidden;background:var(--s3);
+                height:320px;margin-bottom:16px;display:flex;align-items:center;justify-content:center">
+                ${imgs[0]?`<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
+                         :`<span style="font-size:4rem">🚗</span>`}
+              </div>`}
             <!-- Título + preço -->
             <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:8px">
               ${escHtml(l.title)}</h2>
@@ -606,6 +613,7 @@ window.Pages = (() => {
             `)}
           </div>
         </div>`;
+      setTimeout(() => window.ListingGallery?.init(l.id), 0);
     } catch(e) {
       el.innerHTML = `<div style="color:var(--red);padding:32px">⚠️ ${e.message}</div>`;
     }
@@ -1495,6 +1503,7 @@ window.Pages = (() => {
             font-size:.55rem;padding:3px 7px;border-radius:4px;
             background:rgba(0,0,0,.7);color:var(--muted);border:1px solid var(--border)">
             negociável</span>` : ''}
+          ${window.ListingGallery ? ListingGallery.cardBadge(imgs) : ''}
         </div>
         <div style="padding:14px">
           <div style="font-weight:600;font-size:.86rem;margin-bottom:6px;
@@ -1842,11 +1851,10 @@ window.Pages = (() => {
           </div>
 
           <div style="margin-bottom:18px">
-            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">FOTOS (ATÉ 5)</label>
-            <div id="clPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;min-height:0"></div>
-            <button type="button" onclick="Pages._addListingPhotos()" style="width:100%;background:var(--s3);border:1px dashed var(--border2);color:var(--muted);padding:10px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'JetBrains Mono',monospace">
-              📷 Adicionar fotos
-            </button>
+            <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;display:block;margin-bottom:5px">
+              📷 GALERIA DE FOTOS (ATÉ ${LISTING_MAX_PHOTOS}) <span style="color:var(--q4)">— a primeira é a capa</span>
+            </label>
+            <div class="lg-up-grid" id="clPhotoPreview"></div>
           </div>
           <button id="clSubmitBtn" onclick="Pages.submitListing()" style="
             width:100%;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
@@ -1857,8 +1865,9 @@ window.Pages = (() => {
         </div>
       </div>`;
 
-    // Inicia o placeholder correto
-    setTimeout(() => Pages._updateListingPlaceholder(), 50);
+    // Inicia o placeholder correto e a galeria de upload
+    window._listingPhotos = window._listingPhotos || [];
+    setTimeout(() => { Pages._updateListingPlaceholder(); Pages._renderPhotoGrid(); }, 50);
   };
 
   // Helper para atualizar placeholder da descrição ao trocar tipo
@@ -1948,32 +1957,49 @@ window.Pages = (() => {
     renderDashboard,
     showCreateListing,
     submitListing,
+    _renderPhotoGrid: function() {
+      const photos = window._listingPhotos || [];
+      const prev = document.getElementById('clPhotoPreview');
+      if (!prev) return;
+      const items = photos.map((u,i) => `
+        <div class="lg-up-item">
+          <img src="${u}" loading="lazy">
+          ${i===0?'<span class="lg-up-cover">⭐ CAPA</span>':''}
+          <button class="lg-up-del" onclick="Pages._removeListingPhoto(${i})" title="Remover">✕</button>
+          <div class="lg-up-move">
+            ${i>0?`<button onclick="Pages._moveListingPhoto(${i},-1)" title="Mover p/ esquerda">‹</button>`:'<span></span>'}
+            ${i<photos.length-1?`<button onclick="Pages._moveListingPhoto(${i},1)" title="Mover p/ direita">›</button>`:'<span></span>'}
+          </div>
+        </div>`).join('');
+      const addBtn = photos.length < LISTING_MAX_PHOTOS
+        ? `<button type="button" class="lg-up-add" onclick="Pages._addListingPhotos()">
+             <span style="font-size:1.3rem;line-height:1">＋</span><span>${photos.length}/${LISTING_MAX_PHOTOS}</span>
+           </button>`
+        : '';
+      prev.innerHTML = items + addBtn;
+    },
     _addListingPhotos: async function() {
       window._listingPhotos = window._listingPhotos || [];
-      if (window._listingPhotos.length >= 5) { App.toast('Máximo 5 fotos.','warn'); return; }
+      if (window._listingPhotos.length >= LISTING_MAX_PHOTOS) { App.toast(`Máximo ${LISTING_MAX_PHOTOS} fotos.`,'warn'); return; }
       try {
-        const urls = await _pickListingPhoto();
-        const available = 5 - window._listingPhotos.length;
+        const available = LISTING_MAX_PHOTOS - window._listingPhotos.length;
+        const urls = await _pickListingPhoto(available);
         window._listingPhotos = window._listingPhotos.concat(urls.slice(0, available));
-        const prev = document.getElementById('clPhotoPreview');
-        if (prev) prev.innerHTML = window._listingPhotos.map((u,i) =>
-          '<div style="position:relative;display:inline-block">' +
-          '<img src="'+u+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>' +
-          '<button onclick="Pages._removeListingPhoto('+i+')" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1;padding:0">✕</button>' +
-          '</div>'
-        ).join('');
-        App.toast(window._listingPhotos.length + ' foto(s).','ok');
+        Pages._renderPhotoGrid();
+        if (urls.length) App.toast(window._listingPhotos.length + ' foto(s) na galeria.','ok');
       } catch(e) { App.toast(e.message||'Erro.','err'); }
     },
     _removeListingPhoto: function(i) {
       window._listingPhotos = (window._listingPhotos||[]).filter((_,idx)=>idx!==i);
-      const prev = document.getElementById('clPhotoPreview');
-      if (prev) prev.innerHTML = (window._listingPhotos||[]).map((u,j) =>
-        '<div style="position:relative;display:inline-block">' +
-        '<img src="'+u+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)"/>' +
-        '<button onclick="Pages._removeListingPhoto('+j+')" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1;padding:0">✕</button>' +
-        '</div>'
-      ).join('');
+      Pages._renderPhotoGrid();
+    },
+    _moveListingPhoto: function(i, dir) {
+      const arr = window._listingPhotos || [];
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      window._listingPhotos = arr;
+      Pages._renderPhotoGrid();
     },
     searchListings,
     showCalcTab,

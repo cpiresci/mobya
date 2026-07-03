@@ -1,0 +1,205 @@
+/* ============================================================
+   MOBYA — listing-gallery.css  Quantum Engine v1.0
+   Galeria de fotos ultra premium para anúncios (carrossel + lightbox)
+   ============================================================ */
+
+/* ─── GALERIA PRINCIPAL ─────────────────────────────────────── */
+.lg-wrap{ margin-bottom:16px; user-select:none; }
+
+.lg-main{
+  position:relative; width:100%; aspect-ratio:4/3; max-height:420px;
+  border-radius:14px; overflow:hidden; background:var(--s3);
+  border:1px solid var(--border);
+  box-shadow:0 0 0 1px rgba(124,58,237,.04), 0 18px 40px -18px rgba(0,0,0,.6);
+}
+.lg-main-track{
+  display:flex; height:100%; width:100%;
+  transition:transform .38s cubic-bezier(.22,.61,.36,1);
+  will-change:transform;
+}
+.lg-slide{
+  flex:0 0 100%; width:100%; height:100%; position:relative;
+  background:var(--s3); display:flex; align-items:center; justify-content:center;
+}
+.lg-slide img{
+  width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in;
+}
+.lg-empty{
+  width:100%; aspect-ratio:4/3; max-height:420px; border-radius:14px;
+  background:linear-gradient(135deg,var(--s3),#141430); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:4rem; opacity:.5;
+}
+
+/* gradient overlays p/ legibilidade dos controles */
+.lg-main::before, .lg-main::after{
+  content:''; position:absolute; left:0; right:0; height:64px; pointer-events:none; z-index:2;
+}
+.lg-main::before{ top:0; background:linear-gradient(180deg,rgba(0,0,0,.35),transparent); }
+.lg-main::after{ bottom:0; background:linear-gradient(0deg,rgba(0,0,0,.45),transparent); }
+
+.lg-arrow{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.18);
+  background:rgba(8,8,20,.55); backdrop-filter:blur(6px); color:#fff;
+  font-size:1.25rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .18s ease; opacity:.88;
+}
+.lg-arrow:hover{ background:rgba(124,58,237,.55); border-color:var(--q3); box-shadow:0 0 16px rgba(124,58,237,.5); opacity:1; }
+.lg-prev{ left:10px; } .lg-next{ right:10px; }
+
+.lg-counter{
+  position:absolute; top:12px; right:12px; z-index:3;
+  font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.5px;
+  padding:4px 10px; border-radius:20px; background:rgba(4,4,10,.65);
+  border:1px solid rgba(255,255,255,.14); color:#fff; backdrop-filter:blur(6px);
+}
+.lg-badge-count{
+  position:absolute; top:12px; right:12px; z-index:3;
+  font-family:'JetBrains Mono',monospace; font-size:.6rem; letter-spacing:.5px;
+  padding:3px 8px; border-radius:6px; background:rgba(4,4,10,.7);
+  border:1px solid rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; gap:4px;
+}
+
+.lg-expand{
+  position:absolute; bottom:12px; right:12px; z-index:3;
+  width:34px; height:34px; border-radius:9px; border:1px solid rgba(255,255,255,.16);
+  background:rgba(8,8,20,.55); backdrop-filter:blur(6px); color:#fff; font-size:1rem;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s ease;
+}
+.lg-expand:hover{ background:rgba(0,245,255,.25); border-color:var(--neon); box-shadow:0 0 14px rgba(0,245,255,.35); }
+
+.lg-quantum-tag{
+  position:absolute; bottom:12px; left:12px; z-index:3;
+  font-family:'JetBrains Mono',monospace; font-size:.58rem; letter-spacing:1.5px;
+  padding:4px 9px; border-radius:6px; color:var(--neon);
+  background:rgba(0,245,255,.08); border:1px solid rgba(0,245,255,.25); backdrop-filter:blur(6px);
+}
+
+/* ─── DOTS ───────────────────────────────────────────────────── */
+.lg-dots{ display:flex; justify-content:center; gap:6px; margin-top:10px; }
+.lg-dot{
+  width:6px; height:6px; border-radius:50%; background:var(--s3); border:1px solid var(--border2);
+  cursor:pointer; transition:all .2s ease;
+}
+.lg-dot.active{ width:20px; border-radius:4px; background:linear-gradient(90deg,var(--q3),var(--neon)); border-color:transparent; }
+
+/* ─── THUMBNAILS ─────────────────────────────────────────────── */
+.lg-thumbs{
+  display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding-bottom:4px;
+  scroll-snap-type:x proximity;
+}
+.lg-thumbs::-webkit-scrollbar{ height:4px; }
+.lg-thumb{
+  flex:0 0 auto; width:64px; height:48px; border-radius:8px; overflow:hidden; cursor:pointer;
+  border:2px solid transparent; opacity:.55; transition:all .18s ease; scroll-snap-align:start;
+  position:relative; background:var(--s3);
+}
+.lg-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.lg-thumb:hover{ opacity:.85; }
+.lg-thumb.active{ opacity:1; border-color:var(--q3); box-shadow:0 0 12px rgba(168,85,247,.45); }
+
+/* ─── LIGHTBOX (tela cheia) ──────────────────────────────────── */
+.lg-lightbox{
+  position:fixed; inset:0; z-index:2000; background:rgba(2,2,8,.96);
+  backdrop-filter:blur(14px); display:flex; flex-direction:column;
+  animation:lgFadeIn .18s ease;
+}
+@keyframes lgFadeIn{ from{opacity:0} to{opacity:1} }
+
+.lg-lb-top{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px; flex-shrink:0;
+}
+.lg-lb-counter{
+  font-family:'JetBrains Mono',monospace; font-size:.72rem; letter-spacing:1px; color:var(--muted);
+}
+.lg-lb-close{
+  width:38px; height:38px; border-radius:50%; border:1px solid var(--border2);
+  background:var(--s2); color:#fff; font-size:1.1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all .15s ease;
+}
+.lg-lb-close:hover{ background:rgba(244,63,94,.2); border-color:var(--red); }
+
+.lg-lb-stage{
+  flex:1; position:relative; display:flex; align-items:center; justify-content:center;
+  overflow:hidden; touch-action:pan-y;
+}
+.lg-lb-track{
+  display:flex; height:100%; width:100%; transition:transform .35s cubic-bezier(.22,.61,.36,1);
+}
+.lg-lb-slide{
+  flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; padding:0 24px;
+}
+.lg-lb-slide img{
+  max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;
+  cursor:zoom-in; transition:transform .28s ease; transform-origin:center center;
+}
+.lg-lb-slide img.zoomed{ cursor:zoom-out; transform:scale(2.1); }
+
+.lg-lb-arrow{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:46px; height:46px; border-radius:50%; border:1px solid var(--border2);
+  background:rgba(13,13,26,.7); color:#fff; font-size:1.5rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all .18s ease;
+}
+.lg-lb-arrow:hover{ background:rgba(124,58,237,.5); border-color:var(--q3); box-shadow:0 0 20px rgba(124,58,237,.5); }
+.lg-lb-prev{ left:16px; } .lg-lb-next{ right:16px; }
+
+.lg-lb-thumbs{
+  flex-shrink:0; display:flex; gap:8px; padding:14px 18px 20px; overflow-x:auto;
+  justify-content:center;
+}
+.lg-lb-thumbs .lg-thumb{ width:56px; height:42px; }
+
+@media (max-width:600px){
+  .lg-lb-arrow{ width:38px; height:38px; font-size:1.2rem; }
+  .lg-lb-prev{ left:6px; } .lg-lb-next{ right:6px; }
+  .lg-main{ max-height:300px; }
+}
+
+/* ─── BADGE DE FOTOS NOS CARDS ───────────────────────────────── */
+.lg-card-count{
+  position:absolute; bottom:8px; right:8px; z-index:2;
+  font-family:'JetBrains Mono',monospace; font-size:.58rem; padding:3px 7px; border-radius:5px;
+  background:rgba(4,4,10,.7); border:1px solid rgba(255,255,255,.12); color:#fff;
+  display:flex; align-items:center; gap:3px; backdrop-filter:blur(4px);
+}
+.lg-card-dots{
+  position:absolute; bottom:8px; left:8px; z-index:2; display:flex; gap:3px;
+}
+.lg-card-dots span{
+  width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.35);
+}
+.lg-card-dots span.active{ background:var(--neon); }
+
+/* ─── UPLOAD DE FOTOS (form de criação) ──────────────────────── */
+.lg-up-grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:8px; margin-bottom:8px;
+}
+.lg-up-item{
+  position:relative; aspect-ratio:4/3; border-radius:8px; overflow:hidden;
+  border:1px solid var(--border2); background:var(--s3);
+}
+.lg-up-item img{ width:100%; height:100%; object-fit:cover; }
+.lg-up-cover{
+  position:absolute; top:3px; left:3px; font-family:'JetBrains Mono',monospace; font-size:.52rem;
+  padding:2px 5px; border-radius:4px; background:linear-gradient(90deg,var(--q2),var(--neon));
+  color:#04040a; font-weight:700; letter-spacing:.5px;
+}
+.lg-up-del{
+  position:absolute; top:3px; right:3px; background:rgba(239,68,68,.9); color:#fff; border:none;
+  border-radius:50%; width:18px; height:18px; font-size:.62rem; cursor:pointer; line-height:1;
+}
+.lg-up-move{
+  position:absolute; bottom:3px; display:flex; width:100%; justify-content:space-between; padding:0 3px;
+}
+.lg-up-move button{
+  background:rgba(4,4,10,.75); border:1px solid rgba(255,255,255,.15); color:#fff;
+  width:18px; height:18px; border-radius:4px; font-size:.6rem; cursor:pointer; line-height:1;
+}
+.lg-up-add{
+  aspect-ratio:4/3; border-radius:8px; border:1px dashed var(--border2); background:var(--s3);
+  color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:2px; font-size:.62rem; cursor:pointer; transition:all .15s ease;
+}
+.lg-up-add:hover{ border-color:var(--q3); color:var(--q4); background:rgba(124,58,237,.06); }
