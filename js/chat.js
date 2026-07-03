@@ -48,7 +48,8 @@ window.Chat = (() => {
 
   function selectAgent(id, el) {
     document.querySelectorAll('.achip').forEach(c => c.classList.remove('on'));
-    el.classList.add('on');
+    if (el) el.classList.add('on');
+    else { const chip = document.querySelector(`.achip[onclick*="'${id}'"]`); if (chip) chip.classList.add('on'); }
     agent = id;
     history = [];
     conversationId = null;

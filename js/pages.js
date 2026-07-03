@@ -746,7 +746,7 @@ window.Pages = (() => {
                   text-align:center;font-weight:700;font-size:.84rem;text-decoration:none;margin-bottom:10px">
                   📱 WHATSAPP
                 </a>`:''}
-              <button onclick="App.navigate('agentes')" style="
+              <button onclick="_analisarAnuncioIA('${escHtml(l.id)}','${escHtml((l.title||'').replace(/'/g,"\\'")).slice(0,120)}',${l.price||0},'${escHtml(l.type||'')}','${escHtml((l.city||'').replace(/'/g,"\\'"))}','${escHtml(l.state||'')}')" style="
                 width:100%;background:rgba(124,58,237,.12);color:var(--q4);
                 border:1px solid rgba(124,58,237,.25);padding:10px;border-radius:8px;
                 font-weight:600;font-size:.82rem;cursor:pointer">
@@ -772,6 +772,24 @@ window.Pages = (() => {
       el.innerHTML = `<div style="color:var(--red);padding:32px">⚠️ ${e.message}</div>`;
     }
   }
+
+  // Leva o usuário direto pro NEXUS-CV com o anúncio já sendo analisado,
+  // em vez de abrir o chat vazio (bug reportado: 'joga pro Nexus e não fala nada').
+  window._analisarAnuncioIA = function(id, title, price, type, city, state) {
+    App.navigate('agentes');
+    setTimeout(() => {
+      if (typeof Chat === 'undefined') return;
+      Chat.selectAgent('compra');
+      const preco = price ? price.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : 'não informado';
+      const msg = `Analise este anúncio quanto a risco de fraude e preço justo:\n`
+        + `Título: ${title}\n`
+        + `Tipo: ${type}\n`
+        + `Preço: ${preco}\n`
+        + `Local: ${city}/${state}\n`
+        + `ID do anúncio: ${id}`;
+      Chat.inject(msg);
+    }, 120);
+  };
 
   // ═══════════════════════════════════════════════════════════
   // AGENTES IA
