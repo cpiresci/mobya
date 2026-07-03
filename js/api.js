@@ -58,6 +58,8 @@ window.API = (() => {
     create:   (d)    => post('/listings', d),
     update:   (id,d) => put(`/listings/${id}`, d),
     remove:   (id)   => del(`/listings/${id}`),
+    pause:      (id) => patch(`/listings/${id}/pause`, {}),
+    reactivate: (id) => patch(`/listings/${id}/reactivate`, {}),
     favorite: (id)   => post(`/listings/${id}/favorite`, {}),
     mine:     (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
   };

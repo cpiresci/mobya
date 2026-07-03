@@ -227,6 +227,56 @@ window.Pages = (() => {
       </div>`;
   }
 
+  // Card usado no dashboard ("MEUS ANÚNCIOS") — como listingMiniCard, mas com ações rápidas do dono.
+  function ownerMiniCard(l) {
+    const imgs = parseImages(l.images);
+    const STATUS_BADGE = {
+      PENDING_REVIEW: { label:'⏳ Em análise', bg:'rgba(245,158,11,.15)', color:'#f59e0b' },
+      ACTIVE:         { label:'✅ Ativo',       bg:'rgba(16,185,129,.15)', color:'#10b981' },
+      REJECTED:       { label:'❌ Rejeitado',   bg:'rgba(239,68,68,.15)',  color:'#ef4444' },
+      PAUSED:         { label:'⏸️ Pausado',     bg:'rgba(148,163,184,.15)',color:'#94a3b8' },
+    };
+    const badge = STATUS_BADGE[l.status];
+    return `
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;
+        padding:14px;margin-bottom:10px">
+        <div onclick="App.navigate('listing','${l.id}')" style="display:flex;gap:12px;cursor:pointer">
+          <div style="width:72px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;
+            background:var(--s3);display:flex;align-items:center;justify-content:center;position:relative">
+            ${imgs[0]
+              ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
+              : `<span style="font-size:1.6rem">🚗</span>`}
+            ${imgs.length>1?`<span style="position:absolute;bottom:2px;right:2px;font-family:'JetBrains Mono',monospace;
+              font-size:.5rem;padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.75);color:#fff">📷${imgs.length}</span>`:''}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(l.title)}</div>
+              ${badge?`<span style="flex-shrink:0;font-size:.6rem;padding:2px 6px;border-radius:4px;background:${badge.bg};color:${badge.color};white-space:nowrap">${badge.label}</span>`:''}
+            </div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--q4);margin:2px 0">${fmtBRL(l.price)}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${l.city}/${l.state} · ${ago(l.createdAt)}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button onclick="event.stopPropagation();Pages.editListing('${l.id}')" style="
+            flex:1;background:rgba(124,58,237,.1);color:var(--q4);border:1px solid rgba(124,58,237,.22);
+            padding:7px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer">✏️ Editar</button>
+          ${l.status==='ACTIVE'?`
+            <button onclick="event.stopPropagation();Pages.pauseListing('${l.id}',()=>Pages.renderDashboard())" style="
+              flex:1;background:rgba(148,163,184,.08);color:#cbd5e1;border:1px solid rgba(148,163,184,.2);
+              padding:7px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer">⏸️ Pausar</button>`:''}
+          ${l.status==='PAUSED'?`
+            <button onclick="event.stopPropagation();Pages.reactivateListing('${l.id}',()=>Pages.renderDashboard())" style="
+              flex:1;background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.22);
+              padding:7px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer">▶️ Reativar</button>`:''}
+          <button onclick="event.stopPropagation();Pages.deleteListing('${l.id}',()=>Pages.renderDashboard())" style="
+            flex:1;background:rgba(239,68,68,.06);color:var(--red2);border:1px solid rgba(239,68,68,.18);
+            padding:7px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer">🗑️ Excluir</button>
+        </div>
+      </div>`;
+  }
+
 
   // ═══════════════════════════════════════════════════════════
   // CLASSIFICADOS
@@ -466,6 +516,7 @@ window.Pages = (() => {
     const state = (document.getElementById('clState')?.value?.trim().toUpperCase()||'').slice(0,2);
     const desc  = document.getElementById('clDesc')?.value?.trim();
     const type  = document.getElementById('clTypeNew')?.value || 'SALE';
+    const editId = window._editingListingId || null;
 
     if (!title||!price||!city||!state||!desc) {
       App.toast('Preencha todos os campos obrigatórios.','warn'); return;
@@ -473,25 +524,126 @@ window.Pages = (() => {
     const nFotos = (window._listingPhotos||[]).length;
     if (btn) {
       btn.disabled=true; btn.style.opacity='.6';
-      btn.textContent = nFotos > 0 ? `⟳ ENVIANDO ${nFotos} FOTO(S)…` : '⟳ PUBLICANDO…';
+      btn.textContent = nFotos > 0 ? `⟳ ENVIANDO ${nFotos} FOTO(S)…` : (editId ? '⟳ SALVANDO…' : '⟳ PUBLICANDO…');
     }
     try {
       const _imgs = window._listingPhotos || [];
-      await API.listings.create({ title, price:parseFloat(price), city, state, description:desc, type, images: _imgs });
-      window._listingPhotos = [];
-      document.getElementById('createModal')?.remove();
-      App.toast('✅ Anúncio publicado com sucesso!','ok');
-      Pages.searchListings && Pages.searchListings();
+      const payload = { title, price:parseFloat(price), city, state, description:desc, type, images: _imgs };
+      if (editId) {
+        await API.listings.update(editId, payload);
+        window._listingPhotos = []; window._editingListingId = null;
+        document.getElementById('createModal')?.remove();
+        App.toast('✅ Anúncio atualizado com sucesso!','ok');
+        Pages.renderListing(editId);
+      } else {
+        await API.listings.create(payload);
+        window._listingPhotos = [];
+        document.getElementById('createModal')?.remove();
+        App.toast('✅ Anúncio publicado com sucesso!','ok');
+        Pages.searchListings && Pages.searchListings();
+      }
     } catch(e) {
-      App.toast(e.message||'Erro ao publicar.','err');
+      App.toast(e.message||'Erro ao salvar.','err');
     } finally {
-      if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.textContent='PUBLICAR ANÚNCIO'; }
+      if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.textContent = editId ? 'SALVAR ALTERAÇÕES' : 'PUBLICAR ANÚNCIO'; }
     }
   };
+
 
   // ═══════════════════════════════════════════════════════════
   // DETALHE DO ANÚNCIO
   // ═══════════════════════════════════════════════════════════
+  const OWNER_STATUS_INFO = {
+    PENDING_REVIEW: { label:'⏳ Em análise',   color:'#f59e0b', bg:'rgba(245,158,11,.1)',  border:'rgba(245,158,11,.25)', desc:'Nossa equipe está revisando este anúncio antes de publicá-lo.' },
+    ACTIVE:         { label:'✅ Ativo',         color:'#10b981', bg:'rgba(16,185,129,.1)',  border:'rgba(16,185,129,.25)', desc:'Visível na busca pública.' },
+    PAUSED:         { label:'⏸️ Pausado',       color:'#94a3b8', bg:'rgba(148,163,184,.1)', border:'rgba(148,163,184,.25)', desc:'Fora da busca pública até você reativar.' },
+    REJECTED:       { label:'❌ Rejeitado',     color:'#ef4444', bg:'rgba(239,68,68,.1)',   border:'rgba(239,68,68,.25)',  desc:'Não atendeu às regras da plataforma.' },
+    REMOVED:        { label:'🗑️ Removido',      color:'#6b6b90', bg:'rgba(107,107,144,.1)', border:'rgba(107,107,144,.25)',desc:'Este anúncio foi excluído.' },
+  };
+
+  function ownerPanel(l) {
+    const st = OWNER_STATUS_INFO[l.status] || { label:l.status, color:'var(--muted)', bg:'var(--s3)', border:'var(--border)', desc:'' };
+    return `
+      <div style="background:var(--s2);border:1px solid ${st.border};border-radius:12px;padding:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--q4);letter-spacing:2px">⬡ PAINEL DO ANUNCIANTE</div>
+          <span style="font-size:.66rem;padding:3px 9px;border-radius:5px;background:${st.bg};color:${st.color};border:1px solid ${st.border}">${st.label}</span>
+        </div>
+        ${st.desc?`<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">${st.desc}${l.status==='REJECTED'&&l.rejectionReason?`<br><span style="color:${st.color}">Motivo: ${escHtml(l.rejectionReason)}</span>`:''}</div>`:''}
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="Pages.editListing('${l.id}')" style="
+            width:100%;background:rgba(124,58,237,.12);color:var(--q4);border:1px solid rgba(124,58,237,.25);
+            padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
+            ✏️ Editar anúncio
+          </button>
+          ${l.status==='ACTIVE'?`
+            <button onclick="Pages.pauseListing('${l.id}')" id="ownerPauseBtn" style="
+              width:100%;background:rgba(148,163,184,.1);color:#cbd5e1;border:1px solid rgba(148,163,184,.25);
+              padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
+              ⏸️ Pausar anúncio
+            </button>`:''}
+          ${l.status==='PAUSED'?`
+            <button onclick="Pages.reactivateListing('${l.id}')" id="ownerReactivateBtn" style="
+              width:100%;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);
+              padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
+              ▶️ Reativar anúncio
+            </button>`:''}
+          <button onclick="Pages.deleteListing('${l.id}')" id="ownerDeleteBtn" style="
+            width:100%;background:rgba(239,68,68,.08);color:var(--red2);border:1px solid rgba(239,68,68,.2);
+            padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
+            🗑️ Excluir anúncio
+          </button>
+        </div>
+      </div>`;
+  }
+
+  editListing = async function(id) {
+    try {
+      const r = await API.listings.get(id);
+      showCreateListing(r.data.type, r.data);
+    } catch(e) { App.toast(e.message||'Erro ao carregar anúncio.','err'); }
+  };
+
+  pauseListing = async function(id, onDone) {
+    const btn = document.getElementById('ownerPauseBtn');
+    if (btn) { btn.disabled=true; btn.textContent='⟳ Pausando…'; }
+    try {
+      await API.listings.pause(id);
+      App.toast('⏸️ Anúncio pausado.','ok');
+      (onDone || (() => Pages.renderListing(id)))();
+    } catch(e) {
+      App.toast(e.message||'Erro ao pausar.','err');
+      if (btn) { btn.disabled=false; btn.textContent='⏸️ Pausar anúncio'; }
+    }
+  };
+
+  reactivateListing = async function(id, onDone) {
+    const btn = document.getElementById('ownerReactivateBtn');
+    if (btn) { btn.disabled=true; btn.textContent='⟳ Reativando…'; }
+    try {
+      await API.listings.reactivate(id);
+      App.toast('▶️ Anúncio reativado.','ok');
+      (onDone || (() => Pages.renderListing(id)))();
+    } catch(e) {
+      App.toast(e.message||'Erro ao reativar.','err');
+      if (btn) { btn.disabled=false; btn.textContent='▶️ Reativar anúncio'; }
+    }
+  };
+
+  deleteListing = async function(id, onDone) {
+    if (!confirm('Excluir este anúncio definitivamente? Esta ação não pode ser desfeita.')) return;
+    const btn = document.getElementById('ownerDeleteBtn');
+    if (btn) { btn.disabled=true; btn.textContent='⟳ Excluindo…'; }
+    try {
+      await API.listings.remove(id);
+      App.toast('🗑️ Anúncio excluído.','ok');
+      (onDone || (() => App.navigate('dashboard')))();
+    } catch(e) {
+      App.toast(e.message||'Erro ao excluir.','err');
+      if (btn) { btn.disabled=false; btn.textContent='🗑️ Excluir anúncio'; }
+    }
+  };
+
   async function renderListing(id) {
     const el = main();
     if (!el) return;
@@ -503,6 +655,7 @@ window.Pages = (() => {
       const r = await API.listings.get(id);
       const l = r.data;
       const imgs = parseImages(l.images);
+      const isOwner = window.MobyaAuth?.getUser?.()?.id === l.userId;
 
       let rentalConfig = null;
       if (l.type === 'RENT') {
@@ -548,6 +701,7 @@ window.Pages = (() => {
 
           <!-- SIDEBAR DO ANÚNCIO -->
           <div style="display:flex;flex-direction:column;gap:14px">
+            ${isOwner ? ownerPanel(l) : ''}
             ${l.type==='RENT'?`
               <div id="rentBlock" style="background:var(--s2);border:1px solid rgba(0,245,255,.25);border-radius:12px;padding:18px">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--neon);letter-spacing:2px;margin-bottom:12px">🗝️ RESERVAR VEÍCULO</div>
@@ -1146,7 +1300,7 @@ window.Pages = (() => {
             <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
               color:var(--q4);margin-bottom:12px">⬡ MEUS ANÚNCIOS</div>
             ${listings.length
-              ? listings.map(l=>listingMiniCard(l)).join('')
+              ? listings.map(l=>ownerMiniCard(l)).join('')
               : `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
                   Nenhum anúncio publicado.
                   <button onclick="Pages.showCreateListing()" style="background:none;color:var(--q4);
@@ -1778,10 +1932,13 @@ window.Pages = (() => {
   // Substituir a função showCreateListing existente por esta:
   // ═══════════════════════════════════════════════════════════
 
-  showCreateListing = function(preType = 'SALE') {
+  showCreateListing = function(preType = 'SALE', editData = null) {
     if (!API.isAuth()) { window.MobyaAuth?.showLogin(); return; }
     const modals = document.getElementById('modals');
     if (!modals) return;
+
+    window._editingListingId = editData?.id || null;
+    const isEdit = !!editData;
 
     const typeOptions = [
       { v:'SALE',    l:'🚗 Venda de Veículo' },
@@ -1797,6 +1954,8 @@ window.Pages = (() => {
       RENT:    'Ex: Toyota Corolla disponível por diária ou mensal...',
     };
 
+    const curType = editData?.type || preType;
+
     modals.innerHTML = `
       <div style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);
         backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center"
@@ -1807,7 +1966,12 @@ window.Pages = (() => {
             position:absolute;top:16px;right:16px;background:none;border:none;
             color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;margin-bottom:20px">
-            PUBLICAR ANÚNCIO</div>
+            ${isEdit ? 'EDITAR ANÚNCIO' : 'PUBLICAR ANÚNCIO'}</div>
+          ${isEdit && editData.status === 'ACTIVE' ? `
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#f59e0b;
+              font-size:.74rem;border-radius:8px;padding:10px 12px;margin-bottom:16px">
+              ⚠️ Este anúncio já está ativo. Ao salvar, ele volta para análise antes de reaparecer na busca.
+            </div>`:''}
 
           <div style="margin-bottom:14px">
             <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
@@ -1815,19 +1979,19 @@ window.Pages = (() => {
             <select id="clTypeNew" onchange="Pages._updateListingPlaceholder()"
               style="width:100%;background:var(--s3);border:1px solid var(--border);
               color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
-              ${typeOptions.map(t => `<option value="${t.v}" ${t.v === preType ? 'selected' : ''}>${t.l}</option>`).join('')}
+              ${typeOptions.map(t => `<option value="${t.v}" ${t.v === curType ? 'selected' : ''}>${t.l}</option>`).join('')}
             </select>
           </div>
 
           ${[
-            ['clTitle','Título *','text',''],
-            ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0'],
-            ['clCityNew','Cidade *','text','Ex: São Paulo'],
-          ].map(([id, lbl, type, ph]) => `
+            ['clTitle','Título *','text','', editData?.title||''],
+            ['clPrice','Preço (R$) — deixe 0 para "Consultar"','number','0', editData?.price ?? ''],
+            ['clCityNew','Cidade *','text','Ex: São Paulo', editData?.city||''],
+          ].map(([id, lbl, type, ph, val]) => `
             <div style="margin-bottom:12px">
               <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
                 letter-spacing:1px;display:block;margin-bottom:5px">${lbl.toUpperCase()}</label>
-              <input id="${id}" type="${type}" placeholder="${ph}" style="
+              <input id="${id}" type="${type}" placeholder="${ph}" value="${escHtml(String(val))}" style="
                 width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
                 padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
             </div>`).join('')}
@@ -1837,7 +2001,7 @@ window.Pages = (() => {
             <select id="clState" style="width:100%;background:var(--s3);border:1px solid var(--border);
               color:var(--text);padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none">
               <option value="">— Selecione —</option>
-              ${'AC,AL,AP,AM,BA,CE,DF,ES,GO,MA,MT,MS,MG,PA,PB,PR,PE,PI,RJ,RN,RS,RO,RR,SC,SP,SE,TO'.split(',').map(uf=>`<option value="${uf}">${uf}</option>`).join('')}
+              ${'AC,AL,AP,AM,BA,CE,DF,ES,GO,MA,MT,MS,MG,PA,PB,PR,PE,PI,RJ,RN,RS,RO,RR,SC,SP,SE,TO'.split(',').map(uf=>`<option value="${uf}" ${editData?.state===uf?'selected':''}>${uf}</option>`).join('')}
             </select>
           </div>
 
@@ -1845,9 +2009,9 @@ window.Pages = (() => {
             <label style="font-size:.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;
               letter-spacing:1px;display:block;margin-bottom:5px">DESCRIÇÃO *</label>
             <textarea id="clDesc" rows="4"
-              placeholder="${placeholders[preType]}"
+              placeholder="${placeholders[curType]}"
               style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);
-              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical"></textarea>
+              padding:9px 13px;border-radius:8px;font-size:.82rem;outline:none;resize:vertical">${escHtml(editData?.description||'')}</textarea>
           </div>
 
           <div style="margin-bottom:18px">
@@ -1860,13 +2024,13 @@ window.Pages = (() => {
             width:100%;background:linear-gradient(135deg,var(--q1),var(--q3));color:#fff;
             padding:12px;border-radius:8px;font-weight:700;font-size:.88rem;
             border:none;cursor:pointer;box-shadow:0 0 20px rgba(124,58,237,.4)">
-            PUBLICAR ANÚNCIO
+            ${isEdit ? 'SALVAR ALTERAÇÕES' : 'PUBLICAR ANÚNCIO'}
           </button>
         </div>
       </div>`;
 
     // Inicia o placeholder correto e a galeria de upload
-    window._listingPhotos = window._listingPhotos || [];
+    window._listingPhotos = isEdit ? parseImages(editData.images) : [];
     setTimeout(() => { Pages._updateListingPlaceholder(); Pages._renderPhotoGrid(); }, 50);
   };
 
@@ -1957,6 +2121,10 @@ window.Pages = (() => {
     renderDashboard,
     showCreateListing,
     submitListing,
+    editListing,
+    pauseListing,
+    reactivateListing,
+    deleteListing,
     _renderPhotoGrid: function() {
       const photos = window._listingPhotos || [];
       const prev = document.getElementById('clPhotoPreview');
