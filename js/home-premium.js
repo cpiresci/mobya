@@ -537,7 +537,7 @@
   }
 
   function carCardHtml(l) {
-    const imgs = (() => { try { return JSON.parse(l.images || '[]'); } catch { return []; } })();
+    const imgs = (() => { if (Array.isArray(l.images)) return l.images; try { return JSON.parse(l.images || '[]'); } catch { return []; } })();
     const isRent = l.type === 'RENT';
     const isNew = (Date.now() - new Date(l.createdAt)) < 1000 * 60 * 60 * 24 * 3; // <3 dias
     const badgeCls = isRent ? 'hp-b-rent' : (isNew ? 'hp-b-new' : 'hp-b-sale');
@@ -551,7 +551,7 @@
     const [g1, g2, wc] = colorSets[Math.abs(hashStr(l.id || l.title || '')) % colorSets.length];
 
     return `
-      <div class="hp-car" onclick="App.navigate('listing',l.id)">
+      <div class="hp-car" onclick="App.navigate('listing','${l.id}')">
         <div class="hp-car-img" style="background:linear-gradient(135deg,${g1},${g2})">
           ${imgs[0]
             ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover;position:relative;z-index:0">`
