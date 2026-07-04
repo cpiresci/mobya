@@ -1,0 +1,47 @@
+name: Gerar páginas de SEO (Mobya)
+
+# Frente B do master prompt — mantém /anuncio/*/index.html, sitemap.xml e
+# robots.txt sempre sincronizados com os anúncios ativos no backend, sem
+# depender do Cleiton rodar isso manualmente. GitHub Pages só serve estático,
+# então esta é a única forma de manter as páginas de anúncio sempre frescas.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # a cada 6 horas
+  workflow_dispatch:         # também pode disparar manualmente na aba Actions
+  push:
+    branches: [main, master]
+    paths:
+      - 'scripts/generate-seo-pages.mjs'
+      - '.github/workflows/generate-seo.yml'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Gerar páginas de SEO
+        run: node scripts/generate-seo-pages.mjs
+        env:
+          MOBYA_API_URL: https://mobya.onrender.com
+          MOBYA_SITE_URL: https://mobya.com.br
+
+      - name: Commit e push se houver mudança
+        run: |
+          git config user.name "mobya-seo-bot"
+          git config user.email "actions@github.com"
+          git add anuncio/ sitemap.xml robots.txt
+          if git diff --cached --quiet; then
+            echo "Nada mudou, nada para commitar."
+          else
+            git commit -m "chore(seo): atualiza páginas estáticas de anúncios [skip ci]"
+            git push
+          fi

@@ -105,11 +105,23 @@ window.renderPage = function(page) {
 window.App = (() => {
   let currentPage = 'home';
 
+  // Extrai {page, param} de uma hash como '#listing/abc-123' ou '#home'.
+  // Antes disso o param so existia em memoria (window.__mobyaListingId),
+  // entao recarregar ou compartilhar o link de um anuncio especifico
+  // sempre caia na home - a URL nunca carregava o id de verdade.
+  function _parseHash(raw) {
+    const clean = (raw || '#home').replace('#', '') || 'home';
+    const slashIdx = clean.indexOf('/');
+    if (slashIdx === -1) return { page: clean, param: undefined };
+    return { page: clean.slice(0, slashIdx), param: decodeURIComponent(clean.slice(slashIdx + 1)) };
+  }
+
   function navigate(page, param) {
     currentPage = page;
     if (param !== undefined) window.__mobyaListingId = param;
-    if (history.state?.page !== page) {
-      history.pushState({ page }, '', `#${page}`);
+    const hash = param !== undefined ? `#${page}/${encodeURIComponent(param)}` : `#${page}`;
+    if (history.state?.page !== page || history.state?.param !== param) {
+      history.pushState({ page, param }, '', hash);
     }
     closeMenu();
     window.renderPage(page);
@@ -136,7 +148,11 @@ window.App = (() => {
 
   let _backPressedAt = 0;
   window.addEventListener('popstate', (e) => {
-    const page = e.state?.page || (location.hash||'#home').replace('#','') || 'home';
+    const parsed = e.state?.page !== undefined
+      ? { page: e.state.page, param: e.state.param }
+      : _parseHash(location.hash);
+    const page = parsed.page || 'home';
+    if (parsed.param !== undefined) window.__mobyaListingId = parsed.param;
 
     // Se já está na home e aperta voltar — duplo toque para sair
     if (page === 'home' || !e.state) {
@@ -205,7 +221,8 @@ window.App = (() => {
       try { Monetization.init(); } catch(e) { console.warn('Monetization init falhou', e); }
     }
 
-    const initial = (location.hash || '#home').replace('#','') || 'home';
+    const { page: initial, param: initialParam } = _parseHash(location.hash);
+    if (initialParam !== undefined) window.__mobyaListingId = initialParam;
     setLoadingProgress(60, 'Restaurando sessao...');
 
     if (typeof MobyaAuth !== 'undefined') {
@@ -213,7 +230,7 @@ window.App = (() => {
     }
 
     setLoadingProgress(100, 'Pronto.');
-    navigate(initial);
+    navigate(initial, initialParam);
     setTimeout(hideLoadingScreen, 300);
 
     setTimeout(async () => {
