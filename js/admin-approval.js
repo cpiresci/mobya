@@ -1,11 +1,6 @@
 window.updateSidebarRoles = function(user) {
-  const isMechanic = user && ['MECHANIC','INSURER','SELLER'].includes(user.role);
   const isAdmin    = user && ['ADMIN','SUPER_ADMIN'].includes(user.role);
   const isLoggedIn = !!user;
-  const sbP = document.getElementById('sbPainelPrestador');
-  if (sbP) sbP.style.display = (isMechanic || isAdmin) ? '' : 'none';
-  const sbC = document.getElementById('sbCarteira');
-  if (sbC) sbC.style.display = isLoggedIn ? '' : 'none';
   const sbA = document.getElementById('sbAdminAprov');
   if (sbA) sbA.style.display = isAdmin ? '' : 'none';
   const sbAL = document.getElementById('sbAdminAnuncios');
@@ -13,10 +8,12 @@ window.updateSidebarRoles = function(user) {
   const sbR = document.getElementById('sbPainelReceita');
   if (sbR) sbR.style.display = isAdmin ? '' : 'none';
   if (isAdmin) { AdminApproval.fetchPendingCount(); AdminApproval.fetchPendingListingsCount(); }
-  const sbAnf = document.getElementById('sbPainelAnfitriao');
-  if (sbAnf) sbAnf.style.display = isLoggedIn ? '' : 'none';
-  const sbRes = document.getElementById('sbMinhasReservas');
-  if (sbRes) sbRes.style.display = isLoggedIn ? '' : 'none';
+  const sbSecCentral = document.getElementById('sbSecCentral');
+  if (sbSecCentral) sbSecCentral.style.display = isLoggedIn ? '' : 'none';
+  const sbDivCentral = document.getElementById('sbDivCentral');
+  if (sbDivCentral) sbDivCentral.style.display = isLoggedIn ? '' : 'none';
+  const sbConv = document.getElementById('sbConversas');
+  if (sbConv) sbConv.style.display = isLoggedIn ? '' : 'none';
 };
 window.AdminApproval = (() => {
   function esc(s){ return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }

@@ -142,6 +142,8 @@ body::after{
 .sb-item.active{color:var(--text);background:rgba(124,58,237,.11);border-left-color:var(--q3)}
 .sb-sos{color:var(--red)}
 .sb-sos.active{border-left-color:var(--red)}
+.sb-central{color:var(--neon);font-weight:700}
+.sb-central.active{border-left-color:var(--neon)}
 .sb-badge{
   margin-left:auto;font-family:'JetBrains Mono',monospace;
   font-size:.6rem;padding:2px 7px;border-radius:3px;
