@@ -752,6 +752,12 @@ window.Pages = (() => {
                 font-weight:600;font-size:.82rem;cursor:pointer">
                 🤖 Analisar com IA
               </button>
+              <button onclick="ChatDM.openFromListing('${escHtml(l.id)}')" style="
+                width:100%;background:rgba(6,182,212,.12);color:var(--neon);margin-top:8px;
+                border:1px solid rgba(6,182,212,.3);padding:10px;border-radius:8px;
+                font-weight:600;font-size:.82rem;cursor:pointer">
+                💬 Chat com o vendedor
+              </button>
             `)}
             ${card(`
               <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;

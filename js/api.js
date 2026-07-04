@@ -52,6 +52,14 @@ window.API = (() => {
     financing:   (d) => post('/ai/financing-simulation', d),
   };
 
+  const chat = {
+    threads:      (p={})    => get(`/chat/threads?${new URLSearchParams(p)}`),
+    createThread: (d)       => post('/chat/threads', d),
+    messages:     (id,p={}) => get(`/chat/threads/${id}/messages?${new URLSearchParams(p)}`),
+    send:         (id,d)    => post(`/chat/threads/${id}/messages`, d),
+    markRead:     (id)      => patch(`/chat/threads/${id}/read`, {}),
+  };
+
   const listings = {
     search:   (p={}) => get(`/listings?${new URLSearchParams(p)}`),
     get:      (id)   => get(`/listings/${id}`),
@@ -208,5 +216,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, listings, emergency, monetization, vehicle, wallet, notifications, rental, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, wallet, notifications, rental, pollEmergency, ping };
 })();

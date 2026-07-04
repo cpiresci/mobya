@@ -75,6 +75,8 @@ const BASE_PAGES = {
   'admin-aprovacao': () => (typeof AdminApproval!=='undefined'? AdminApproval.render()                   : comingSoon('APROVAÇÃO DE PRESTADORES','✅')),
   'admin-anuncios':  () => (typeof AdminApproval!=='undefined'? AdminApproval.renderListings()            : comingSoon('APROVAÇÃO DE ANÚNCIOS','🚗')),
   'meus-anuncios':   () => App.navigate('dashboard'),  // alias → dashboard tem seção de anúncios
+  conversas:         () => (typeof ChatDM !== 'undefined' ? ChatDM.renderInbox('main')            : comingSoon('CONVERSAS','💬')),
+  'chat-thread':     () => (typeof ChatDM !== 'undefined' ? ChatDM.renderThread('main', window.__mobyaListingId) : comingSoon('CONVERSA','💬')),
   notificacoes:      () => (typeof NotificacoesPage!=='undefined' ? NotificacoesPage.render()            : comingSoon('NOTIFICAÇÕES','🔔')),
   carteira:          () => (typeof WalletPage!=='undefined'        ? WalletPage.render()                 : comingSoon('CARTEIRA','💳')),
   'ultra-gps':       () => (typeof UltraGPS  !=='undefined'        ? UltraGPS.render()                   : comingSoon('ULTRA GPS','🛣️')),
@@ -250,6 +252,8 @@ if (typeof window.updateSidebarRoles === 'undefined') {
     if (sbAnf) sbAnf.style.display = isLoggedIn ? '' : 'none';
     const sbRes = document.getElementById('sbMinhasReservas');
     if (sbRes) sbRes.style.display = isLoggedIn ? '' : 'none';
+    const sbConv = document.getElementById('sbConversas');
+    if (sbConv) sbConv.style.display = isLoggedIn ? '' : 'none';
   };
 }
 
