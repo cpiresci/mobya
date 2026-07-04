@@ -294,6 +294,13 @@ window.MobyaAuth = (() => {
       <div class="form-field"><label>Email</label><input id="rgEmail" type="email" placeholder="seu@email.com"></div>
       ${pwdFieldHTML({ id:'rgPass', label:'Senha (mín. 8 caracteres)', autocomplete:'new-password', onEnter:'MobyaAuth.doRegister()' })}
       ${pwdStrengthHTML()}
+      <div style="display:flex;align-items:flex-start;gap:8px;margin:12px 0 4px">
+        <input id="rgTerms" type="checkbox" style="margin-top:3px;flex-shrink:0">
+        <label for="rgTerms" style="font-size:.78rem;color:var(--muted);line-height:1.4;cursor:pointer">
+          Li e concordo com os <a href="termos.html" target="_blank" style="color:var(--q4)">Termos de Uso</a>
+          e a <a href="privacidade.html" target="_blank" style="color:var(--q4)">Política de Privacidade</a> da MOBYA.
+        </label>
+      </div>
       <button class="ai-btn" style="width:100%;justify-content:center;height:42px;margin-top:4px" onclick="MobyaAuth.doRegister()"><div class="pdot"></div>CRIAR CONTA</button>
       <div style="text-align:center;margin-top:14px;font-size:.81rem;color:var(--muted)">
         Já tem conta? <button onclick="MobyaAuth.showLogin()" style="background:none;color:var(--q4);cursor:pointer;font-weight:600;border:none">Entrar</button>
@@ -305,12 +312,14 @@ window.MobyaAuth = (() => {
     const name  = document.getElementById('rgName')?.value?.trim();
     const email = document.getElementById('rgEmail')?.value?.trim();
     const pass  = document.getElementById('rgPass')?.value;
+    const termsAccepted = !!document.getElementById('rgTerms')?.checked;
     if (!name||!email||!pass) return showAuthErr('Preencha todos os campos.');
     if (pass.length < 8) return showAuthErr('Senha deve ter mínimo 8 caracteres.');
+    if (!termsAccepted) return showAuthErr('Você precisa aceitar os Termos de Uso para criar sua conta.');
     const btn = document.querySelector('#authContent .ai-btn');
     if (btn) { btn.disabled=true; btn.innerHTML='<div class="pdot"></div>CRIANDO...'; }
     try {
-      await API.auth.register({ name, email, password: pass });
+      await API.auth.register({ name, email, password: pass, termsAccepted, termsVersion: '2026-07-04' });
       closeModal();
       Toast.show('Conta criada! Faça login para continuar. ✅', 'ok', 5000);
       showLogin();
