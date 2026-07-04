@@ -69,6 +69,7 @@ window.API = (() => {
     pause:      (id) => patch(`/listings/${id}/pause`, {}),
     reactivate: (id) => patch(`/listings/${id}/reactivate`, {}),
     favorite: (id)   => post(`/listings/${id}/favorite`, {}),
+    favorites:(p={}) => get(`/listings/favorites?${new URLSearchParams(p)}`),
     mine:     (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
   };
 

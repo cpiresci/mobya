@@ -2201,6 +2201,7 @@ window.Pages = (() => {
     renderServicos,
     searchPecas,
     searchServicos,
+    listingCard,
     cotarPeca,
     solicitarPeca,
     _updateListingPlaceholder,
