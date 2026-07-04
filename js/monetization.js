@@ -1348,7 +1348,8 @@ window.Monetization = (() => {
 
   async function renderProviderDashboard() {
     const main=document.getElementById('main'); if(!main) return;
-    main.innerHTML=`<div id="prov-header" style="margin-bottom:28px">
+    const centralBar = (typeof Central !== 'undefined') ? Central.tabBar('prestador') : '';
+    main.innerHTML=`${centralBar}<div id="prov-header" style="margin-bottom:28px">
         <div style="display:flex;align-items:center;gap:10px">
           <div style="height:32px;width:220px;background:var(--s3);border-radius:6px;animation:pulse 2s infinite"></div>
         </div>

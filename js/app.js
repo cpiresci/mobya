@@ -55,7 +55,7 @@ const BASE_PAGES = {
   calculadoras:  () => Pages.renderCalculadoras(),
   vistoria:      () => Pages.renderVistoria(),
   documentacao:  () => Pages.renderDocumentacao(),
-  dashboard:     () => Pages.renderDashboard(),
+  dashboard:     () => (typeof Central !== 'undefined' ? Central.renderOverview() : Pages.renderDashboard()),
   chat:          () => renderChatPage(),
   listing:       () => Pages.renderListing(window.__mobyaListingId),
   pecas:         () => Pages.renderPecas(),

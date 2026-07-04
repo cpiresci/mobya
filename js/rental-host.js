@@ -121,7 +121,8 @@ window.RentalHost = (() => {
   }
 
   function _shell(content){
-    return `<div style="margin-bottom:24px"><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--green),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent">PAINEL DO ANFITRI\u00c3O</div><div style="color:var(--muted);font-size:.84rem;margin-top:4px">Gerencie suas reservas e ve\u00edculos cadastrados</div></div>${tabBar()}<div id="rh-content"></div>`;
+    const centralBar = (typeof Central !== 'undefined') ? Central.tabBar('anfitriao') : '';
+    return `${centralBar}<div style="margin-bottom:24px"><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;background:linear-gradient(135deg,#fff,var(--green),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent">PAINEL DO ANFITRI\u00c3O</div><div style="color:var(--muted);font-size:.84rem;margin-top:4px">Gerencie suas reservas e ve\u00edculos cadastrados</div></div>${tabBar()}<div id="rh-content"></div>`;
   }
 
   async function render(){

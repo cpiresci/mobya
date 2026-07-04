@@ -128,6 +128,13 @@ window.API = (() => {
     releasePending: ()      => post('/wallet/release-pending', {}),
   };
 
+  const me = {
+    // Central Mobya: um único fetch que traz anúncios, aluguel (anfitrião/
+    // locatário), perfil de prestador, cotações e contadores — substitui as
+    // ~5 chamadas soltas que renderDashboard fazia antes.
+    overview: () => get('/me/overview'),
+  };
+
   const notifications = {
     list:      (p={}) => get(`/notifications?${new URLSearchParams(p)}`),
     unread:    ()      => get('/notifications/unread-count'),
@@ -217,5 +224,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, wallet, notifications, rental, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, wallet, notifications, rental, me, pollEmergency, ping };
 })();

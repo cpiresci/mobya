@@ -11,7 +11,9 @@ window.WalletPage = (() => {
     const main = document.getElementById('main');
     if (!main) return;
 
+    const centralBar = (typeof Central !== 'undefined') ? Central.tabBar('carteira') : '';
     main.innerHTML = `
+      ${centralBar}
       <div style="padding:18px 16px;max-width:540px;margin:0 auto">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;
           letter-spacing:2px;background:linear-gradient(135deg,#10b981,#00f5ff);

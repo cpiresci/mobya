@@ -26,7 +26,9 @@ window.PainelComprador = (() => {
     if (!el) return;
     if (!API.isAuth()) { window.MobyaAuth?.showLogin('painel-comprador'); return; }
 
+    const centralBar = (containerId === 'main' && typeof Central !== 'undefined') ? Central.tabBar('locatario') : '';
     el.innerHTML = `
+      ${centralBar}
       <div style="margin-bottom:20px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;
           background:linear-gradient(135deg,#fff,var(--q3),var(--neon));-webkit-background-clip:text;
