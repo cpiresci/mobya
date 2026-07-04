@@ -1293,26 +1293,35 @@ window.Pages = (() => {
         </button>
       </div>`; return;
     }
-    el.innerHTML = `${pageHeader('MEU DASHBOARD','Seus anúncios · Emergências · Cotações','var(--q4),var(--neon)')}
+    el.innerHTML = `${pageHeader('MEU DASHBOARD','Anúncios · Reservas recebidas · Conversas · Cotações','var(--q4),var(--neon)')}
       <div id="dashContent">${skeleton(4)}</div>`;
 
     try {
-      const [listingsR, quotesR, emergenciesR] = await Promise.all([
+      const [listingsR, quotesR, emergenciesR, hostBookingsR, sellerThreadsR] = await Promise.all([
         API.listings.mine({ limit: 10 }).catch(() => null),
         API.monetization.quotes({ limit: 5 }).catch(() => null),
         API.emergency.mine({ limit: 10 }).catch(() => null),
+        API.rental.hostBookings({ limit: 5 }).catch(() => null),
+        API.chat.threads({ role: 'seller', limit: 5 }).catch(() => null),
       ]);
       const listings    = listingsR?.data || [];
       const quotes      = quotesR?.data?.quotes || quotesR?.data || [];
       const emergencies = emergenciesR?.data || [];
       const activeEmerg = emergencies.filter(e => !['COMPLETED','CANCELLED'].includes(e.status));
+      const hostBookings   = hostBookingsR?.data || [];
+      const sellerThreads  = sellerThreadsR?.data || [];
+      const BOOKING_LABELS_D = { PENDING:'Aguardando você', CONFIRMED:'Confirmada', ACTIVE:'Em andamento',
+        COMPLETED:'Concluída', DECLINED:'Recusada', CANCELLED:'Cancelada', DISPUTED:'Em disputa' };
+      const BOOKING_COLORS_D = { PENDING:'var(--gold)', CONFIRMED:'var(--neon)', ACTIVE:'var(--green)',
+        COMPLETED:'var(--muted)', DECLINED:'var(--red)', CANCELLED:'var(--red)', DISPUTED:'var(--orange)' };
 
       document.getElementById('dashContent').innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
           ${[
             {label:'MEUS ANÚNCIOS',      value:fmtNum(listingsR?.pagination?.total||listings.length), color:'var(--q4)'},
             {label:'MINHAS COTAÇÕES',    value:fmtNum(quotesR?.pagination?.total||quotes.length),   color:'var(--green)'},
             {label:'EMERGÊNCIAS ATIVAS', value:fmtNum(activeEmerg.length), color: activeEmerg.length ? 'var(--red)' : 'var(--neon)'},
+            {label:'RESERVAS RECEBIDAS', value:fmtNum(hostBookingsR?.pagination?.total||hostBookings.length), color:'var(--gold)'},
           ].map(k=>`
             <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center">
               <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);margin-bottom:8px">${k.label}</div>
@@ -1354,6 +1363,50 @@ window.Pages = (() => {
               : `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
                   Nenhuma cotação ainda. <button onclick="App.navigate('monetizacao')" style="background:none;
                     color:var(--green);border:none;cursor:pointer;font-weight:600">Solicitar agora</button></div>`}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
+              color:var(--gold);margin-bottom:12px">🗝️ RESERVAS RECEBIDAS</div>
+            ${hostBookings.length
+              ? hostBookings.map(b=>`
+                <div onclick="App.navigate('painel-anfitriao')" style="display:flex;justify-content:space-between;
+                  align-items:center;background:var(--s2);border:1px solid var(--border);border-radius:8px;
+                  padding:12px;margin-bottom:8px;cursor:pointer">
+                  <div>
+                    <div style="font-weight:600;font-size:.82rem">${escHtml(b.config?.listing?.title || 'Reserva')}</div>
+                    <div style="color:var(--muted);font-size:.72rem;margin-top:2px">
+                      ${b.startDate ? new Date(b.startDate).toLocaleDateString('pt-BR') : ''} → ${b.endDate ? new Date(b.endDate).toLocaleDateString('pt-BR') : ''}
+                    </div>
+                  </div>
+                  <span style="font-size:.66rem;font-weight:700;color:${BOOKING_COLORS_D[b.status]||'var(--muted)'};
+                    background:rgba(255,255,255,.05);padding:3px 9px;border-radius:6px">${BOOKING_LABELS_D[b.status]||b.status}</span>
+                </div>`).join('')
+              : `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
+                  Nenhuma reserva recebida ainda.</div>`}
+            ${hostBookings.length ? `<div onclick="App.navigate('painel-anfitriao')" style="text-align:center;
+              padding:10px;color:var(--gold);cursor:pointer;font-size:.78rem;font-weight:600">Ver Painel Anfitrião →</div>` : ''}
+          </div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:2px;
+              color:var(--neon);margin-bottom:12px">💬 CONVERSAS COMO VENDEDOR</div>
+            ${sellerThreads.length
+              ? sellerThreads.map(t=>`
+                <div onclick="ChatDM.open('${t.id}')" style="display:flex;justify-content:space-between;
+                  align-items:center;background:var(--s2);border:1px solid var(--border);border-radius:8px;
+                  padding:12px;margin-bottom:8px;cursor:pointer">
+                  <div style="min-width:0">
+                    <div style="font-weight:600;font-size:.82rem">${escHtml(t.buyer?.name || 'Comprador')}</div>
+                    <div style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                      ${escHtml(t.listing?.title || '')}${t.messages?.[0] ? ' · ' + escHtml(t.messages[0].content) : ''}
+                    </div>
+                  </div>
+                </div>`).join('')
+              : `<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">
+                  Nenhuma conversa recebida ainda.</div>`}
+            ${sellerThreads.length ? `<div onclick="App.navigate('conversas')" style="text-align:center;
+              padding:10px;color:var(--neon);cursor:pointer;font-size:.78rem;font-weight:600">Ver todas as conversas →</div>` : ''}
           </div>
         </div>
       `;
