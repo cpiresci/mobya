@@ -561,8 +561,28 @@ window.Pages = (() => {
     REMOVED:        { label:'🗑️ Removido',      color:'#6b6b90', bg:'rgba(107,107,144,.1)', border:'rgba(107,107,144,.25)',desc:'Este anúncio foi excluído.' },
   };
 
-  function ownerPanel(l) {
+  function ownerPanel(l, verifyStatus) {
     const st = OWNER_STATUS_INFO[l.status] || { label:l.status, color:'var(--muted)', bg:'var(--s3)', border:'var(--border)', desc:'' };
+    const vs = verifyStatus || { verified:false, status:null };
+    let verifyBlock;
+    if (vs.verified) {
+      const restr = vs.existeRestricao;
+      verifyBlock = `<div style="background:${restr?'rgba(245,158,11,.1)':'rgba(16,185,129,.1)'};
+        border:1px solid ${restr?'rgba(245,158,11,.25)':'rgba(16,185,129,.25)'};border-radius:8px;padding:10px;
+        font-size:.78rem;color:${restr?'var(--gold)':'#10b981'}">
+        ${restr ? '⚠️ Verificado — restrição encontrada' : '✅ Veículo verificado'}
+        ${vs.verifiedAt ? `<div style="font-size:.65rem;color:var(--muted);margin-top:2px">em ${new Date(vs.verifiedAt).toLocaleDateString('pt-BR')}</div>` : ''}
+      </div>`;
+    } else if (vs.status === 'PENDING_PAYMENT' || vs.status === 'PROCESSING') {
+      verifyBlock = `<div style="background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.2);
+        border-radius:8px;padding:10px;font-size:.78rem;color:var(--muted)">⏳ Verificação em processamento...</div>`;
+    } else {
+      verifyBlock = `<button onclick="VehicleVerify.start('${l.id}')" style="
+        width:100%;background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.25);
+        padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
+        🛡️ Verificar veículo (R$ 19,90)
+      </button>`;
+    }
     return `
       <div style="background:var(--s2);border:1px solid ${st.border};border-radius:12px;padding:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -571,6 +591,7 @@ window.Pages = (() => {
         </div>
         ${st.desc?`<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">${st.desc}${l.status==='REJECTED'&&l.rejectionReason?`<br><span style="color:${st.color}">Motivo: ${escHtml(l.rejectionReason)}</span>`:''}</div>`:''}
         <div style="display:flex;flex-direction:column;gap:8px">
+          ${verifyBlock}
           <button onclick="Pages.editListing('${l.id}')" style="
             width:100%;background:rgba(124,58,237,.12);color:var(--q4);border:1px solid rgba(124,58,237,.25);
             padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
@@ -661,6 +682,8 @@ window.Pages = (() => {
       if (l.type === 'RENT') {
         try { const rc = await API.rental.getConfigByListing(l.id); rentalConfig = rc?.data || null; } catch {}
       }
+      let verifyStatus = null;
+      try { const vs = await API.listings.verifyStatus(l.id); verifyStatus = vs?.data || vs || null; } catch {}
       
       el.innerHTML = `
         <button onclick="App.navigate('classificados')" style="
@@ -680,6 +703,14 @@ window.Pages = (() => {
               ${escHtml(l.title)}</h2>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--q4);margin-bottom:16px">
               ${fmtBRL(l.price)}</div>
+            ${verifyStatus?.verified ? `
+              <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;padding:6px 12px;
+                border-radius:20px;font-size:.76rem;font-weight:600;
+                background:${verifyStatus.existeRestricao?'rgba(245,158,11,.12)':'rgba(16,185,129,.12)'};
+                border:1px solid ${verifyStatus.existeRestricao?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)'};
+                color:${verifyStatus.existeRestricao?'var(--gold)':'#10b981'}">
+                ${verifyStatus.existeRestricao ? '⚠️ Verificado — com restrição' : '✅ Veículo Verificado'}
+              </div>` : ''}
             <!-- Descrição -->
             <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;
               padding:18px;font-size:.85rem;line-height:1.7;color:var(--muted);margin-bottom:16px">
@@ -701,7 +732,7 @@ window.Pages = (() => {
 
           <!-- SIDEBAR DO ANÚNCIO -->
           <div style="display:flex;flex-direction:column;gap:14px">
-            ${isOwner ? ownerPanel(l) : ''}
+            ${isOwner ? ownerPanel(l, verifyStatus) : ''}
             ${l.type==='RENT'?`
               <div id="rentBlock" style="background:var(--s2);border:1px solid rgba(0,245,255,.25);border-radius:12px;padding:18px">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--neon);letter-spacing:2px;margin-bottom:12px">🗝️ RESERVAR VEÍCULO</div>

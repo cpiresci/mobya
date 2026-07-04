@@ -71,6 +71,8 @@ window.API = (() => {
     favorite: (id)   => post(`/listings/${id}/favorite`, {}),
     favorites:(p={}) => get(`/listings/favorites?${new URLSearchParams(p)}`),
     mine:     (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
+    verifyCharge: (id, body={}) => post(`/listings/${id}/verify/charge`, body),
+    verifyStatus: (id)          => get(`/listings/${id}/verify/status`),
   };
 
   const emergency = {
