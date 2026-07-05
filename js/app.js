@@ -233,6 +233,11 @@ window.App = (() => {
     navigate(initial, initialParam);
     setTimeout(hideLoadingScreen, 300);
 
+    // Registro silencioso do service worker (Frente D) - so habilita a
+    // instalacao como PWA. NAO pede permissao de notificacao aqui; isso so
+    // acontece quando o usuario clica em "Ativar notificacoes" na Central.
+    if (typeof PushClient !== 'undefined') PushClient.registerServiceWorker().catch(() => {});
+
     setTimeout(async () => {
       try { await Promise.race([API.ping(), new Promise(r => setTimeout(r, 8000))]); } catch {}
       if (typeof KeepAlive !== 'undefined') KeepAlive.init();

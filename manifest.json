@@ -1,0 +1,17 @@
+{
+  "name": "MOBYA — Marketplace de Serviços Automotivos",
+  "short_name": "MOBYA",
+  "description": "Aluguel entre particulares, classificados, SOS 24h e serviços automotivos num só app.",
+  "start_url": "/index.html",
+  "id": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#04040a",
+  "theme_color": "#00f5ff",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

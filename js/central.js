@@ -130,6 +130,7 @@ window.Central = (() => {
     const { modules, counters, anuncios, anfitriao, locatario, prestador, cotacoes } = data;
 
     content.innerHTML = `
+      <div id="push-opt-in-banner"></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:26px">
         ${_card('MEUS ANÚNCIOS', counters.anuncios, 'var(--q4)')}
         ${_card('RESERVAS PENDENTES', counters.reservasRecebidasPendentes, counters.reservasRecebidasPendentes ? 'var(--gold)' : 'var(--neon)')}
@@ -202,7 +203,49 @@ window.Central = (() => {
         </div>
       </div>
     `;
+
+    _renderPushBanner();
   }
 
-  return { tabBar, renderOverview, invalidate: () => { _cache = null; } };
+  // Frente D do master prompt: banner discreto oferecendo ativar push,
+  // so aparece se o navegador suporta E o usuario ainda nao esta inscrito.
+  // Nunca pede permissao sozinho - so no clique explicito do usuario.
+  async function _renderPushBanner() {
+    const banner = document.getElementById('push-opt-in-banner');
+    if (!banner || typeof PushClient === 'undefined' || !PushClient.isSupported()) return;
+    const already = await PushClient.isSubscribed().catch(() => true);
+    if (already) return;
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+        background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.2);border-radius:10px;
+        padding:12px 16px;margin-bottom:20px">
+        <div style="font-size:.8rem;color:var(--text)">
+          🔔 Ative notificações e não perca mensagens, propostas e reservas.
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="Central.enablePush(this)" style="background:linear-gradient(135deg,var(--q1),var(--neon));
+            color:#04040a;border:none;border-radius:7px;padding:8px 16px;font-weight:700;font-size:.76rem;cursor:pointer">
+            Ativar
+          </button>
+          <button onclick="document.getElementById('push-opt-in-banner').innerHTML=''" style="background:none;
+            border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:8px 14px;
+            font-size:.76rem;cursor:pointer">Agora não</button>
+        </div>
+      </div>`;
+  }
+
+  async function enablePush(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Ativando...'; }
+    const ok = await PushClient.subscribe().catch(() => false);
+    const banner = document.getElementById('push-opt-in-banner');
+    if (banner) {
+      banner.innerHTML = ok
+        ? `<div style="color:#10b981;font-size:.8rem;padding:10px 16px;background:rgba(16,185,129,.08);
+            border:1px solid rgba(16,185,129,.2);border-radius:10px;margin-bottom:20px">✅ Notificações ativadas!</div>`
+        : `<div style="color:var(--gold);font-size:.8rem;padding:10px 16px;background:rgba(245,158,11,.08);
+            border:1px solid rgba(245,158,11,.2);border-radius:10px;margin-bottom:20px">⚠️ Não foi possível ativar — verifique a permissão de notificações do navegador.</div>`;
+    }
+  }
+
+  return { tabBar, renderOverview, enablePush, invalidate: () => { _cache = null; } };
 })();

@@ -75,6 +75,12 @@ window.API = (() => {
     verifyStatus: (id)          => get(`/listings/${id}/verify/status`),
   };
 
+  const push = {
+    vapidPublicKey: () => get('/push/vapid-public-key'),
+    subscribe:      (d) => post('/push/subscribe', d),
+    unsubscribe:    (d) => post('/push/unsubscribe', d),
+  };
+
   const emergency = {
     create:  (d)    => post('/emergency', d),
     mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
@@ -226,5 +232,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, wallet, notifications, rental, me, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, wallet, notifications, rental, me, push, pollEmergency, ping };
 })();
