@@ -176,13 +176,43 @@
     // Opcional: defina um token público Mapbox (pk.eyJ...) para pular o gate de token no GPS Tracking.
     // Sem isso, o usuário insere o próprio token uma vez e ele fica salvo no localStorage do navegador.
     MAPBOX_TOKEN: 'pk.eyJ1IjoibW9ieWEiLCJhIjoiY21xbjV5bmRxMDFseTJycTIxdHZmZnZmbyJ9.ifppIZRDeI_hkFj5O0-jiw',
+    // Frente F do master prompt (Analytics). Deixe em branco ate voce criar
+    // as contas - enquanto vazio, nenhum script de analytics carrega e
+    // Analytics.track() vira no-op silencioso em qualquer lugar do codigo.
+    GA4_ID: '',          // ex: 'G-XXXXXXXXXX' (Google Analytics 4 -> Admin -> Fluxos de dados)
+    META_PIXEL_ID: '',   // ex: '1234567890123' (Meta Business Suite -> Gerenciador de Eventos)
   };
+</script>
+<script>
+  // Carregamento condicional - so baixa os scripts de terceiro se os IDs
+  // acima estiverem preenchidos. Enquanto estiver testando/sem conta ainda,
+  // isso nao pesa nada na pagina nem dispara requisicao nenhuma.
+  if (window.MOBYA.GA4_ID) {
+    const gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${window.MOBYA.GA4_ID}`;
+    document.head.appendChild(gaScript);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', window.MOBYA.GA4_ID);
+  }
+  if (window.MOBYA.META_PIXEL_ID) {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', window.MOBYA.META_PIXEL_ID);
+    window.fbq('track', 'PageView');
+  }
 </script>
 <script src="js/app.js?v=20260702c"></script>
 <script src="js/api.js?v=20260624a"></script>
 <script src="js/central.js?v=20260703a"></script>
 <script src="js/vehicle-verify.js?v=20260704a"></script>
 <script src="js/push-client.js?v=20260705a"></script>
+<script src="js/analytics.js?v=20260705a"></script>
 <script src="js/auth.js?v=20260620b"></script>
 <script src="js/pages.js?v=20260703a"></script>
 <script src="js/listing-gallery.js?v=20260703a"></script>

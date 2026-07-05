@@ -191,6 +191,7 @@ window.MobyaAuth = (() => {
       updateUI(user);
       closeModal();
       Toast.show(`Bem-vindo, ${user.name.split(' ')[0]}! ⚡`, 'ok');
+      window.Analytics?.track('login', { method: 'email' });
       if (redirect) App.navigate(redirect);
     } catch(e) {
       showAuthErr(e.message||'Erro ao entrar.');
@@ -322,6 +323,7 @@ window.MobyaAuth = (() => {
       await API.auth.register({ name, email, password: pass, termsAccepted, termsVersion: '2026-07-04' });
       closeModal();
       Toast.show('Conta criada! Faça login para continuar. ✅', 'ok', 5000);
+      window.Analytics?.track('sign_up', { method: 'email' });
       showLogin();
     } catch(e) {
       showAuthErr(e.message||'Erro ao criar conta.');

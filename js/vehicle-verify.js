@@ -7,6 +7,7 @@
 window.VehicleVerify = (() => {
   let _pollTimer  = null;
   let _listingId  = null;
+  let _amount     = null;
   let _overlay    = null;
 
   async function start(listingId) {
@@ -15,6 +16,7 @@ window.VehicleVerify = (() => {
     try {
       const r = await API.listings.verifyCharge(listingId);
       const { pix, amount } = r.data || r;
+      _amount = amount;
       _showModal({ loading: false, amount, qrCode: pix?.qrCode || null, qrCodeBase64: pix?.qrCodeBase64 || null });
       _startPolling(listingId);
     } catch (e) {
@@ -40,6 +42,9 @@ window.VehicleVerify = (() => {
   }
 
   function _onVerified() {
+    window.Analytics?.track('purchase', {
+      transaction_id: _listingId, value: _amount, currency: 'BRL', item_name: 'verificacao_veicular',
+    });
     const msgEl = _overlay?.querySelector('#vv-status-msg');
     if (msgEl) {
       msgEl.innerHTML = `<div style="color:#10b981;font-size:1rem;font-weight:700;text-align:center;padding:8px 0">

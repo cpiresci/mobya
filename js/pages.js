@@ -684,7 +684,11 @@ window.Pages = (() => {
       }
       let verifyStatus = null;
       try { const vs = await API.listings.verifyStatus(l.id); verifyStatus = vs?.data || vs || null; } catch {}
-      
+
+      window.Analytics?.track('view_item', {
+        item_id: l.slug || l.id, item_name: l.title, value: l.price, currency: 'BRL',
+      });
+
       el.innerHTML = `
         <button onclick="App.navigate('classificados')" style="
           background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;margin-bottom:20px">
@@ -2207,6 +2211,7 @@ window.Pages = (() => {
     if (btn) { btn.disabled=true; btn.textContent='⟳ Criando reserva...'; }
     try {
       await API.rental.createBooking({ configId:window.__rentCfgId, startDate:s, endDate:e });
+      window.Analytics?.track('begin_checkout', { item_id: listingId, currency: 'BRL' });
       window.App?.toast('✅ Reserva criada! Aguarde confirmação.','ok',5000);
       window.App?.navigate('minhas-reservas');
     } catch(err) {
