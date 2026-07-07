@@ -137,11 +137,10 @@ window.Pages = (() => {
           <div class="qhome-side-col">
             ${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:2px;color:var(--q4);margin-bottom:14px">⬡ STATUS NEXUS</div>
               <div id="homProviders" style="display:flex;flex-direction:column;gap:8px">
-                ${['SambaNova','Cerebras','Gemini','OpenRouter'].map(p=>`
-                  <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span style="font-size:.78rem;color:var(--muted)">${p}</span>
-                    <span id="hp_${p.toLowerCase()}" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)">● –</span>
-                  </div>`).join('')}
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:.78rem;color:var(--muted)">Motor Quântico</span>
+                  <span id="hp_motor" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)">● –</span>
+                </div>
               </div>`)}
             ${card(`<div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--green);margin-bottom:10px">💰 GANHE COM MOBYA</div>
               <div style="font-size:.82rem;color:var(--text);margin-bottom:12px;line-height:1.5">Integre sua oficina, locadora ou seguradora e receba leads qualificados.</div>
@@ -160,7 +159,7 @@ window.Pages = (() => {
         <div class="qhome-footer">
           <div class="qhf-item"><span class="qhf-ico">⬡</span><span>9 Agentes NEXUS especializados</span></div>
           <div class="qhf-sep">·</div>
-          <div class="qhf-item"><span class="qhf-ico neon">●</span><span>SambaNova · Cerebras · Gemini · OpenRouter</span></div>
+          <div class="qhf-item"><span class="qhf-ico neon">●</span><span>Motor Quântico · Fallback Multi-Provedor</span></div>
           <div class="qhf-sep">·</div>
           <div class="qhf-item"><span>🔒</span><span>Consultas criptografadas</span></div>
         </div>
@@ -183,13 +182,12 @@ window.Pages = (() => {
           : '<div style="color:var(--muted);font-size:.8rem;padding:24px;text-align:center">Nenhum anúncio disponível.</div>';
       }
       const providers = provR?.data || [];
-      providers.forEach(p => {
-        const el = document.getElementById(`hp_${p.name.toLowerCase()}`);
-        if (el) {
-          el.style.color   = p.configured ? 'var(--green)' : 'var(--muted)';
-          el.textContent   = p.configured ? '● ATIVO' : '● OFF';
-        }
-      });
+      const motorEl = document.getElementById('hp_motor');
+      if (motorEl) {
+        const anyConfigured = providers.some(p => p.configured);
+        motorEl.style.color = anyConfigured ? 'var(--green)' : 'var(--muted)';
+        motorEl.textContent = anyConfigured ? '● ATIVO' : '● OFF';
+      }
     });
   }
 

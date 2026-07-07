@@ -214,14 +214,14 @@ window.API = (() => {
   function updateStatus(ok, data) {
     const dot = document.getElementById('apiDot');
     const txt = document.getElementById('apiTxt');
-    const sb  = document.getElementById('sbSambanova');
+    const sb  = document.getElementById('sbMotorQuantico');
     if (dot) { dot.style.background = ok ? 'var(--neon)' : 'var(--red)'; dot.style.boxShadow = ok ? '0 0 8px var(--neon)' : '0 0 8px var(--red)'; }
     if (txt) txt.textContent = ok ? 'QUANTUM ONLINE' : 'API OFFLINE';
-    if (data?.providers) {
-      data.providers.forEach(p => {
-        const el = document.getElementById(`sb${p.name.replace(/\s/g,'')}`);
-        if (el) el.textContent = p.configured ? '● ON' : '● –';
-      });
+    // Não expõe os nomes dos provedores individuais (SambaNova/Cerebras/
+    // Gemini/OpenRouter) pro usuário final — só o agregado do Motor Quântico.
+    if (sb && data?.providers) {
+      const anyConfigured = data.providers.some(p => p.configured);
+      sb.textContent = anyConfigured ? '● ON' : '● –';
     }
   }
 
