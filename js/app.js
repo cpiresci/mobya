@@ -56,6 +56,7 @@ const BASE_PAGES = {
   vistoria:      () => Pages.renderVistoria(),
   documentacao:  () => Pages.renderDocumentacao(),
   dashboard:     () => (typeof Central !== 'undefined' ? Central.renderOverview() : Pages.renderDashboard()),
+  'indique-e-ganhe': () => (typeof Central !== 'undefined' ? Central.renderReferral() : null),
   chat:          () => renderChatPage(),
   listing:       () => Pages.renderListing(window.__mobyaListingId),
   pecas:         () => Pages.renderPecas(),
@@ -223,6 +224,12 @@ window.App = (() => {
 
     const { page: initial, param: initialParam } = _parseHash(location.hash);
     if (initialParam !== undefined) window.__mobyaListingId = initialParam;
+
+    try {
+      const refCode = new URLSearchParams(location.search).get('ref');
+      if (refCode) localStorage.setItem('mobya_referral_code', refCode.toUpperCase());
+    } catch {}
+
     setLoadingProgress(60, 'Restaurando sessao...');
 
     if (typeof MobyaAuth !== 'undefined') {

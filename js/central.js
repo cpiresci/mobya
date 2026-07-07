@@ -39,6 +39,7 @@ window.Central = (() => {
     { key: 'locatario', label: 'Minhas Reservas',  icon: '📋', route: 'painel-comprador' },
     { key: 'prestador', label: 'Prestador',        icon: '🛠️', route: 'painel-prestador' },
     { key: 'carteira',  label: 'Carteira',         icon: '💳', route: 'carteira' },
+    { key: 'indique',   label: 'Indique e Ganhe',  icon: '🎁', route: 'indique-e-ganhe' },
   ];
 
   function tabBar(activeKey) {
@@ -247,5 +248,90 @@ window.Central = (() => {
     }
   }
 
-  return { tabBar, renderOverview, enablePush, invalidate: () => { _cache = null; } };
+  async function renderReferral() {
+    const el = document.getElementById('main');
+    if (!el) return;
+    if (!API.isAuth()) {
+      el.innerHTML = `<div style="text-align:center;padding:64px">
+        <div style="font-size:3rem;margin-bottom:16px">🔒</div>
+        <div style="color:var(--muted)">Faça login para ver seu programa de indicação.</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `${tabBar('indique')}<div id="referral-content" style="text-align:center;padding:40px;
+      color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.73rem">⟳ Carregando...</div>`;
+
+    let data;
+    try {
+      const r = await API.referral.me();
+      data = r?.data || r;
+    } catch (e) {
+      document.getElementById('referral-content').innerHTML = `<div style="color:var(--red);padding:20px;text-align:center">
+        ⚠️ Não foi possível carregar seus dados de indicação agora.</div>`;
+      return;
+    }
+
+    const { code, link, totalAvailable, totalCredited, referredCount, referredUsers } = data;
+    const content = document.getElementById('referral-content');
+    content.innerHTML = `
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:2.2rem;margin-bottom:8px">🎁</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;
+          background:linear-gradient(135deg,var(--q3),var(--neon));-webkit-background-clip:text;
+          -webkit-text-fill-color:transparent">INDIQUE E GANHE</div>
+        <div style="color:var(--muted);font-size:.82rem;margin-top:4px">
+          Cada amigo que se cadastrar pelo seu link e fizer a primeira compra te dá crédito.
+        </div>
+      </div>
+
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:20px;
+        text-align:center;margin-bottom:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:2px">SEU CÓDIGO</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:4px;color:var(--gold)">${code}</div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center">
+          <button onclick="Central._copyReferralLink('${link}')" style="background:var(--s3);border:1px solid var(--border);
+            color:var(--text);border-radius:8px;padding:9px 16px;font-size:.78rem;cursor:pointer">📋 Copiar link</button>
+          <button onclick="Central._shareReferralLink('${link}')" style="background:linear-gradient(135deg,var(--q1),var(--neon));
+            color:#04040a;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:.78rem;cursor:pointer">📤 Compartilhar</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">
+        ${_card('AMIGOS INDICADOS', referredCount, 'var(--q4)')}
+        ${_card('CRÉDITO DISPONÍVEL', `R$ ${totalAvailable.toFixed(2)}`, 'var(--green)')}
+        ${_card('TOTAL JÁ GANHO', `R$ ${totalCredited.toFixed(2)}`, 'var(--gold)')}
+      </div>
+
+      ${referredUsers.length ? `
+        <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);
+            letter-spacing:1px;margin-bottom:10px">PESSOAS QUE VOCÊ INDICOU</div>
+          ${referredUsers.map(u => `<div style="display:flex;justify-content:space-between;padding:6px 0;
+            border-top:1px solid var(--border);font-size:.8rem">
+            <span>${u.name}</span><span style="color:var(--muted)">${new Date(u.since).toLocaleDateString('pt-BR')}</span>
+          </div>`).join('')}
+        </div>` : `<div style="text-align:center;color:var(--muted);font-size:.82rem;padding:20px">
+          Ainda não indicou ninguém — compartilhe seu link acima!</div>`}
+    `;
+  }
+
+  function _copyReferralLink(link) {
+    navigator.clipboard.writeText(link).then(() => {
+      if (typeof Toast !== 'undefined') Toast.show('Link copiado! 📋', 'ok');
+    });
+  }
+
+  function _shareReferralLink(link) {
+    if (navigator.share) {
+      navigator.share({ title: 'MOBYA', text: 'Usa esse link e ganha vantagens na Mobya!', url: link }).catch(() => {});
+    } else {
+      _copyReferralLink(link);
+    }
+  }
+
+  return {
+    tabBar, renderOverview, enablePush, renderReferral,
+    _copyReferralLink, _shareReferralLink,
+    invalidate: () => { _cache = null; },
+  };
 })();

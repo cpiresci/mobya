@@ -320,7 +320,8 @@ window.MobyaAuth = (() => {
     const btn = document.querySelector('#authContent .ai-btn');
     if (btn) { btn.disabled=true; btn.innerHTML='<div class="pdot"></div>CRIANDO...'; }
     try {
-      await API.auth.register({ name, email, password: pass, termsAccepted, termsVersion: '2026-07-04' });
+      const referralCode = localStorage.getItem('mobya_referral_code') || undefined;
+      await API.auth.register({ name, email, password: pass, termsAccepted, termsVersion: '2026-07-04', referralCode });
       closeModal();
       Toast.show('Conta criada! Faça login para continuar. ✅', 'ok', 5000);
       window.Analytics?.track('sign_up', { method: 'email' });
