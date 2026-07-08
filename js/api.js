@@ -73,6 +73,8 @@ window.API = (() => {
     mine:     (p={}) => get(`/listings/mine?${new URLSearchParams(p)}`),
     verifyCharge: (id, body={}) => post(`/listings/${id}/verify/charge`, body),
     verifyStatus: (id)          => get(`/listings/${id}/verify/status`),
+    boost:        (id)          => post(`/listings/${id}/boost`, {}),
+    boostStatus:  (id)          => get(`/listings/${id}/boost/status`),
   };
 
   const push = {

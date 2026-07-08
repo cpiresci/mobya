@@ -581,6 +581,17 @@ window.Pages = (() => {
         🛡️ Verificar veículo (R$ 19,90)
       </button>`;
     }
+    const isBoosted = l.boostedUntil && new Date(l.boostedUntil) > new Date();
+    const boostBlock = isBoosted
+      ? `<div style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.25);border-radius:8px;
+          padding:10px;font-size:.78rem;color:var(--neon)">
+          🚀 Em destaque até ${new Date(l.boostedUntil).toLocaleDateString('pt-BR')}
+        </div>`
+      : `<button onclick="ListingBoost.start('${l.id}')" style="
+          width:100%;background:rgba(0,245,255,.1);color:var(--neon);border:1px solid rgba(0,245,255,.25);
+          padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
+          🚀 Destacar anúncio
+        </button>`;
     return `
       <div style="background:var(--s2);border:1px solid ${st.border};border-radius:12px;padding:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -590,6 +601,7 @@ window.Pages = (() => {
         ${st.desc?`<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px">${st.desc}${l.status==='REJECTED'&&l.rejectionReason?`<br><span style="color:${st.color}">Motivo: ${escHtml(l.rejectionReason)}</span>`:''}</div>`:''}
         <div style="display:flex;flex-direction:column;gap:8px">
           ${verifyBlock}
+          ${boostBlock}
           <button onclick="Pages.editListing('${l.id}')" style="
             width:100%;background:rgba(124,58,237,.12);color:var(--q4);border:1px solid rgba(124,58,237,.25);
             padding:10px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer">
@@ -712,6 +724,12 @@ window.Pages = (() => {
                 border:1px solid ${verifyStatus.existeRestricao?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)'};
                 color:${verifyStatus.existeRestricao?'var(--gold)':'#10b981'}">
                 ${verifyStatus.existeRestricao ? '⚠️ Verificado — com restrição' : '✅ Veículo Verificado'}
+              </div>` : ''}
+            ${l.boostedUntil && new Date(l.boostedUntil) > new Date() ? `
+              <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;margin-left:8px;padding:6px 12px;
+                border-radius:20px;font-size:.76rem;font-weight:600;
+                background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.3);color:var(--neon)">
+                🚀 Em destaque
               </div>` : ''}
             <!-- Descrição -->
             <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;
