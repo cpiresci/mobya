@@ -85,6 +85,7 @@ const BASE_PAGES = {
   garagem:           () => (typeof Pages     !=='undefined' && Pages.renderGaragem ? Pages.renderGaragem() : comingSoon('MINHA GARAGEM','🚗')),
   monetizacao:       () => (typeof PagesMon  !=='undefined' && PagesMon.renderMonetizacao ? PagesMon.renderMonetizacao() : comingSoon('SEJA UM PARCEIRO','🤝')),
   'painel-receita':  () => (typeof PagesMon  !=='undefined' && PagesMon.renderPainelReceita ? PagesMon.renderPainelReceita() : comingSoon('PAINEL DE RECEITA','📊')),
+  'consulta-placa':  () => (typeof PlateCheck!=='undefined'        ? PlateCheck.render()                 : comingSoon('CONSULTA DE PLACA','🛡️')),
 };
 
 window.renderPage = function(page) {

@@ -89,6 +89,34 @@
 }
 .hp-sos-eta span { display:block; font-size:.56rem; color:rgba(244,63,94,.7); }
 
+/* ─── CONSULTA OFICIAL DE PLACA — Frente H (08/07/2026) ── */
+.hp-verify {
+  margin-bottom:28px; border-radius:16px; padding:18px;
+  background:linear-gradient(135deg,rgba(0,245,255,.14) 0%,rgba(16,185,129,.05) 100%);
+  border:1px solid rgba(0,245,255,.3);
+  cursor:pointer; transition:all .22s; position:relative; overflow:hidden;
+}
+.hp-verify::before {
+  content:''; position:absolute; top:-40px; right:-30px; width:140px; height:140px; border-radius:50%;
+  background:radial-gradient(circle,rgba(0,245,255,.18) 0%,transparent 70%); pointer-events:none;
+}
+.hp-verify:hover { border-color:rgba(0,245,255,.5); transform:translateY(-2px); }
+.hp-verify-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.hp-verify-orb {
+  width:54px; height:54px; border-radius:16px; flex-shrink:0;
+  background:rgba(0,245,255,.14); border:1.5px solid rgba(0,245,255,.4);
+  display:flex; align-items:center; justify-content:center;
+}
+.hp-verify-info { flex:1; min-width:200px; }
+.hp-verify-title { font-family:'Bebas Neue',sans-serif; font-size:1.15rem; letter-spacing:1px; color:#00f5ff; margin-bottom:3px; }
+.hp-verify-sub { font-size:.78rem; color:var(--muted); }
+.hp-verify-price {
+  font-family:'JetBrains Mono',monospace; font-size:.78rem; font-weight:700; color:#10b981;
+  background:rgba(16,185,129,.13); border:1px solid rgba(16,185,129,.3);
+  border-radius:8px; padding:5px 12px; text-align:center; flex-shrink:0;
+}
+.hp-verify-price span { display:block; font-size:.56rem; font-weight:500; color:rgba(16,185,129,.75); }
+
 /* ─── SECTION HEADERS ─────────────────── */
 .hp-sec { margin-bottom:30px; }
 .hp-sec-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }

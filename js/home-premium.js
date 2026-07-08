@@ -161,6 +161,15 @@
       <linearGradient id="hpVisI" x1="24" y1="26" x2="38" y2="40" gradientUnits="userSpaceOnUse">
         <stop stop-color="#818cf8"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
     </svg>`,
+    placa: `<svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+      <path d="M24 6L36 11V22C36 31 31 37.5 24 41C17 37.5 12 31 12 22V11L24 6Z" fill="url(#hpPlc)"/>
+      <path d="M24 10L32 13.5V22C32 28.5 28.7 33 24 36C19.3 33 16 28.5 16 22V13.5L24 10Z" fill="rgba(0,0,0,.22)"/>
+      <rect x="17" y="20" width="14" height="8" rx="1.5" fill="rgba(0,245,255,.14)" stroke="#00f5ff" stroke-width="1.1"/>
+      <text x="24" y="26" text-anchor="middle" font-family="monospace" font-size="5.4" font-weight="700" fill="#00f5ff">ABC1D23</text>
+      <path d="M18.5 32.5L21.5 35.5L29.5 27" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="hpPlc" x1="12" y1="6" x2="36" y2="41" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#0e7490"/><stop offset="1" stop-color="#0891b2"/></linearGradient></defs>
+    </svg>`,
     chatia: `<svg width="30" height="30" viewBox="0 0 48 48" fill="none">
       <circle cx="24" cy="22" r="11" fill="url(#hpAI)"/>
       <circle cx="24" cy="22" r="4" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
@@ -244,6 +253,7 @@
     { page: 'financiamento', icon: 'financiamento', label: 'Financ.',       cls: 'hp-oc-green'  },
     { page: 'pecas',         icon: 'pecas',         label: 'Peças',         cls: 'hp-oc-gold'   },
     { page: 'vistoria',      icon: 'vistoria',      label: 'Vistoria',      cls: 'hp-oc-indigo' },
+    { page: 'consulta-placa',icon: 'placa',         label: 'Placa Oficial', cls: 'hp-oc-cyan'   },
     { page: 'chat',          icon: 'chatia',        label: 'Chat IA',       cls: 'hp-oc-pink'   },
   ];
 
@@ -303,6 +313,18 @@
               <div class="hp-sos-sub">Guincho · Chaveiro · Pane seca · Bateria · Acidente</div>
             </div>
             <div class="hp-sos-eta">~8 min<span>estimativa</span></div>
+          </div>
+        </div>
+
+        <!-- CONSULTA OFICIAL DE PLACA — Frente H (08/07/2026) -->
+        <div class="hp-verify" onclick="App.navigate('consulta-placa')">
+          <div class="hp-verify-row">
+            <div class="hp-verify-orb">${icon('placa')}</div>
+            <div class="hp-verify-info">
+              <div class="hp-verify-title">🛡️ Consulta Oficial de Placa</div>
+              <div class="hp-verify-sub">Restrições, furto/roubo e bloqueios direto na fonte DETRAN — não é estimativa de IA</div>
+            </div>
+            <div class="hp-verify-price">R$ 19,90<span>por consulta</span></div>
           </div>
         </div>
 
@@ -447,6 +469,10 @@
             <div class="hp-cat-sm hp-oc-indigo" onclick="App.navigate('vistoria')">
               <div class="hp-cat-sm-orb">${icon('vistoria')}</div>
               <span class="hp-cat-sm-lbl">Vistoria</span>
+            </div>
+            <div class="hp-cat-sm hp-oc-cyan" onclick="App.navigate('consulta-placa')">
+              <div class="hp-cat-sm-orb">${icon('placa')}</div>
+              <span class="hp-cat-sm-lbl">Placa Oficial</span>
             </div>
           </div>
         </section>
