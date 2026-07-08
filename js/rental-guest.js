@@ -89,7 +89,10 @@ window.RentalGuest = (() => {
     const payment = params.get('payment');
     if (!payment) return;
     history.replaceState(null, '', location.pathname + location.hash.split('?')[0]);
-    if (payment === 'success') App.toast('✅ Pagamento aprovado! Reserva ativada.', 'ok', 5000);
+    if (payment === 'success') {
+      window.Analytics?.track('purchase', { currency: 'BRL', item_name: 'aluguel_reserva' });
+      App.toast('✅ Pagamento aprovado! Reserva ativada.', 'ok', 5000);
+    }
     else if (payment === 'pending') App.toast('⏳ Pagamento em análise. Aguarde.', 'warn', 5000);
     else if (payment === 'failure') App.toast('❌ Pagamento não concluído. Tente novamente.', 'err', 5000);
   }

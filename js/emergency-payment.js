@@ -12,6 +12,7 @@ window.EmergencyPayment = (() => {
   let _pollTimer   = null;
   let _emergencyId = null;
   let _overlay     = null;
+  let _amount      = null;
 
   // ── Inicia o fluxo completo: chama API, exibe modal ──────────────────────
   async function showPixPayment(emergencyId) {
@@ -37,6 +38,7 @@ window.EmergencyPayment = (() => {
       if (usedMock) {
         const mockData = r.data || r;
         const estimatedPrice = mockData.estimatedPrice || null;
+        _amount = estimatedPrice;
         _showModal({ loading: false, estimatedPrice, breakdown: null,
           qrCode: null, qrCodeBase64: null, emergencyId, idempotent: false });
         setTimeout(() => _onPaymentConfirmed(), 1200);
@@ -44,6 +46,7 @@ window.EmergencyPayment = (() => {
       }
 
       const { estimatedPrice, breakdown, pix, customerPaymentStatus, idempotent } = r.data || r;
+      _amount = estimatedPrice;
 
       if (customerPaymentStatus === 'PAID') {
         // Já foi pago (idempotência) — vai direto pro GPS
@@ -89,6 +92,9 @@ window.EmergencyPayment = (() => {
 
   // ── Pagamento confirmado ──────────────────────────────────────────────────
   function _onPaymentConfirmed() {
+    window.Analytics?.track('purchase', {
+      transaction_id: _emergencyId, value: _amount, currency: 'BRL', item_name: 'emergencia_sos',
+    });
     if (_overlay) {
       _overlay.querySelector('#pix-status-msg').innerHTML =
         `<div style="color:#10b981;font-size:1.1rem;font-weight:700;text-align:center;padding:8px 0">
