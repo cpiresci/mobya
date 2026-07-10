@@ -22,28 +22,15 @@ window.EmergencyPayment = (() => {
     _showModal({ loading: true });
 
     try {
-      let r, usedMock = false;
-      try {
-        r = await API.emergency.initiatePayment(emergencyId);
-      } catch (pixErr) {
-        console.warn('[EmergencyPayment] PIX falhou, tentando mock-pay:', pixErr.message);
-        try {
-          r = await API.emergency.mockPay(emergencyId);
-          usedMock = true;
-        } catch (mockErr) {
-          throw pixErr;
-        }
-      }
-
-      if (usedMock) {
-        const mockData = r.data || r;
-        const estimatedPrice = mockData.estimatedPrice || null;
-        _amount = estimatedPrice;
-        _showModal({ loading: false, estimatedPrice, breakdown: null,
-          qrCode: null, qrCodeBase64: null, emergencyId, idempotent: false });
-        setTimeout(() => _onPaymentConfirmed(), 1200);
-        return;
-      }
+      // Achado de seguranca (10/07/2026): este fluxo tinha um fallback automatico
+      // pro endpoint de simulacao (/mock-pay) sempre que a geracao do PIX real
+      // falhava (ex: erro de credencial no MP). Isso significava que qualquer
+      // falha na integracao com o MP liberava o dispatch do prestador de graca,
+      // sem nenhum pagamento real ter sido feito. Removido de proposito --
+      // mock-pay so deve ser chamado manualmente por QA, nunca como fallback
+      // automatico de um usuario real. Se o PIX falhar, o erro agora aparece
+      // pro cliente normalmente em vez de liberar o servico de graca.
+      const r = await API.emergency.initiatePayment(emergencyId);
 
       const { estimatedPrice, breakdown, pix, customerPaymentStatus, idempotent } = r.data || r;
       _amount = estimatedPrice;
