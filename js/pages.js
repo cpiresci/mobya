@@ -791,7 +791,7 @@ window.Pages = (() => {
                 </div>
               </div>
               ${l.user?.phone?`
-                <a href="https://wa.me/55${l.user.phone.replace(/\D/g,'')}" target="_blank" style="
+                <a href="https://wa.me/55${l.user.phone.replace(/\D/g,'')}" target="_blank" onclick="window.Analytics?.track('generate_lead',{item_id:'${escHtml(l.id||'')}',method:'whatsapp'})" style="
                   display:block;width:100%;background:rgba(37,211,102,.12);color:#25d366;
                   border:1px solid rgba(37,211,102,.3);padding:10px;border-radius:8px;
                   text-align:center;font-weight:700;font-size:.84rem;text-decoration:none;margin-bottom:10px">

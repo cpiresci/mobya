@@ -76,7 +76,7 @@ window.RentalGuest = (() => {
         <div style="font-size:.72rem;color:var(--muted)"><div style="color:var(--text-dim);margin-bottom:2px">TOTAL</div><div style="font-family:'JetBrains Mono',monospace;color:var(--gold)">${fmtBRL(b.renterTotalAmount)}</div></div>
       </div>
       ${host.name?`<div style="background:var(--s3);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:9px"><span style="font-size:1rem">🏠</span><div><div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:1px">ANFITRIÃO</div><div style="font-size:.82rem;color:var(--text);font-weight:600">${esc(host.name)}</div>${host.phone?`<div style="font-size:.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${esc(host.phone)}</div>`:''}</div></div>`:''}
-      ${canPay?`<button onclick="RentalGuest.pay('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">💳 Pagar agora — ${fmtBRL(b.renterTotalAmount)}</button>`:''}
+      ${canPay?`<button onclick="RentalGuest.pay('${esc(b.id)}',${parseFloat(b.renterTotalAmount)||0})" style="width:100%;background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">💳 Pagar agora — ${fmtBRL(b.renterTotalAmount)}</button>`:''}
       ${canCheckinConfirm?`<button onclick="RentalGuest.checkinConfirm('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--neon),#0891b2);color:#000;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">🚗 Confirmar Retirada do Veículo</button>`:''}
       ${canCheckoutInitiate?`<button onclick="RentalGuest.checkoutInitiate('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">🏁 Finalizar Locação</button>`:''}
       ${canCancel?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar Reserva</button>`:''}
@@ -138,14 +138,19 @@ window.RentalGuest = (() => {
     }
   }
 
-  async function pay(bookingId) {
+  async function pay(bookingId, amount) {
     const card = document.getElementById('gbcard-'+bookingId);
     const btn = card?.querySelector('button');
     if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = '⟳ Iniciando pagamento...'; }
     try {
       const r = await API.rental.payBooking(bookingId);
       const url = r.data?.sandboxInitPoint || r.data?.initPoint;
-      if (url) { window.location.href = url; return; }
+      if (url) {
+        window.Analytics?.track('begin_checkout', { item_id: bookingId, value: amount || 0, currency: 'BRL' });
+        try { localStorage.setItem('mobya_pending_rental_payment', JSON.stringify({ bookingId, amount: amount || 0 })); } catch {}
+        window.location.href = url;
+        return;
+      }
       App.toast('Erro ao iniciar pagamento', 'err');
     } catch(e) {
       App.toast(e.message || 'Erro no pagamento', 'err');

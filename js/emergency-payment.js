@@ -9,9 +9,10 @@
 //   5. Se o usuário fechar → pode reabrir via botão no painel
 
 window.EmergencyPayment = (() => {
-  let _pollTimer   = null;
-  let _emergencyId = null;
-  let _overlay     = null;
+  let _pollTimer      = null;
+  let _emergencyId    = null;
+  let _overlay        = null;
+  let _estimatedPrice = null;
   let _amount      = null;
 
   // ── Inicia o fluxo completo: chama API, exibe modal ──────────────────────
