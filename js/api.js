@@ -93,6 +93,10 @@ window.API = (() => {
     me: () => get('/referral/me'),
   };
 
+  const uploads = {
+    cloudinarySignature: () => get('/uploads/cloudinary-signature'),
+  };
+
   const emergency = {
     create:  (d)    => post('/emergency', d),
     mine:    (p={}) => get(`/emergency/mine?${new URLSearchParams(p)}`),
@@ -244,5 +248,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, vehicleCheck, wallet, notifications, rental, me, push, referral, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, vehicleCheck, wallet, notifications, rental, me, push, referral, uploads, pollEmergency, ping };
 })();

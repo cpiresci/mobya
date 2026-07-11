@@ -451,22 +451,27 @@ window.Pages = (() => {
   }
 
 
-  const CLOUDINARY_CLOUD = 'dnvmunvag';
-  const CLOUDINARY_PRESET = 'mobya_unsigned';
-
-  function _uploadToCloudinary(blob) {
-    return new Promise((resolve, reject) => {
-      const fd = new FormData();
-      fd.append('file', blob);
-      fd.append('upload_preset', CLOUDINARY_PRESET);
-      fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method:'POST', body:fd })
-        .then(r => r.json())
-        .then(data => {
-          if (data.secure_url) resolve(data.secure_url);
-          else reject(new Error(data.error?.message || 'Falha no upload Cloudinary.'));
-        })
-        .catch(() => reject(new Error('Falha de rede no upload da foto.')));
-    });
+  // Achado (11/07/2026, pipeline de imagem v8 §1.3): preset unsigned trocado
+  // por upload assinado -- o backend gera timestamp+signature (autenticado),
+  // o Cloudinary valida a assinatura com a api_secret que só o backend tem.
+  async function _uploadToCloudinary(blob) {
+    let sig;
+    try {
+      const r = await API.uploads.cloudinarySignature();
+      sig = r.data || r;
+    } catch (e) {
+      throw new Error('Não foi possível autorizar o upload da foto. Tente novamente.');
+    }
+    const fd = new FormData();
+    fd.append('file', blob);
+    fd.append('api_key', sig.apiKey);
+    fd.append('timestamp', sig.timestamp);
+    fd.append('signature', sig.signature);
+    fd.append('folder', sig.folder);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method:'POST', body:fd });
+    const data = await res.json().catch(() => ({}));
+    if (data.secure_url) return data.secure_url;
+    throw new Error(data.error?.message || 'Falha no upload Cloudinary.');
   }
 
   function _compressPhoto(file) {
