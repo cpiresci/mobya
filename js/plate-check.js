@@ -144,6 +144,7 @@ window.PlateCheck = (() => {
       _checkId = vehicleCheckId;
       _amount = amount;
       _showModal({ loading: false, amount, qrCode: pix?.qrCode || null, qrCodeBase64: pix?.qrCodeBase64 || null });
+      window.Analytics?.track('begin_checkout', { item_id: vehicleCheckId, value: amount || 0, currency: 'BRL' });
       _startPolling();
     } catch (e) {
       _showModal({ loading: false, error: e.message || 'Erro ao gerar PIX da consulta.' });
