@@ -90,7 +90,15 @@ window.RentalHost = (() => {
         ${canCheckout?`<button onclick="RentalHost.checkoutBooking('${esc(b.id)}')" style="flex:1;min-width:120px;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u{1F3C1} Check-out</button>`:''}
         ${canCancel?`<button onclick="RentalHost.cancelBooking('${esc(b.id)}')" style="flex:1;min-width:100px;background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px;font-weight:600;font-size:.74rem;cursor:pointer;font-family:'Space Grotesk',sans-serif">\u26a0\ufe0f Cancelar</button>`:''}
       </div>
+      ${b.status==='COMPLETED'?`<button onclick="RentalHost.openReview('${esc(b.id)}','${esc(renter.name||'')}')" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">\u2b50 Avaliar locatário</button>`:''}
     </div>`;
+  }
+
+  // Sistema de reputação (master prompt v13). Mesma observação do lado
+  // guest: não checa de antemão se já existe review, o backend cuida disso.
+  function openReview(bookingId, renterName) {
+    if (typeof ReviewModal === 'undefined') return;
+    ReviewModal.prompt({ targetType:'RENTAL_GUEST', targetName: renterName || undefined, proof:{ bookingId } });
   }
 
   function configCard(cfg){
@@ -307,5 +315,5 @@ window.RentalHost = (() => {
     }
   }
 
-  return{render,_switchTab,_currentTab,confirmBooking,declineBooking,checkinBooking,checkoutBooking,cancelBooking,toggleConfig,_showAddConfigModal,_submitNewConfig};
+  return{render,_switchTab,_currentTab,confirmBooking,declineBooking,checkinBooking,checkoutBooking,cancelBooking,toggleConfig,_showAddConfigModal,_submitNewConfig,openReview};
 })();

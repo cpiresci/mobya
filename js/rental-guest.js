@@ -81,7 +81,16 @@ window.RentalGuest = (() => {
       ${canCheckoutInitiate?`<button onclick="RentalGuest.checkoutInitiate('${esc(b.id)}')" style="width:100%;background:linear-gradient(135deg,var(--gold),#d97706);color:#000;border:none;border-radius:8px;padding:10px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">🏁 Finalizar Locação</button>`:''}
       ${canCancel?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar Reserva</button>`:''}
       ${canCancelPaid?`<button onclick="RentalGuest.cancel('${esc(b.id)}','${esc(b.status)}')" style="width:100%;background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:9px;font-weight:600;font-size:.76rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">✖ Cancelar e Solicitar Reembolso</button>`:''}
+      ${b.status==='COMPLETED'?`<button onclick="RentalGuest.openReview('${esc(b.id)}','${esc(host.name||'')}')" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:9px;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:2px">⭐ Avaliar anfitrião</button>`:''}
     </div>`;
+  }
+
+  // Sistema de reputação (master prompt v13). Não checa antecipadamente se
+  // já existe review pra essa reserva -- o backend tem unique constraint e
+  // retorna 409 nesse caso, mostrado como toast pelo próprio ReviewModal.
+  function openReview(bookingId, hostName) {
+    if (typeof ReviewModal === 'undefined') return;
+    ReviewModal.prompt({ targetType:'RENTAL_HOST', targetName: hostName || undefined, proof:{ bookingId } });
   }
 
   function _handleMpReturn() {
@@ -197,5 +206,5 @@ window.RentalGuest = (() => {
   function _startPoll(){_stopPoll();_pollTimer=setInterval(()=>{if(document.getElementById('rg-list'))render();else _stopPoll();},30000);}
   function _stopPoll(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
 
-  return{render,cancel,pay,cancelPaid:(id)=>cancel(id,'ACTIVE'),checkinConfirm,checkoutInitiate};
+  return{render,cancel,pay,cancelPaid:(id)=>cancel(id,'ACTIVE'),checkinConfirm,checkoutInitiate,openReview};
 })();

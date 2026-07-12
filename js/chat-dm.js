@@ -96,6 +96,62 @@ window.ChatDM = (() => {
 
   function open(threadId) { App.navigate('chat-thread', threadId); }
 
+  // ── Ações no header da conversa: marcar anúncio como vendido (vendedor)
+  // e avaliar a outra parte depois da venda confirmada. Sistema de
+  // reputação (master prompt v13) -- ver review-modal.js e
+  // PATCH /listings/:id/mark-sold no backend.
+  async function renderHeaderActions(thread, other) {
+    const box = document.getElementById('dmHeaderActions');
+    if (!box || !thread) { if (box) box.innerHTML = ''; return; }
+    const listingId = thread.listingId || thread.listing?.id;
+    if (!listingId) { box.innerHTML = ''; return; }
+
+    const iAmSeller = thread.sellerId === meId;
+    let listing;
+    try {
+      const r = await API.listings.get(listingId);
+      listing = r?.data;
+    } catch (_) { box.innerHTML = ''; return; }
+    if (!listing) { box.innerHTML = ''; return; }
+
+    if (iAmSeller && listing.status === 'ACTIVE') {
+      box.innerHTML = `<button onclick="ChatDM.markSold('${listingId}','${thread.buyerId}')" style="background:var(--s3);border:1px solid var(--border);color:var(--gold,#f59e0b);border-radius:8px;padding:7px 12px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">✅ Marcar vendido</button>`;
+      return;
+    }
+
+    // Venda já confirmada pra esse comprador específico -- destrava avaliação mútua.
+    if (listing.status === 'SOLD' && listing.soldToUserId === thread.buyerId) {
+      const targetType = iAmSeller ? 'LISTING_BUYER' : 'LISTING_SELLER';
+      box.innerHTML = `<button onclick="ChatDM.openReview('${targetType}','${listingId}','${escAttr(other?.name || '')}')" style="background:var(--s3);border:1px solid var(--border);color:var(--neon);border-radius:8px;padding:7px 12px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">⭐ Avaliar</button>`;
+      return;
+    }
+
+    box.innerHTML = '';
+  }
+
+  function escAttr(s) { return String(s ?? '').replace(/'/g, "\\'"); }
+
+  async function markSold(listingId, buyerId) {
+    if (!window.confirm('Confirma que esse anúncio foi vendido pra essa pessoa? Essa ação não pode ser desfeita.')) return;
+    try {
+      await API.listings.markSold(listingId, buyerId);
+      App.toast('✅ Anúncio marcado como vendido!', 'ok');
+      openReview('LISTING_BUYER', listingId, '');
+    } catch (e) {
+      App.toast(e?.message || 'Erro ao marcar como vendido.', 'err');
+    }
+  }
+
+  function openReview(targetType, listingId, targetName) {
+    if (typeof ReviewModal === 'undefined') return;
+    ReviewModal.prompt({
+      targetType,
+      targetName: targetName || undefined,
+      proof: { listingId },
+      onDone: () => { const box = document.getElementById('dmHeaderActions'); if (box) box.innerHTML = ''; },
+    });
+  }
+
   // ── Tela de uma conversa específica ──
   async function renderThread(containerId, threadId) {
     const el = document.getElementById(containerId);
@@ -108,7 +164,11 @@ window.ChatDM = (() => {
       <div style="display:flex;flex-direction:column;height:calc(100vh - 160px);max-height:640px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--s2)">
         <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
           <button onclick="App.navigate('conversas')" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer">←</button>
-          <div id="dmHeaderName" style="font-weight:700">Carregando...</div>
+          <div style="flex:1;min-width:0">
+            <div id="dmHeaderName" style="font-weight:700">Carregando...</div>
+            <div id="dmHeaderListing" style="font-size:.7rem;color:var(--muted)"></div>
+          </div>
+          <div id="dmHeaderActions"></div>
         </div>
         <div id="dmMsgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px"></div>
         <div style="padding:10px;border-top:1px solid var(--border);display:flex;gap:8px">
@@ -126,6 +186,10 @@ window.ChatDM = (() => {
       const other = thread ? (thread.buyerId === meId ? thread.seller : thread.buyer) : null;
       const nameEl = document.getElementById('dmHeaderName');
       if (nameEl) nameEl.textContent = other?.name || 'Conversa';
+      const listingEl = document.getElementById('dmHeaderListing');
+      if (listingEl) listingEl.textContent = thread?.listing?.title || '';
+
+      renderHeaderActions(thread, other).catch(() => {});
 
       const msgs = msgsR?.data || [];
       const box = document.getElementById('dmMsgs');
@@ -181,5 +245,5 @@ window.ChatDM = (() => {
     }
   }
 
-  return { openFromListing, open, renderInbox, renderThread, key, send };
+  return { openFromListing, open, renderInbox, renderThread, key, send, markSold, openReview };
 })();

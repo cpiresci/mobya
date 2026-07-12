@@ -75,6 +75,16 @@ window.API = (() => {
     verifyStatus: (id)          => get(`/listings/${id}/verify/status`),
     boost:        (id)          => post(`/listings/${id}/boost`, {}),
     boostStatus:  (id)          => get(`/listings/${id}/boost/status`),
+    markSold:     (id, buyerId) => patch(`/listings/${id}/mark-sold`, { buyerId }),
+  };
+
+  // Sistema de reputação (master prompt v13). Generaliza o que rateProvider
+  // já fazia (só provider, só número) pra vendedor/comprador de anúncio e
+  // anfitrião/locatário de aluguel, com comentário em texto.
+  const reviews = {
+    create:     (d)        => post('/reviews', d),
+    forUser:    (userId,p={})     => get(`/reviews/user/${userId}?${new URLSearchParams(p)}`),
+    forProvider:(providerId,p={}) => get(`/reviews/provider/${providerId}?${new URLSearchParams(p)}`),
   };
 
   const vehicleCheck = {
@@ -248,5 +258,5 @@ window.API = (() => {
     return req(path, { method: m, body });
   };
 
-  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, vehicleCheck, wallet, notifications, rental, me, push, referral, uploads, pollEmergency, ping };
+  return { setToken, getToken, isAuth, get, post, put, patch, del, req: reqCompat, auth, ai, chat, listings, emergency, monetization, vehicle, vehicleCheck, wallet, notifications, rental, me, push, referral, uploads, reviews, pollEmergency, ping };
 })();
