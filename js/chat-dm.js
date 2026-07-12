@@ -104,15 +104,10 @@ window.ChatDM = (() => {
     const box = document.getElementById('dmHeaderActions');
     if (!box || !thread) { if (box) box.innerHTML = ''; return; }
     const listingId = thread.listingId || thread.listing?.id;
-    if (!listingId) { box.innerHTML = ''; return; }
+    const listing = thread.listing;
+    if (!listingId || !listing) { box.innerHTML = ''; return; }
 
     const iAmSeller = thread.sellerId === meId;
-    let listing;
-    try {
-      const r = await API.listings.get(listingId);
-      listing = r?.data;
-    } catch (_) { box.innerHTML = ''; return; }
-    if (!listing) { box.innerHTML = ''; return; }
 
     if (iAmSeller && listing.status === 'ACTIVE') {
       box.innerHTML = `<button onclick="ChatDM.markSold('${listingId}','${thread.buyerId}')" style="background:var(--s3);border:1px solid var(--border);color:var(--gold,#f59e0b);border-radius:8px;padding:7px 12px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">✅ Marcar vendido</button>`;
