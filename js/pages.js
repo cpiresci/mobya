@@ -209,7 +209,7 @@ window.Pages = (() => {
         <div style="width:72px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;
           background:var(--s3);display:flex;align-items:center;justify-content:center;position:relative">
           ${imgs[0]
-            ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
+            ? `<img src="${window.cldOptimize(imgs[0])}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
             : `<span style="font-size:1.6rem">🚗</span>`}
           ${imgs.length>1?`<span style="position:absolute;bottom:2px;right:2px;font-family:'JetBrains Mono',monospace;
             font-size:.5rem;padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.75);color:#fff">📷${imgs.length}</span>`:''}
@@ -242,7 +242,7 @@ window.Pages = (() => {
           <div style="width:72px;height:54px;border-radius:7px;overflow:hidden;flex-shrink:0;
             background:var(--s3);display:flex;align-items:center;justify-content:center;position:relative">
             ${imgs[0]
-              ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
+              ? `<img src="${window.cldOptimize(imgs[0])}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`
               : `<span style="font-size:1.6rem">🚗</span>`}
             ${imgs.length>1?`<span style="position:absolute;bottom:2px;right:2px;font-family:'JetBrains Mono',monospace;
               font-size:.5rem;padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.75);color:#fff">📷${imgs.length}</span>`:''}
@@ -421,7 +421,7 @@ window.Pages = (() => {
         onmouseout="this.style.transform='translateY(0)';this.style.borderColor='var(--border)'">
         <div style="height:160px;background:var(--s3);position:relative;overflow:hidden">
           ${imgs[0]
-            ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
+            ? `<img src="${window.cldOptimize(imgs[0])}" style="width:100%;height:100%;object-fit:cover">`
             : `<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem">🚗</div>`}
           <span style="position:absolute;top:10px;left:10px;font-family:'JetBrains Mono',monospace;
             font-size:.58rem;padding:3px 8px;border-radius:4px;background:rgba(0,0,0,.7);
@@ -714,7 +714,7 @@ window.Pages = (() => {
             ${window.ListingGallery ? ListingGallery.render(imgs, l.id) : `
               <div style="border-radius:12px;overflow:hidden;background:var(--s3);
                 height:320px;margin-bottom:16px;display:flex;align-items:center;justify-content:center">
-                ${imgs[0]?`<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
+                ${imgs[0]?`<img src="${window.cldOptimize(imgs[0])}" style="width:100%;height:100%;object-fit:cover">`
                          :`<span style="font-size:4rem">🚗</span>`}
               </div>`}
             <!-- Título + preço -->
@@ -1779,7 +1779,7 @@ window.Pages = (() => {
         onmouseout="this.style.transform='translateY(0)';this.style.borderColor='var(--border)'">
         <div style="height:150px;background:var(--s3);position:relative;overflow:hidden">
           ${imgs[0]
-            ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`
+            ? `<img src="${window.cldOptimize(imgs[0])}" style="width:100%;height:100%;object-fit:cover">`
             : `<div style="height:100%;display:flex;align-items:center;justify-content:center;font-size:2.8rem">⚙️</div>`}
           <span style="position:absolute;top:8px;left:8px;font-family:'JetBrains Mono',monospace;
             font-size:.58rem;padding:3px 8px;border-radius:4px;
@@ -2265,7 +2265,7 @@ window.Pages = (() => {
       if (!prev) return;
       const items = photos.map((u,i) => `
         <div class="lg-up-item">
-          <img src="${u}" loading="lazy">
+          <img src="${window.cldOptimize(u)}" loading="lazy">
           ${i===0?'<span class="lg-up-cover">⭐ CAPA</span>':''}
           <button class="lg-up-del" onclick="Pages._removeListingPhoto(${i})" title="Remover">✕</button>
           <div class="lg-up-move">

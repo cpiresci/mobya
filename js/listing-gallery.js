@@ -30,7 +30,7 @@ window.ListingGallery = (() => {
           <div class="lg-main-track" id="${id}_track">
             ${imgs.map((u,i) => `
               <div class="lg-slide">
-                <img src="${esc(u)}" loading="${i===0?'eager':'lazy'}"
+                <img src="${esc(window.cldOptimize(u))}" loading="${i===0?'eager':'lazy'}"
                   onclick="ListingGallery.openLightbox('${id}')" alt="Foto ${i+1}">
               </div>`).join('')}
           </div>
@@ -49,7 +49,7 @@ window.ListingGallery = (() => {
           <div class="lg-thumbs" id="${id}_thumbs">
             ${imgs.map((u,i)=>`
               <div class="lg-thumb ${i===0?'active':''}" onclick="ListingGallery.goTo('${id}',${i})">
-                <img src="${esc(u)}" loading="lazy">
+                <img src="${esc(window.cldOptimize(u))}" loading="lazy">
               </div>`).join('')}
           </div>
         `:''}
@@ -120,7 +120,7 @@ window.ListingGallery = (() => {
         <div class="lg-lb-track" id="lg_lb_track">
           ${lb.imgs.map((u,i)=>`
             <div class="lg-lb-slide">
-              <img src="${esc(u)}" id="lg_lb_img_${i}" onclick="ListingGallery._toggleZoom(${i})" alt="Foto ${i+1}">
+              <img src="${esc(window.cldOptimize(u))}" id="lg_lb_img_${i}" onclick="ListingGallery._toggleZoom(${i})" alt="Foto ${i+1}">
             </div>`).join('')}
         </div>
         ${lb.imgs.length>1?`
@@ -132,7 +132,7 @@ window.ListingGallery = (() => {
         <div class="lg-lb-thumbs" id="lg_lb_thumbs">
           ${lb.imgs.map((u,i)=>`
             <div class="lg-thumb ${i===lb.idx?'active':''}" onclick="ListingGallery.lbGoTo(${i})">
-              <img src="${esc(u)}" loading="lazy">
+              <img src="${esc(window.cldOptimize(u))}" loading="lazy">
             </div>`).join('')}
         </div>`:''}
     `;

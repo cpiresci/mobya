@@ -1,3 +1,15 @@
+// Cloudinary: injeta f_auto,q_auto na URL de entrega pra servir WebP/AVIF
+// automaticamente pro navegador que suportar (cai pra JPEG nos que nao
+// suportam), com qualidade ajustada automaticamente. So afeta URLs do
+// Cloudinary -- qualquer outra URL passa intacta. Nao muda o arquivo
+// armazenado, so a transformacao na hora de servir.
+window.cldOptimize = function(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
+  if (/\/upload\/(?:[^/]*,)?f_auto/.test(url)) return url; // ja tem, evita duplicar
+  return url.replace('/upload/', '/upload/f_auto,q_auto/');
+};
+
 window.API = (() => {
   const base = () => window.MOBYA.API;
   let _token = null;
